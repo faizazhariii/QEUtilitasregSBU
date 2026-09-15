@@ -73,6 +73,15 @@
   }
   .scroll-hint{font-size:10.5px; color:var(--sub); text-align:center; margin:-4px 0 12px;}
 
+  @media (min-width: 860px){
+    .panel-row{
+      display:grid; grid-template-columns:repeat(3, 1fr); overflow-x:visible;
+      margin:0 0 12px; padding-left:0; padding-right:0;
+    }
+    .panel-row .panel{flex:none;}
+    .scroll-hint{display:none;}
+  }
+
   .panel{
     background:var(--card); border-radius:14px; padding:15px; border:1px solid var(--card-border);
     margin-bottom:12px; box-shadow:var(--shadow);
