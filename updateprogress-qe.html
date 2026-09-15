@@ -7,103 +7,112 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
   :root{
-    --bg:#eef1f8; --card:#ffffff; --text:#1a1f36; --sub:#6b7280;
-    --royal:#1d3fae; --royal-dark:#152f88; --royal-light:#e8edfb;
-    --border:#dfe3ee; --danger:#c0392b; --success:#1a9e4d;
+    --bg:#0b1120; --bg2:#0e1729;
+    --card:#141d33; --card-border:#232f4d;
+    --text:#e7ebf5; --sub:#8b95ab;
+    --accent:#3b6ef6; --accent2:#6d9bff; --accent-soft:#1b2a4d;
+    --green:#22c55e; --orange:#f59e0b; --red:#ef4444;
+    --shadow:0 4px 18px rgba(0,0,0,.35);
   }
   *{box-sizing:border-box;}
   body{
     margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-    background:var(--bg); color:var(--text); padding-bottom:32px;
+    background:var(--bg); color:var(--text); padding-bottom:28px;
   }
   header{
-    background:linear-gradient(135deg, var(--royal) 0%, var(--royal-dark) 100%);
-    color:#fff; padding:18px 16px; position:sticky; top:0; z-index:10;
-    box-shadow:0 2px 10px rgba(29,63,174,.25);
+    background:var(--bg2); padding:16px; position:sticky; top:0; z-index:10;
+    border-bottom:1px solid var(--card-border);
   }
-  header h1{margin:0; font-size:18px; font-weight:700; letter-spacing:.2px;}
-  header p{margin:4px 0 0; font-size:12px; opacity:.85;}
+  header h1{margin:0; font-size:17px; font-weight:700;}
+  header p{margin:3px 0 0; font-size:12px; color:var(--sub);}
 
-  .section{padding:16px;}
+  .section{padding:14px;}
   .card{
-    background:var(--card); border-radius:14px; padding:16px; border:1px solid var(--border);
-    margin-bottom:12px; box-shadow:0 1px 3px rgba(29,63,174,.06);
+    background:var(--card); border-radius:14px; padding:15px; border:1px solid var(--card-border);
+    margin-bottom:12px; box-shadow:var(--shadow);
   }
-  label{display:block; font-size:12px; font-weight:700; color:var(--royal); margin-bottom:6px; text-transform:uppercase; letter-spacing:.3px;}
+  label{display:block; font-size:11px; font-weight:700; color:var(--accent2); margin-bottom:6px; text-transform:uppercase; letter-spacing:.4px;}
   input[type=text], input[type=number], textarea{
-    width:100%; padding:11px 12px; border:1px solid var(--border); border-radius:10px;
-    font-size:14px; background:#fafbfe; color:var(--text); font-family:inherit;
+    width:100%; padding:12px; border:1px solid var(--card-border); border-radius:10px;
+    font-size:14px; background:var(--bg2); color:var(--text); font-family:inherit;
   }
   input[type=text]:focus, input[type=number]:focus, textarea:focus{
-    outline:none; border-color:var(--royal); background:#fff;
+    outline:none; border-color:var(--accent);
   }
   textarea{resize:vertical; min-height:70px;}
+  ::placeholder{color:#5b6478;}
 
   .result-item{
-    padding:10px 12px; border-bottom:1px solid var(--border); cursor:pointer; font-size:14px; border-radius:8px;
+    padding:11px 12px; border-radius:10px; cursor:pointer; font-size:14px; margin-top:6px;
+    background:var(--bg2); border:1px solid var(--card-border);
   }
-  .result-item:last-child{border-bottom:none;}
-  .result-item .loc{font-size:12px; color:var(--sub); margin-top:2px;}
-  .result-item:active{background:var(--royal-light);}
+  .result-item .loc{font-size:11px; color:var(--sub); margin-top:3px;}
+  .result-item:active{border-color:var(--accent);}
 
   .selected-card{display:none;}
   .selected-card.show{display:block;}
-  .selected-card .lop{font-weight:700; font-size:15px; margin-bottom:2px; color:var(--royal-dark);}
-  .selected-card .loc{font-size:12px; color:var(--sub); margin-bottom:12px;}
+  .selected-card .lop{font-weight:700; font-size:15px; margin-bottom:2px;}
+  .selected-card .loc{font-size:12px; color:var(--sub); margin-bottom:14px;}
+
+  .overall-progress{margin-bottom:4px;}
+  .overall-progress .row{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px;}
+  .overall-progress .pct{font-size:20px; font-weight:800; color:var(--accent2);}
+  .overall-progress .label{font-size:11px; color:var(--sub); text-transform:uppercase; letter-spacing:.4px;}
+  .bar-track{width:100%; height:8px; border-radius:99px; background:var(--bg2); overflow:hidden; border:1px solid var(--card-border);}
+  .bar-fill{height:100%; border-radius:99px; background:linear-gradient(90deg, var(--accent) 0%, var(--accent2) 100%); transition:width .25s ease;}
+
   .field{margin-bottom:14px;}
+  .section-title{font-size:11px; font-weight:700; color:var(--accent2); text-transform:uppercase; letter-spacing:.4px; margin:16px 0 8px;}
 
-  .section-title{font-size:12px; font-weight:700; color:var(--royal); text-transform:uppercase; letter-spacing:.3px; margin:18px 0 8px;}
-
-  .item-row{
-    display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 0;
-    border-bottom:1px solid var(--border);
+  .item-card{
+    background:var(--bg2); border:1px solid var(--card-border); border-radius:12px;
+    padding:11px 12px; margin-bottom:8px;
   }
-  .item-row:last-child{border-bottom:none;}
-  .item-row .item-name{font-size:13px; font-weight:600; flex:1;}
-  .item-values{display:flex; align-items:center; gap:8px;}
-  .plan-box{
-    display:flex; flex-direction:column; align-items:center; min-width:52px;
-    background:var(--royal-light); border-radius:8px; padding:5px 8px;
-  }
-  .plan-box .value-label{font-size:9px; color:var(--royal); font-weight:700; text-transform:uppercase;}
-  .plan-box .value{font-size:13px; font-weight:700; color:var(--royal-dark);}
-  .item-values input[type=number]{width:80px; text-align:right; padding:8px 10px;}
+  .item-top{display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:8px;}
+  .item-name{font-size:13px; font-weight:600; flex:1;}
+  .item-pct{font-size:12px; font-weight:700; color:var(--accent2); white-space:nowrap;}
+  .item-mid{display:flex; align-items:center; gap:10px;}
+  .plan-tag{font-size:11px; color:var(--sub); white-space:nowrap;}
+  .plan-tag b{color:var(--text); font-weight:700;}
+  .item-mid input[type=number]{flex:1; text-align:right; padding:9px 10px;}
+  .item-bar{margin-top:8px;}
 
   .empty-items{font-size:13px; color:var(--sub); padding:8px 0;}
 
   .evidence-preview{
     width:100%; max-height:220px; object-fit:cover; border-radius:10px; margin-top:8px; display:none;
+    border:1px solid var(--card-border);
   }
   .evidence-buttons{display:flex; gap:8px;}
   .evidence-buttons label{
-    flex:1; text-align:center; padding:11px; border:1.5px dashed var(--royal); border-radius:10px;
-    background:var(--royal-light); color:var(--royal); font-size:13px; font-weight:700; cursor:pointer;
+    flex:1; text-align:center; padding:12px; border:1.5px dashed var(--accent); border-radius:10px;
+    background:var(--accent-soft); color:var(--accent2); font-size:13px; font-weight:700; cursor:pointer;
     margin-bottom:0; text-transform:none;
   }
   .evidence-buttons input[type=file]{display:none;}
   .evidence-clear{
-    text-align:center; font-size:12px; color:var(--danger); margin-top:6px; cursor:pointer; display:none;
+    text-align:center; font-size:12px; color:var(--red); margin-top:6px; cursor:pointer; display:none;
   }
 
   button.submit{
-    width:100%; padding:14px; border:none; border-radius:10px;
-    background:linear-gradient(135deg, var(--royal) 0%, var(--royal-dark) 100%); color:#fff;
+    width:100%; padding:14px; border:none; border-radius:12px;
+    background:linear-gradient(135deg, var(--accent) 0%, #274fc9 100%); color:#fff;
     font-size:15px; font-weight:700; cursor:pointer; margin-top:6px;
-    box-shadow:0 3px 10px rgba(29,63,174,.3);
+    box-shadow:0 4px 14px rgba(59,110,246,.35);
   }
   button.submit:disabled{opacity:.5; box-shadow:none;}
   .change-link{
-    text-align:center; font-size:13px; color:var(--royal); margin-top:10px; cursor:pointer; font-weight:600;
+    text-align:center; font-size:13px; color:var(--accent2); margin-top:10px; cursor:pointer; font-weight:600;
   }
 
   .toast{
     position:fixed; left:16px; right:16px; bottom:16px; padding:12px 14px; border-radius:10px;
-    font-size:14px; text-align:center; color:#fff; display:none; z-index:50;
+    font-size:14px; text-align:center; color:#fff; display:none; z-index:50; box-shadow:var(--shadow);
   }
-  .toast.success{background:var(--success);}
-  .toast.error{background:var(--danger);}
+  .toast.success{background:var(--green);}
+  .toast.error{background:var(--red);}
 
-  .empty{font-size:13px; color:var(--sub); padding:12px;}
+  .empty{font-size:13px; color:var(--sub); padding:10px;}
 </style>
 </head>
 <body>
@@ -118,12 +127,20 @@
   <div class="card" id="search-card">
     <label for="search">Cari (Nama LOP atau ID Digasss)</label>
     <input type="text" id="search" placeholder="Ketik nama LOP / ID Digasss..." autocomplete="off" />
-    <div id="results" style="margin-top:8px;"></div>
+    <div id="results"></div>
   </div>
 
   <div class="card selected-card" id="selected-card">
     <div class="lop" id="sel-lop"></div>
     <div class="loc" id="sel-loc"></div>
+
+    <div class="overall-progress">
+      <div class="row">
+        <span class="label">Progress Keseluruhan</span>
+        <span class="pct" id="overallPct">0%</span>
+      </div>
+      <div class="bar-track"><div class="bar-fill" id="overallBar" style="width:0%"></div></div>
+    </div>
 
     <div class="section-title">Progress Aktual per Item</div>
     <div id="items-loading" class="empty-items">Memuat item...</div>
@@ -210,7 +227,7 @@
     resultsEl.innerHTML = matches.map(function(item, idx){
       return '<div class="result-item" data-idx="' + idx + '">' +
         escapeHtml(item.namaLop) +
-        '<div class="loc">ID Digasss: ' + escapeHtml(item.idDigasss || '-') + ' &middot; STO ' + escapeHtml(item.sto) + ' &middot; ' + escapeHtml(item.statusProgres || '-') + '</div>' +
+        '<div class="loc">ID Digasss: ' + escapeHtml(item.idDigasss || '-') + ' &middot; STO ' + escapeHtml(item.sto) + '</div>' +
       '</div>';
     }).join('');
 
@@ -233,6 +250,7 @@
     document.getElementById('items-loading').style.display = 'block';
     document.getElementById('items-loading').textContent = 'Memuat item...';
     document.getElementById('items-list').innerHTML = '';
+    updateOverallProgress();
 
     fetch(API_URL + '?action=detail&row=' + item.rowIndex)
       .then(function(res){ return res.json(); })
@@ -246,6 +264,20 @@
       });
   }
 
+  function pct(aktual, plan){
+    var p = parseFloat(plan) || 0;
+    var a = parseFloat(aktual) || 0;
+    if (p <= 0) return 0;
+    var v = (a / p) * 100;
+    return Math.max(0, Math.min(100, Math.round(v)));
+  }
+
+  function barColor(p){
+    if (p >= 100) return 'var(--green)';
+    if (p >= 40) return 'var(--accent)';
+    return 'var(--orange)';
+  }
+
   function renderItems(){
     var listEl = document.getElementById('items-list');
     var loadingEl = document.getElementById('items-loading');
@@ -253,20 +285,60 @@
     if (detailItems.length === 0) {
       loadingEl.textContent = 'Tidak ada item plan untuk pekerjaan ini.';
       loadingEl.style.display = 'block';
+      updateOverallProgress();
       return;
     }
     loadingEl.style.display = 'none';
 
     listEl.innerHTML = detailItems.map(function(it, idx){
+      var p = pct(it.aktual, it.plan);
       return '' +
-        '<div class="item-row">' +
-          '<div class="item-name">' + escapeHtml(it.label) + '</div>' +
-          '<div class="item-values">' +
-            '<div class="plan-box"><span class="value-label">Plan</span><span class="value">' + escapeHtml(it.plan) + '</span></div>' +
+        '<div class="item-card">' +
+          '<div class="item-top">' +
+            '<div class="item-name">' + escapeHtml(it.label) + '</div>' +
+            '<div class="item-pct" id="itemPct-' + idx + '">' + p + '%</div>' +
+          '</div>' +
+          '<div class="item-mid">' +
+            '<span class="plan-tag">Plan <b>' + escapeHtml(it.plan) + '</b></span>' +
             '<input type="number" inputmode="decimal" data-idx="' + idx + '" class="aktual-input" value="' + escapeHtml(it.aktual) + '" />' +
           '</div>' +
+          '<div class="item-bar bar-track"><div class="bar-fill" id="itemBar-' + idx + '" style="width:' + p + '%; background:' + barColor(p) + '"></div></div>' +
         '</div>';
     }).join('');
+
+    Array.prototype.forEach.call(listEl.querySelectorAll('.aktual-input'), function(input){
+      input.addEventListener('input', function(){
+        var idx = parseInt(this.getAttribute('data-idx'), 10);
+        var it = detailItems[idx];
+        var p = pct(this.value, it.plan);
+        document.getElementById('itemPct-' + idx).textContent = p + '%';
+        var bar = document.getElementById('itemBar-' + idx);
+        bar.style.width = p + '%';
+        bar.style.background = barColor(p);
+        updateOverallProgress();
+      });
+    });
+
+    updateOverallProgress();
+  }
+
+  function updateOverallProgress(){
+    var totalPlan = 0, totalAktual = 0;
+    var inputs = document.querySelectorAll('.aktual-input');
+    detailItems.forEach(function(it, idx){
+      var p = parseFloat(it.plan) || 0;
+      totalPlan += p;
+      var inputEl = inputs[idx];
+      var aVal = inputEl ? parseFloat(inputEl.value) : parseFloat(it.aktual);
+      totalAktual += (aVal || 0);
+    });
+    var overall = totalPlan > 0 ? Math.max(0, Math.min(100, Math.round((totalAktual / totalPlan) * 100))) : 0;
+    document.getElementById('overallPct').textContent = overall + '%';
+    var bar = document.getElementById('overallBar');
+    bar.style.width = overall + '%';
+    bar.style.background = overall >= 100
+      ? 'var(--green)'
+      : 'linear-gradient(90deg, var(--accent) 0%, var(--accent2) 100%)';
   }
 
   document.getElementById('changeLink').addEventListener('click', function(){
@@ -283,9 +355,9 @@
     if (!file) return;
     var reader = new FileReader();
     reader.onload = function(e){
-      var dataUrl = e.target.result; // "data:image/jpeg;base64,...."
+      var dataUrl = e.target.result;
       var commaIdx = dataUrl.indexOf(',');
-      var meta = dataUrl.substring(5, dataUrl.indexOf(';')); // e.g. image/jpeg
+      var meta = dataUrl.substring(5, dataUrl.indexOf(';'));
       var base64 = dataUrl.substring(commaIdx + 1);
       evidencePhoto = { data: base64, mimeType: meta, fileName: file.name || 'evidence.jpg' };
       var img = document.getElementById('evidencePreview');
