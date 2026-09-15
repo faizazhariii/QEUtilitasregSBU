@@ -68,14 +68,20 @@
     background:var(--bg2); border:1px solid var(--card-border); border-radius:12px;
     padding:11px 12px; margin-bottom:8px;
   }
-  .item-top{display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:8px;}
+  .item-top{display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:10px;}
   .item-name{font-size:13px; font-weight:600; flex:1;}
   .item-pct{font-size:12px; font-weight:700; color:var(--accent2); white-space:nowrap;}
-  .item-mid{display:flex; align-items:center; gap:10px;}
-  .plan-tag{font-size:11px; color:var(--sub); white-space:nowrap;}
-  .plan-tag b{color:var(--text); font-weight:700;}
-  .item-mid input[type=number]{flex:1; text-align:right; padding:9px 10px;}
-  .item-bar{margin-top:8px;}
+  .item-mid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .item-col .col-label{
+    font-size:10px; font-weight:700; color:var(--sub); text-transform:uppercase;
+    letter-spacing:.4px; margin-bottom:5px; text-align:center;
+  }
+  .item-mid input[type=number]{width:100%; text-align:center; padding:9px 8px;}
+  .plan-value{
+    width:100%; text-align:center; padding:9px 8px; border-radius:10px;
+    background:var(--card); border:1px solid var(--card-border); font-size:14px; font-weight:700;
+  }
+  .item-bar{margin-top:10px;}
 
   .empty-items{font-size:13px; color:var(--sub); padding:8px 0;}
 
