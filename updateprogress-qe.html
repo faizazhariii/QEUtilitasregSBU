@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>Input Progress QE Utilitas</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root{
+    --bg:#f2f2f7; --card:#ffffff; --text:#1c1c1e; --sub:#6b6b70;
+    --accent:#0088cc; --border:#e5e5ea; --danger:#c0392b;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:var(--bg); color:var(--text); padding-bottom:32px;
+  }
+  header{
+    background:var(--accent); color:#fff; padding:16px; position:sticky; top:0; z-index:10;
+  }
+  header h1{margin:0; font-size:18px; font-weight:600;}
+
+  .section{padding:16px;}
+  .card{
+    background:var(--card); border-radius:12px; padding:14px; border:1px solid var(--border);
+    margin-bottom:12px;
+  }
+  label{display:block; font-size:12px; font-weight:600; color:var(--sub); margin-bottom:6px; text-transform:uppercase;}
+  input[type=text], select, textarea{
+    width:100%; padding:11px 12px; border:1px solid var(--border); border-radius:10px;
+    font-size:14px; background:var(--bg); color:var(--text); font-family:inherit;
+  }
+  textarea{resize:vertical; min-height:70px;}
+
+  .result-item{
+    padding:10px 12px; border-bottom:1px solid var(--border); cursor:pointer; font-size:14px;
+  }
+  .result-item:last-child{border-bottom:none;}
+  .result-item .loc{font-size:12px; color:var(--sub); margin-top:2px;}
+  .result-item:active{background:var(--bg);}
+
+  .selected-card{display:none;}
+  .selected-card.show{display:block;}
+  .selected-card .lop{font-weight:600; font-size:15px; margin-bottom:2px;}
+  .selected-card .loc{font-size:12px; color:var(--sub); margin-bottom:12px;}
+  .selected-card .current-status{
+    font-size:12px; background:var(--bg); border-radius:8px; padding:8px 10px; margin-bottom:12px;
+  }
+  .field{margin-bottom:12px;}
+
+  button{
+    width:100%; padding:13px; border:none; border-radius:10px; background:var(--accent); color:#fff;
+    font-size:15px; font-weight:600; cursor:pointer;
+  }
+  button:disabled{opacity:.5;}
+  .change-link{
+    text-align:center; font-size:13px; color:var(--accent); margin-top:10px; cursor:pointer;
+  }
+
+  .toast{
+    position:fixed; left:16px; right:16px; bottom:16px; padding:12px 14px; border-radius:10px;
+    font-size:14px; text-align:center; color:#fff; display:none; z-index:50;
+  }
+  .toast.success{background:#1a9e4d;}
+  .toast.error{background:var(--danger);}
+
+  .empty{font-size:13px; color:var(--sub); padding:12px;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Input Progress QE Utilitas</h1>
+</header>
+
+<div class="section">
+
+  <div class="card" id="search-card">
+    <label for="search">Cari pekerjaan (Nama LOP)</label>
+    <input type="text" id="search" placeholder="Ketik nama LOP atau STO..." autocomplete="off" />
+    <div id="results" style="margin-top:8px;"></div>
+  </div>
+
+  <div class="card selected-card" id="selected-card">
+    <div class="lop" id="sel-lop"></div>
+    <div class="loc" id="sel-loc"></div>
+    <div class="current-status" id="sel-current"></div>
+
+    <div class="field">
+      <label for="statusInput">Status Progres Baru</label>
+      <select id="statusInput">
+        <option value="">-- Pilih status (opsional, kosongkan jika tidak berubah) --</option>
+        <option>01 PERSIAPAN</option>
+        <option>02 PERSIAPAN</option>
+        <option>03 AANWIJZING</option>
+        <option>04 PERIZINAN</option>
+        <option>05 MATDEL</option>
+        <option>06 INSTALASI</option>
+        <option>07 CO</option>
+        <option>08 CLOSED</option>
+        <option>XX DROP</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="noteInput">Catatan Progress Hari Ini</label>
+      <textarea id="noteInput" placeholder="Contoh: Tarik kabel selesai, proses CO menunggu drainase"></textarea>
+    </div>
+
+    <button id="submitBtn">Simpan Update</button>
+    <div class="change-link" id="changeLink">Ganti pekerjaan lain</div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // TODO Faiz: ganti dengan URL deployment Apps Script (Code_QEUtilitas.gs) yang sama seperti cekprogress-qe.html
+  var API_URL = 'https://script.google.com/macros/s/AKfycby-aLVUMoaoGpXtPoer9CziAg46aw5A67zJ-6NyqBEuhebJC_Jrft6LbPUpMz881LuG/exec';
+
+  var tg = window.Telegram ? window.Telegram.WebApp : null;
+  if (tg) { tg.ready(); tg.expand(); }
+
+  var allItems = [];
+  var selected = null;
+
+  function escapeHtml(str){
+    return String(str == null ? '' : str)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function showToast(msg, type){
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast ' + type;
+    t.style.display = 'block';
+    setTimeout(function(){ t.style.display = 'none'; }, 3000);
+  }
+
+  fetch(API_URL + '?action=list')
+    .then(function(res){ return res.json(); })
+    .then(function(data){
+      if (!data.ok) throw new Error(data.error || 'Gagal memuat data');
+      allItems = data.items;
+    })
+    .catch(function(err){
+      showToast('Gagal memuat data: ' + err.message, 'error');
+    });
+
+  document.getElementById('search').addEventListener('input', function(){
+    var q = this.value.trim().toUpperCase();
+    var resultsEl = document.getElementById('results');
+    if (!q) { resultsEl.innerHTML = ''; return; }
+
+    var matches = allItems.filter(function(item){
+      return item.namaLop.toUpperCase().indexOf(q) !== -1 ||
+             (item.sto || '').toUpperCase().indexOf(q) !== -1;
+    }).slice(0, 15);
+
+    if (matches.length === 0) {
+      resultsEl.innerHTML = '<div class="empty">Tidak ditemukan.</div>';
+      return;
+    }
+
+    resultsEl.innerHTML = matches.map(function(item, idx){
+      return '<div class="result-item" data-idx="' + idx + '">' +
+        escapeHtml(item.namaLop) +
+        '<div class="loc">' + escapeHtml(item.region) + ' &middot; STO ' + escapeHtml(item.sto) + ' &middot; ' + escapeHtml(item.statusProgres || '-') + '</div>' +
+      '</div>';
+    }).join('');
+
+    Array.prototype.forEach.call(resultsEl.querySelectorAll('.result-item'), function(el){
+      el.addEventListener('click', function(){
+        selectItem(matches[parseInt(el.getAttribute('data-idx'), 10)]);
+      });
+    });
+  });
+
+  function selectItem(item){
+    selected = item;
+    document.getElementById('search-card').style.display = 'none';
+    document.getElementById('selected-card').classList.add('show');
+    document.getElementById('sel-lop').textContent = item.namaLop;
+    document.getElementById('sel-loc').textContent = item.region + ' \u00b7 ' + item.districtTif + ' \u00b7 STO ' + item.sto;
+    document.getElementById('sel-current').textContent = 'Status saat ini: ' + (item.statusProgres || '-');
+    document.getElementById('statusInput').value = '';
+    document.getElementById('noteInput').value = '';
+  }
+
+  document.getElementById('changeLink').addEventListener('click', function(){
+    selected = null;
+    document.getElementById('selected-card').classList.remove('show');
+    document.getElementById('search-card').style.display = 'block';
+    document.getElementById('search').value = '';
+    document.getElementById('results').innerHTML = '';
+  });
+
+  document.getElementById('submitBtn').addEventListener('click', function(){
+    if (!selected) return;
+    var status = document.getElementById('statusInput').value;
+    var note = document.getElementById('noteInput').value.trim();
+
+    if (!status && !note) {
+      showToast('Isi status baru atau catatan dulu.', 'error');
+      return;
+    }
+
+    var btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = 'Menyimpan...';
+
+    fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'update',
+        row: selected.rowIndex,
+        statusProgres: status,
+        note: note
+      })
+    })
+      .then(function(res){ return res.json(); })
+      .then(function(data){
+        btn.disabled = false;
+        btn.textContent = 'Simpan Update';
+        if (!data.ok) throw new Error(data.error || 'Gagal menyimpan');
+        showToast('Berhasil disimpan!', 'success');
+        if (status) selected.statusProgres = status;
+        document.getElementById('sel-current').textContent = 'Status saat ini: ' + (selected.statusProgres || '-');
+        document.getElementById('noteInput').value = '';
+        document.getElementById('statusInput').value = '';
+      })
+      .catch(function(err){
+        btn.disabled = false;
+        btn.textContent = 'Simpan Update';
+        showToast('Gagal: ' + err.message, 'error');
+      });
+  });
+</script>
+
+</body>
+</html>
