@@ -26,7 +26,7 @@
     margin-bottom:12px;
   }
   label{display:block; font-size:12px; font-weight:600; color:var(--sub); margin-bottom:6px; text-transform:uppercase;}
-  input[type=text], select, textarea{
+  input[type=text], input[type=number], select, textarea{
     width:100%; padding:11px 12px; border:1px solid var(--border); border-radius:10px;
     font-size:14px; background:var(--bg); color:var(--text); font-family:inherit;
   }
@@ -48,11 +48,37 @@
   }
   .field{margin-bottom:12px;}
 
-  button{
-    width:100%; padding:13px; border:none; border-radius:10px; background:var(--accent); color:#fff;
-    font-size:15px; font-weight:600; cursor:pointer;
+  .section-title{font-size:12px; font-weight:700; color:var(--sub); text-transform:uppercase; margin:16px 0 8px;}
+
+  .item-row{
+    display:flex; align-items:center; gap:8px; padding:10px 0; border-bottom:1px solid var(--border);
   }
-  button:disabled{opacity:.5;}
+  .item-row:last-child{border-bottom:none;}
+  .item-row .item-name{flex:1; font-size:13px;}
+  .item-row .plan-val{font-size:11px; color:var(--sub); margin-top:2px;}
+  .item-row input[type=number]{width:88px; text-align:right;}
+
+  .empty-items{font-size:13px; color:var(--sub); padding:8px 0;}
+
+  .evidence-preview{
+    width:100%; max-height:220px; object-fit:cover; border-radius:10px; margin-top:8px; display:none;
+  }
+  .evidence-buttons{display:flex; gap:8px;}
+  .evidence-buttons label{
+    flex:1; text-align:center; padding:11px; border:1px dashed var(--border); border-radius:10px;
+    background:var(--bg); color:var(--accent); font-size:13px; font-weight:600; cursor:pointer;
+    margin-bottom:0; text-transform:none;
+  }
+  .evidence-buttons input[type=file]{display:none;}
+  .evidence-clear{
+    text-align:center; font-size:12px; color:var(--danger); margin-top:6px; cursor:pointer; display:none;
+  }
+
+  button.submit{
+    width:100%; padding:13px; border:none; border-radius:10px; background:var(--accent); color:#fff;
+    font-size:15px; font-weight:600; cursor:pointer; margin-top:4px;
+  }
+  button.submit:disabled{opacity:.5;}
   .change-link{
     text-align:center; font-size:13px; color:var(--accent); margin-top:10px; cursor:pointer;
   }
@@ -76,8 +102,8 @@
 <div class="section">
 
   <div class="card" id="search-card">
-    <label for="search">Cari pekerjaan (Nama LOP)</label>
-    <input type="text" id="search" placeholder="Ketik nama LOP atau STO..." autocomplete="off" />
+    <label for="search">Cari (Nama LOP atau ID Digasss)</label>
+    <input type="text" id="search" placeholder="Ketik nama LOP / ID Digasss..." autocomplete="off" />
     <div id="results" style="margin-top:8px;"></div>
   </div>
 
@@ -102,12 +128,31 @@
       </select>
     </div>
 
+    <div class="section-title">Progress Aktual per Item</div>
+    <div id="items-loading" class="empty-items">Memuat item...</div>
+    <div id="items-list"></div>
+
+    <div class="section-title">Catatan &amp; Evidence</div>
     <div class="field">
       <label for="noteInput">Catatan Progress Hari Ini</label>
       <textarea id="noteInput" placeholder="Contoh: Tarik kabel selesai, proses CO menunggu drainase"></textarea>
     </div>
 
-    <button id="submitBtn">Simpan Update</button>
+    <div class="field">
+      <label>Foto Evidence</label>
+      <div class="evidence-buttons">
+        <label>Ambil Foto
+          <input type="file" id="evidenceCamera" accept="image/*" capture="environment" />
+        </label>
+        <label>Upload dari Galeri
+          <input type="file" id="evidenceUpload" accept="image/*" />
+        </label>
+      </div>
+      <img id="evidencePreview" class="evidence-preview" />
+      <div class="evidence-clear" id="evidenceClear">Hapus foto</div>
+    </div>
+
+    <button class="submit" id="submitBtn">Simpan Update</button>
     <div class="change-link" id="changeLink">Ganti pekerjaan lain</div>
   </div>
 
@@ -116,7 +161,6 @@
 <div class="toast" id="toast"></div>
 
 <script>
-  // TODO Faiz: ganti dengan URL deployment Apps Script (Code_QEUtilitas.gs) yang sama seperti cekprogress-qe.html
   var API_URL = 'https://script.google.com/macros/s/AKfycby-aLVUMoaoGpXtPoer9CziAg46aw5A67zJ-6NyqBEuhebJC_Jrft6LbPUpMz881LuG/exec';
 
   var tg = window.Telegram ? window.Telegram.WebApp : null;
@@ -124,6 +168,8 @@
 
   var allItems = [];
   var selected = null;
+  var detailItems = [];
+  var evidencePhoto = null; // { data, mimeType, fileName }
 
   function escapeHtml(str){
     return String(str == null ? '' : str)
@@ -155,6 +201,7 @@
 
     var matches = allItems.filter(function(item){
       return item.namaLop.toUpperCase().indexOf(q) !== -1 ||
+             (item.idDigasss || '').toString().toUpperCase().indexOf(q) !== -1 ||
              (item.sto || '').toUpperCase().indexOf(q) !== -1;
     }).slice(0, 15);
 
@@ -166,7 +213,7 @@
     resultsEl.innerHTML = matches.map(function(item, idx){
       return '<div class="result-item" data-idx="' + idx + '">' +
         escapeHtml(item.namaLop) +
-        '<div class="loc">' + escapeHtml(item.region) + ' &middot; STO ' + escapeHtml(item.sto) + ' &middot; ' + escapeHtml(item.statusProgres || '-') + '</div>' +
+        '<div class="loc">ID Digasss: ' + escapeHtml(item.idDigasss || '-') + ' &middot; STO ' + escapeHtml(item.sto) + ' &middot; ' + escapeHtml(item.statusProgres || '-') + '</div>' +
       '</div>';
     }).join('');
 
@@ -182,27 +229,112 @@
     document.getElementById('search-card').style.display = 'none';
     document.getElementById('selected-card').classList.add('show');
     document.getElementById('sel-lop').textContent = item.namaLop;
-    document.getElementById('sel-loc').textContent = item.region + ' \u00b7 ' + item.districtTif + ' \u00b7 STO ' + item.sto;
+    document.getElementById('sel-loc').textContent = item.region + ' \u00b7 ' + item.districtTif + ' \u00b7 STO ' + item.sto + ' \u00b7 ID ' + (item.idDigasss || '-');
     document.getElementById('sel-current').textContent = 'Status saat ini: ' + (item.statusProgres || '-');
     document.getElementById('statusInput').value = '';
     document.getElementById('noteInput').value = '';
+    clearEvidence();
+
+    document.getElementById('items-loading').style.display = 'block';
+    document.getElementById('items-loading').textContent = 'Memuat item...';
+    document.getElementById('items-list').innerHTML = '';
+
+    fetch(API_URL + '?action=detail&row=' + item.rowIndex)
+      .then(function(res){ return res.json(); })
+      .then(function(data){
+        if (!data.ok) throw new Error(data.error || 'Gagal memuat detail');
+        detailItems = data.item.items || [];
+        renderItems();
+      })
+      .catch(function(err){
+        document.getElementById('items-loading').textContent = 'Gagal memuat item: ' + err.message;
+      });
+  }
+
+  function renderItems(){
+    var listEl = document.getElementById('items-list');
+    var loadingEl = document.getElementById('items-loading');
+
+    if (detailItems.length === 0) {
+      loadingEl.textContent = 'Tidak ada item plan untuk pekerjaan ini.';
+      loadingEl.style.display = 'block';
+      return;
+    }
+    loadingEl.style.display = 'none';
+
+    listEl.innerHTML = detailItems.map(function(it, idx){
+      return '' +
+        '<div class="item-row">' +
+          '<div class="item-name">' + escapeHtml(it.label) +
+            '<div class="plan-val">Plan: ' + escapeHtml(it.plan) + '</div>' +
+          '</div>' +
+          '<input type="number" inputmode="decimal" data-idx="' + idx + '" class="aktual-input" value="' + escapeHtml(it.aktual) + '" />' +
+        '</div>';
+    }).join('');
   }
 
   document.getElementById('changeLink').addEventListener('click', function(){
     selected = null;
+    detailItems = [];
     document.getElementById('selected-card').classList.remove('show');
     document.getElementById('search-card').style.display = 'block';
     document.getElementById('search').value = '';
     document.getElementById('results').innerHTML = '';
   });
 
+  // --- Evidence photo handling ---
+  function handleFile(file){
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(e){
+      var dataUrl = e.target.result; // "data:image/jpeg;base64,...."
+      var commaIdx = dataUrl.indexOf(',');
+      var meta = dataUrl.substring(5, dataUrl.indexOf(';')); // e.g. image/jpeg
+      var base64 = dataUrl.substring(commaIdx + 1);
+      evidencePhoto = { data: base64, mimeType: meta, fileName: file.name || 'evidence.jpg' };
+      var img = document.getElementById('evidencePreview');
+      img.src = dataUrl;
+      img.style.display = 'block';
+      document.getElementById('evidenceClear').style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  document.getElementById('evidenceCamera').addEventListener('change', function(){
+    handleFile(this.files[0]);
+  });
+  document.getElementById('evidenceUpload').addEventListener('change', function(){
+    handleFile(this.files[0]);
+  });
+
+  function clearEvidence(){
+    evidencePhoto = null;
+    document.getElementById('evidencePreview').style.display = 'none';
+    document.getElementById('evidencePreview').src = '';
+    document.getElementById('evidenceClear').style.display = 'none';
+    document.getElementById('evidenceCamera').value = '';
+    document.getElementById('evidenceUpload').value = '';
+  }
+  document.getElementById('evidenceClear').addEventListener('click', clearEvidence);
+
+  // --- Submit ---
   document.getElementById('submitBtn').addEventListener('click', function(){
     if (!selected) return;
     var status = document.getElementById('statusInput').value;
     var note = document.getElementById('noteInput').value.trim();
 
-    if (!status && !note) {
-      showToast('Isi status baru atau catatan dulu.', 'error');
+    var itemUpdates = [];
+    Array.prototype.forEach.call(document.querySelectorAll('.aktual-input'), function(input){
+      var idx = parseInt(input.getAttribute('data-idx'), 10);
+      var original = detailItems[idx];
+      var newVal = input.value;
+      if (newVal !== '' && String(newVal) !== String(original.aktual)) {
+        itemUpdates.push({ label: original.label, aktual: newVal });
+      }
+    });
+
+    if (!status && !note && !evidencePhoto && itemUpdates.length === 0) {
+      showToast('Isi minimal salah satu: status, progress item, catatan, atau foto.', 'error');
       return;
     }
 
@@ -210,14 +342,18 @@
     btn.disabled = true;
     btn.textContent = 'Menyimpan...';
 
+    var payload = {
+      action: 'update',
+      row: selected.rowIndex,
+      statusProgres: status,
+      note: note,
+      itemUpdates: itemUpdates
+    };
+    if (evidencePhoto) payload.photo = evidencePhoto;
+
     fetch(API_URL, {
       method: 'POST',
-      body: JSON.stringify({
-        action: 'update',
-        row: selected.rowIndex,
-        statusProgres: status,
-        note: note
-      })
+      body: JSON.stringify(payload)
     })
       .then(function(res){ return res.json(); })
       .then(function(data){
@@ -229,6 +365,11 @@
         document.getElementById('sel-current').textContent = 'Status saat ini: ' + (selected.statusProgres || '-');
         document.getElementById('noteInput').value = '';
         document.getElementById('statusInput').value = '';
+        itemUpdates.forEach(function(u){
+          var it = detailItems.find(function(d){ return d.label === u.label; });
+          if (it) it.aktual = u.aktual;
+        });
+        clearEvidence();
       })
       .catch(function(err){
         btn.disabled = false;
