@@ -7,8 +7,9 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
   :root{
-    --bg:#f2f2f7; --card:#ffffff; --text:#1c1c1e; --sub:#6b6b70;
-    --accent:#0088cc; --border:#e5e5ea; --danger:#c0392b;
+    --bg:#eef1f8; --card:#ffffff; --text:#1a1f36; --sub:#6b7280;
+    --royal:#1d3fae; --royal-dark:#152f88; --royal-light:#e8edfb;
+    --border:#dfe3ee; --danger:#c0392b; --success:#1a9e4d;
   }
   *{box-sizing:border-box;}
   body{
@@ -16,47 +17,57 @@
     background:var(--bg); color:var(--text); padding-bottom:32px;
   }
   header{
-    background:var(--accent); color:#fff; padding:16px; position:sticky; top:0; z-index:10;
+    background:linear-gradient(135deg, var(--royal) 0%, var(--royal-dark) 100%);
+    color:#fff; padding:18px 16px; position:sticky; top:0; z-index:10;
+    box-shadow:0 2px 10px rgba(29,63,174,.25);
   }
-  header h1{margin:0; font-size:18px; font-weight:600;}
+  header h1{margin:0; font-size:18px; font-weight:700; letter-spacing:.2px;}
+  header p{margin:4px 0 0; font-size:12px; opacity:.85;}
 
   .section{padding:16px;}
   .card{
-    background:var(--card); border-radius:12px; padding:14px; border:1px solid var(--border);
-    margin-bottom:12px;
+    background:var(--card); border-radius:14px; padding:16px; border:1px solid var(--border);
+    margin-bottom:12px; box-shadow:0 1px 3px rgba(29,63,174,.06);
   }
-  label{display:block; font-size:12px; font-weight:600; color:var(--sub); margin-bottom:6px; text-transform:uppercase;}
-  input[type=text], input[type=number], select, textarea{
+  label{display:block; font-size:12px; font-weight:700; color:var(--royal); margin-bottom:6px; text-transform:uppercase; letter-spacing:.3px;}
+  input[type=text], input[type=number], textarea{
     width:100%; padding:11px 12px; border:1px solid var(--border); border-radius:10px;
-    font-size:14px; background:var(--bg); color:var(--text); font-family:inherit;
+    font-size:14px; background:#fafbfe; color:var(--text); font-family:inherit;
+  }
+  input[type=text]:focus, input[type=number]:focus, textarea:focus{
+    outline:none; border-color:var(--royal); background:#fff;
   }
   textarea{resize:vertical; min-height:70px;}
 
   .result-item{
-    padding:10px 12px; border-bottom:1px solid var(--border); cursor:pointer; font-size:14px;
+    padding:10px 12px; border-bottom:1px solid var(--border); cursor:pointer; font-size:14px; border-radius:8px;
   }
   .result-item:last-child{border-bottom:none;}
   .result-item .loc{font-size:12px; color:var(--sub); margin-top:2px;}
-  .result-item:active{background:var(--bg);}
+  .result-item:active{background:var(--royal-light);}
 
   .selected-card{display:none;}
   .selected-card.show{display:block;}
-  .selected-card .lop{font-weight:600; font-size:15px; margin-bottom:2px;}
+  .selected-card .lop{font-weight:700; font-size:15px; margin-bottom:2px; color:var(--royal-dark);}
   .selected-card .loc{font-size:12px; color:var(--sub); margin-bottom:12px;}
-  .selected-card .current-status{
-    font-size:12px; background:var(--bg); border-radius:8px; padding:8px 10px; margin-bottom:12px;
-  }
-  .field{margin-bottom:12px;}
+  .field{margin-bottom:14px;}
 
-  .section-title{font-size:12px; font-weight:700; color:var(--sub); text-transform:uppercase; margin:16px 0 8px;}
+  .section-title{font-size:12px; font-weight:700; color:var(--royal); text-transform:uppercase; letter-spacing:.3px; margin:18px 0 8px;}
 
   .item-row{
-    display:flex; align-items:center; gap:8px; padding:10px 0; border-bottom:1px solid var(--border);
+    display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 0;
+    border-bottom:1px solid var(--border);
   }
   .item-row:last-child{border-bottom:none;}
-  .item-row .item-name{flex:1; font-size:13px;}
-  .item-row .plan-val{font-size:11px; color:var(--sub); margin-top:2px;}
-  .item-row input[type=number]{width:88px; text-align:right;}
+  .item-row .item-name{font-size:13px; font-weight:600; flex:1;}
+  .item-values{display:flex; align-items:center; gap:8px;}
+  .plan-box{
+    display:flex; flex-direction:column; align-items:center; min-width:52px;
+    background:var(--royal-light); border-radius:8px; padding:5px 8px;
+  }
+  .plan-box .value-label{font-size:9px; color:var(--royal); font-weight:700; text-transform:uppercase;}
+  .plan-box .value{font-size:13px; font-weight:700; color:var(--royal-dark);}
+  .item-values input[type=number]{width:80px; text-align:right; padding:8px 10px;}
 
   .empty-items{font-size:13px; color:var(--sub); padding:8px 0;}
 
@@ -65,8 +76,8 @@
   }
   .evidence-buttons{display:flex; gap:8px;}
   .evidence-buttons label{
-    flex:1; text-align:center; padding:11px; border:1px dashed var(--border); border-radius:10px;
-    background:var(--bg); color:var(--accent); font-size:13px; font-weight:600; cursor:pointer;
+    flex:1; text-align:center; padding:11px; border:1.5px dashed var(--royal); border-radius:10px;
+    background:var(--royal-light); color:var(--royal); font-size:13px; font-weight:700; cursor:pointer;
     margin-bottom:0; text-transform:none;
   }
   .evidence-buttons input[type=file]{display:none;}
@@ -75,19 +86,21 @@
   }
 
   button.submit{
-    width:100%; padding:13px; border:none; border-radius:10px; background:var(--accent); color:#fff;
-    font-size:15px; font-weight:600; cursor:pointer; margin-top:4px;
+    width:100%; padding:14px; border:none; border-radius:10px;
+    background:linear-gradient(135deg, var(--royal) 0%, var(--royal-dark) 100%); color:#fff;
+    font-size:15px; font-weight:700; cursor:pointer; margin-top:6px;
+    box-shadow:0 3px 10px rgba(29,63,174,.3);
   }
-  button.submit:disabled{opacity:.5;}
+  button.submit:disabled{opacity:.5; box-shadow:none;}
   .change-link{
-    text-align:center; font-size:13px; color:var(--accent); margin-top:10px; cursor:pointer;
+    text-align:center; font-size:13px; color:var(--royal); margin-top:10px; cursor:pointer; font-weight:600;
   }
 
   .toast{
     position:fixed; left:16px; right:16px; bottom:16px; padding:12px 14px; border-radius:10px;
     font-size:14px; text-align:center; color:#fff; display:none; z-index:50;
   }
-  .toast.success{background:#1a9e4d;}
+  .toast.success{background:var(--success);}
   .toast.error{background:var(--danger);}
 
   .empty{font-size:13px; color:var(--sub); padding:12px;}
@@ -97,6 +110,7 @@
 
 <header>
   <h1>Input Progress QE Utilitas</h1>
+  <p>ED REG Sumbagut</p>
 </header>
 
 <div class="section">
@@ -110,23 +124,6 @@
   <div class="card selected-card" id="selected-card">
     <div class="lop" id="sel-lop"></div>
     <div class="loc" id="sel-loc"></div>
-    <div class="current-status" id="sel-current"></div>
-
-    <div class="field">
-      <label for="statusInput">Status Progres Baru</label>
-      <select id="statusInput">
-        <option value="">-- Pilih status (opsional, kosongkan jika tidak berubah) --</option>
-        <option>01 PERSIAPAN</option>
-        <option>02 PERSIAPAN</option>
-        <option>03 AANWIJZING</option>
-        <option>04 PERIZINAN</option>
-        <option>05 MATDEL</option>
-        <option>06 INSTALASI</option>
-        <option>07 CO</option>
-        <option>08 CLOSED</option>
-        <option>XX DROP</option>
-      </select>
-    </div>
 
     <div class="section-title">Progress Aktual per Item</div>
     <div id="items-loading" class="empty-items">Memuat item...</div>
@@ -230,8 +227,6 @@
     document.getElementById('selected-card').classList.add('show');
     document.getElementById('sel-lop').textContent = item.namaLop;
     document.getElementById('sel-loc').textContent = item.region + ' \u00b7 ' + item.districtTif + ' \u00b7 STO ' + item.sto + ' \u00b7 ID ' + (item.idDigasss || '-');
-    document.getElementById('sel-current').textContent = 'Status saat ini: ' + (item.statusProgres || '-');
-    document.getElementById('statusInput').value = '';
     document.getElementById('noteInput').value = '';
     clearEvidence();
 
@@ -265,10 +260,11 @@
     listEl.innerHTML = detailItems.map(function(it, idx){
       return '' +
         '<div class="item-row">' +
-          '<div class="item-name">' + escapeHtml(it.label) +
-            '<div class="plan-val">Plan: ' + escapeHtml(it.plan) + '</div>' +
+          '<div class="item-name">' + escapeHtml(it.label) + '</div>' +
+          '<div class="item-values">' +
+            '<div class="plan-box"><span class="value-label">Plan</span><span class="value">' + escapeHtml(it.plan) + '</span></div>' +
+            '<input type="number" inputmode="decimal" data-idx="' + idx + '" class="aktual-input" value="' + escapeHtml(it.aktual) + '" />' +
           '</div>' +
-          '<input type="number" inputmode="decimal" data-idx="' + idx + '" class="aktual-input" value="' + escapeHtml(it.aktual) + '" />' +
         '</div>';
     }).join('');
   }
@@ -320,7 +316,6 @@
   // --- Submit ---
   document.getElementById('submitBtn').addEventListener('click', function(){
     if (!selected) return;
-    var status = document.getElementById('statusInput').value;
     var note = document.getElementById('noteInput').value.trim();
 
     var itemUpdates = [];
@@ -333,8 +328,8 @@
       }
     });
 
-    if (!status && !note && !evidencePhoto && itemUpdates.length === 0) {
-      showToast('Isi minimal salah satu: status, progress item, catatan, atau foto.', 'error');
+    if (!note && !evidencePhoto && itemUpdates.length === 0) {
+      showToast('Isi minimal salah satu: progress item, catatan, atau foto.', 'error');
       return;
     }
 
@@ -345,7 +340,6 @@
     var payload = {
       action: 'update',
       row: selected.rowIndex,
-      statusProgres: status,
       note: note,
       itemUpdates: itemUpdates
     };
@@ -361,10 +355,7 @@
         btn.textContent = 'Simpan Update';
         if (!data.ok) throw new Error(data.error || 'Gagal menyimpan');
         showToast('Berhasil disimpan!', 'success');
-        if (status) selected.statusProgres = status;
-        document.getElementById('sel-current').textContent = 'Status saat ini: ' + (selected.statusProgres || '-');
         document.getElementById('noteInput').value = '';
-        document.getElementById('statusInput').value = '';
         itemUpdates.forEach(function(u){
           var it = detailItems.find(function(d){ return d.label === u.label; });
           if (it) it.aktual = u.aktual;
