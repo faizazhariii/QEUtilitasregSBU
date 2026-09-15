@@ -17,7 +17,7 @@
   *{box-sizing:border-box;}
   body{
     margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-    background:var(--bg); color:var(--text); padding-bottom:90px;
+    background:var(--bg); color:var(--text); padding-bottom:100px;
   }
 
   header{
@@ -89,19 +89,55 @@
   .bar-fill{height:100%; border-radius:99px;}
 
   .loading, .empty{font-size:13px; color:var(--sub); text-align:center; padding:16px;}
+  .hint{font-size:12.5px; color:var(--sub); text-align:center; padding:14px 8px;}
 
-  .bottom-nav{
-    position:fixed; left:0; right:0; bottom:0; padding:14px 16px calc(14px + env(safe-area-inset-bottom));
-    display:flex; justify-content:center; gap:14px; background:linear-gradient(180deg, rgba(11,17,32,0) 0%, var(--bg) 35%);
+  /* Search result picker */
+  .result-item{
+    padding:11px 12px; border-radius:10px; cursor:pointer; font-size:14px; margin-top:6px;
+    background:var(--bg2); border:1px solid var(--card-border);
+  }
+  .result-item .loc{font-size:11px; color:var(--sub); margin-top:3px;}
+  .result-item:active{border-color:var(--accent);}
+
+  /* Job detail (read-only cek progress) */
+  .job-title{font-weight:700; font-size:15px; margin-bottom:2px;}
+  .job-loc{font-size:12px; color:var(--sub); margin-bottom:14px;}
+  .overall-progress{margin-bottom:16px;}
+  .overall-progress .row{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px;}
+  .overall-progress .pct{font-size:20px; font-weight:800; color:var(--accent2);}
+  .overall-progress .label{font-size:11px; color:var(--sub); text-transform:uppercase; letter-spacing:.4px;}
+
+  .item-card{
+    background:var(--bg2); border:1px solid var(--card-border); border-radius:12px;
+    padding:11px 12px; margin-bottom:8px;
+  }
+  .item-card:last-child{margin-bottom:0;}
+  .item-top{display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:8px;}
+  .item-name{font-size:13px; font-weight:600;}
+  .item-pct{font-size:12px; font-weight:700; color:var(--accent2); white-space:nowrap;}
+  .item-vals{font-size:11.5px; color:var(--sub); margin-bottom:8px;}
+  .item-vals b{color:var(--text);}
+
+  .back-link{
+    text-align:center; font-size:12.5px; color:var(--accent2); margin-top:4px; cursor:pointer; font-weight:600;
+  }
+
+  /* Floating round action button */
+  .fab-wrap{
+    position:fixed; right:18px; bottom:calc(18px + env(safe-area-inset-bottom));
+    display:flex; flex-direction:column; align-items:center; gap:7px; z-index:20;
+  }
+  .fab-label{
+    font-size:11px; font-weight:700; color:var(--text); background:var(--card);
+    padding:5px 11px; border-radius:999px; border:1px solid var(--card-border); white-space:nowrap;
+    box-shadow:var(--shadow);
   }
   .fab{
-    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
-    width:76px; height:64px; border-radius:18px; text-decoration:none; color:#fff; font-size:10.5px; font-weight:700;
-    box-shadow:0 6px 18px rgba(0,0,0,.4);
+    width:58px; height:58px; border-radius:50%; text-decoration:none;
+    background:linear-gradient(135deg, var(--accent) 0%, #274fc9 100%); color:#fff;
+    display:flex; align-items:center; justify-content:center; font-size:24px;
+    box-shadow:0 6px 18px rgba(59,110,246,.45);
   }
-  .fab .ic{font-size:19px;}
-  .fab.blue{background:linear-gradient(135deg, var(--accent) 0%, #274fc9 100%);}
-  .fab.green{background:linear-gradient(135deg, var(--green) 0%, #15803d 100%);}
 </style>
 </head>
 <body>
@@ -120,9 +156,9 @@
   <div class="search-card">
     <div class="search-row">
       <span class="ic">&#128269;</span>
-      <input type="text" id="search" placeholder="Cari Nama LOP, ID Digasss, STO..." autocomplete="off" />
+      <input type="text" id="search" placeholder="Cari Nama LOP, ID Digasss, STO untuk cek progress..." autocomplete="off" />
     </div>
-    <div class="search-tip">Bisa bulk search dipisah koma, misal: QE-0272,QE-0301</div>
+    <div class="search-tip">Ketik untuk langsung lihat progress per item pekerjaan</div>
   </div>
 
   <div class="filter-scroll" id="regionFilters"></div>
@@ -140,41 +176,21 @@
     <div id="statusList"><div class="loading">Memuat...</div></div>
   </div>
 
-  <div class="panel">
-    <div class="panel-head">
-      <div class="title-wrap">
-        <div class="panel-icon" style="background:rgba(168,85,247,.15); color:var(--purple);">&#127760;</div>
-        <h2>Overview Region</h2>
-      </div>
-      <span class="panel-badge" id="regionTotalBadge">-</span>
-    </div>
-    <div class="panel-sub">Sebaran site per region</div>
-    <div id="regionList"><div class="loading">Memuat...</div></div>
-  </div>
-
-  <div class="panel">
+  <div class="panel" id="progressPanel" style="display:none;">
     <div class="panel-head">
       <div class="title-wrap">
         <div class="panel-icon" style="background:rgba(20,184,166,.15); color:var(--teal);">&#128295;</div>
-        <h2>Overview Progress Item</h2>
+        <h2 id="progressPanelTitle">Cek Progress</h2>
       </div>
-      <span class="panel-badge" id="itemTotalBadge">-</span>
     </div>
-    <div class="panel-sub">Total Aktual vs Plan per jenis pekerjaan</div>
-    <div id="itemList"><div class="loading">Memuat...</div></div>
+    <div id="progressPanelBody"></div>
   </div>
 
 </div>
 
-<div class="bottom-nav">
-  <a class="fab blue" href="cekprogress-qe.html">
-    <span class="ic">&#128202;</span>
-    Cek Progress
-  </a>
-  <a class="fab green" href="updateprogress-qe.html">
-    <span class="ic">&#9999;&#65039;</span>
-    Input Progress
-  </a>
+<div class="fab-wrap">
+  <div class="fab-label">Input Progress</div>
+  <a class="fab" href="updateprogress-qe.html" aria-label="Input Progress">&#9999;&#65039;</a>
 </div>
 
 <script>
@@ -186,6 +202,7 @@
   var palette = ['#3b6ef6','#22c55e','#f59e0b','#a855f7','#ef4444','#14b8a6','#eab308','#6d9bff','#ec4899'];
   var activeRegion = '';
   var searchDebounce = null;
+  var allItems = [];
 
   function escapeHtml(str){
     return String(str == null ? '' : str)
@@ -194,8 +211,6 @@
 
   function buildQuery(){
     var params = [];
-    var q = document.getElementById('search').value.trim();
-    if (q) params.push('q=' + encodeURIComponent(q.split(',')[0].trim()));
     if (activeRegion) params.push('region=' + encodeURIComponent(activeRegion));
     return params.length ? ('?' + params.join('&')) : '';
   }
@@ -216,36 +231,26 @@
             activeRegion = el.getAttribute('data-region');
             Array.prototype.forEach.call(wrap.querySelectorAll('.chip'), function(c){ c.classList.remove('active'); });
             el.classList.add('active');
-            loadSummary();
+            loadStatusSummary();
           });
         });
       })
       .catch(function(){});
   }
 
-  function loadSummary(){
+  function loadStatusSummary(){
     document.getElementById('statusList').innerHTML = '<div class="loading">Memuat...</div>';
-    document.getElementById('regionList').innerHTML = '<div class="loading">Memuat...</div>';
-    document.getElementById('itemList').innerHTML = '<div class="loading">Memuat...</div>';
 
     fetch(API_URL + '?action=summary' + buildQuery().replace('?', '&'))
       .then(function(res){ return res.json(); })
       .then(function(data){
         if (!data.ok) throw new Error(data.error || 'Gagal memuat data');
-
         document.getElementById('showingLabel').innerHTML = 'Menampilkan <b>' + data.totalSites + '</b> site';
         document.getElementById('statusTotalBadge').textContent = data.totalSites + ' site';
-        document.getElementById('regionTotalBadge').textContent = data.regionCounts.length + ' region';
-        document.getElementById('itemTotalBadge').textContent = data.itemTotals.length + ' item';
-
         renderCountPanel('statusList', data.statusCounts, 'count');
-        renderCountPanel('regionList', data.regionCounts, 'count');
-        renderItemPanel('itemList', data.itemTotals);
       })
       .catch(function(err){
         document.getElementById('statusList').innerHTML = '<div class="empty">Gagal memuat: ' + escapeHtml(err.message) + '</div>';
-        document.getElementById('regionList').innerHTML = '';
-        document.getElementById('itemList').innerHTML = '';
       });
   }
 
@@ -271,40 +276,141 @@
     }).join('');
   }
 
-  function renderItemPanel(elId, items){
-    var el = document.getElementById(elId);
-    if (!items || items.length === 0) {
-      el.innerHTML = '<div class="empty">Belum ada data.</div>';
-      return;
-    }
-    el.innerHTML = items.map(function(it, idx){
-      var pct = it.planSum > 0 ? Math.round((it.aktualSum / it.planSum) * 100) : 0;
-      pct = Math.max(0, Math.min(100, pct));
-      var color = palette[idx % palette.length];
-      return '' +
-        '<div class="stat-row">' +
-          '<div class="stat-top">' +
-            '<span class="stat-dot" style="background:' + color + '"></span>' +
-            '<span class="stat-name">' + escapeHtml(it.label) + '</span>' +
-            '<span class="stat-count">' + pct + '%</span>' +
-          '</div>' +
-          '<div class="stat-sub">Aktual ' + Math.round(it.aktualSum) + ' / Plan ' + Math.round(it.planSum) + '</div>' +
-          '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%; background:' + color + '"></div></div>' +
-        '</div>';
+  // --- Cek Progress via search (replaces separate Cek Progress page) ---
+  function ensureAllItemsLoaded(cb){
+    if (allItems.length) { cb(); return; }
+    fetch(API_URL + '?action=list')
+      .then(function(res){ return res.json(); })
+      .then(function(data){
+        if (data.ok) allItems = data.items;
+        cb();
+      })
+      .catch(function(){ cb(); });
+  }
+
+  function pct(aktual, plan){
+    var p = parseFloat(plan) || 0;
+    var a = parseFloat(aktual) || 0;
+    if (p <= 0) return 0;
+    return Math.max(0, Math.min(100, Math.round((a / p) * 100)));
+  }
+  function barColor(p){
+    if (p >= 100) return 'var(--green)';
+    if (p >= 40) return 'var(--accent)';
+    return 'var(--orange)';
+  }
+
+  function showProgressPanel(){ document.getElementById('progressPanel').style.display = 'block'; }
+  function hideProgressPanel(){ document.getElementById('progressPanel').style.display = 'none'; }
+
+  function renderResultPicker(matches){
+    document.getElementById('progressPanelTitle').textContent = 'Hasil Pencarian';
+    var body = document.getElementById('progressPanelBody');
+    body.innerHTML = matches.map(function(item, idx){
+      return '<div class="result-item" data-idx="' + idx + '">' +
+        escapeHtml(item.namaLop) +
+        '<div class="loc">ID Digasss: ' + escapeHtml(item.idDigasss || '-') + ' &middot; STO ' + escapeHtml(item.sto) + '</div>' +
+      '</div>';
     }).join('');
+    Array.prototype.forEach.call(body.querySelectorAll('.result-item'), function(el){
+      el.addEventListener('click', function(){
+        loadJobDetail(matches[parseInt(el.getAttribute('data-idx'), 10)]);
+      });
+    });
+    showProgressPanel();
+  }
+
+  function loadJobDetail(item){
+    document.getElementById('progressPanelTitle').textContent = 'Cek Progress';
+    var body = document.getElementById('progressPanelBody');
+    body.innerHTML = '<div class="loading">Memuat detail...</div>';
+    showProgressPanel();
+
+    fetch(API_URL + '?action=detail&row=' + item.rowIndex)
+      .then(function(res){ return res.json(); })
+      .then(function(data){
+        if (!data.ok) throw new Error(data.error || 'Gagal memuat detail');
+        var it = data.item;
+        var items = it.items || [];
+
+        var totalPlan = 0, totalAktual = 0;
+        items.forEach(function(x){ totalPlan += parseFloat(x.plan) || 0; totalAktual += parseFloat(x.aktual) || 0; });
+        var overall = totalPlan > 0 ? Math.max(0, Math.min(100, Math.round((totalAktual / totalPlan) * 100))) : 0;
+
+        var html = '' +
+          '<div class="job-title">' + escapeHtml(it.namaLop) + '</div>' +
+          '<div class="job-loc">' + escapeHtml(it.region) + ' \u00b7 ' + escapeHtml(it.districtTif) + ' \u00b7 STO ' + escapeHtml(it.sto) + ' \u00b7 ID ' + escapeHtml(it.idDigasss || '-') + '</div>' +
+          '<div class="overall-progress">' +
+            '<div class="row"><span class="label">Progress Keseluruhan</span><span class="pct">' + overall + '%</span></div>' +
+            '<div class="bar-track"><div class="bar-fill" style="width:' + overall + '%; background:linear-gradient(90deg, var(--accent) 0%, var(--accent2) 100%)"></div></div>' +
+          '</div>';
+
+        if (items.length === 0) {
+          html += '<div class="empty">Tidak ada item plan untuk pekerjaan ini.</div>';
+        } else {
+          html += items.map(function(x){
+            var p = pct(x.aktual, x.plan);
+            return '' +
+              '<div class="item-card">' +
+                '<div class="item-top">' +
+                  '<div class="item-name">' + escapeHtml(x.label) + '</div>' +
+                  '<div class="item-pct">' + p + '%</div>' +
+                '</div>' +
+                '<div class="item-vals">Aktual <b>' + escapeHtml(x.aktual || 0) + '</b> / Plan <b>' + escapeHtml(x.plan) + '</b></div>' +
+                '<div class="bar-track"><div class="bar-fill" style="width:' + p + '%; background:' + barColor(p) + '"></div></div>' +
+              '</div>';
+          }).join('');
+        }
+
+        html += '<div class="back-link" id="backToResults">&larr; Cari pekerjaan lain</div>';
+        body.innerHTML = html;
+        document.getElementById('backToResults').addEventListener('click', function(){
+          document.getElementById('search').value = '';
+          hideProgressPanel();
+        });
+      })
+      .catch(function(err){
+        body.innerHTML = '<div class="empty">Gagal memuat detail: ' + escapeHtml(err.message) + '</div>';
+      });
+  }
+
+  function runSearch(){
+    var q = document.getElementById('search').value.trim();
+    if (!q) { hideProgressPanel(); return; }
+
+    ensureAllItemsLoaded(function(){
+      var qUpper = q.toUpperCase();
+      var matches = allItems.filter(function(item){
+        return item.namaLop.toUpperCase().indexOf(qUpper) !== -1 ||
+               (item.idDigasss || '').toString().toUpperCase().indexOf(qUpper) !== -1 ||
+               (item.sto || '').toUpperCase().indexOf(qUpper) !== -1;
+      }).slice(0, 15);
+
+      if (matches.length === 0) {
+        document.getElementById('progressPanelTitle').textContent = 'Cek Progress';
+        document.getElementById('progressPanelBody').innerHTML = '<div class="empty">Tidak ditemukan.</div>';
+        showProgressPanel();
+      } else if (matches.length === 1) {
+        loadJobDetail(matches[0]);
+      } else {
+        renderResultPicker(matches);
+      }
+    });
   }
 
   document.getElementById('search').addEventListener('input', function(){
     clearTimeout(searchDebounce);
-    searchDebounce = setTimeout(loadSummary, 400);
+    searchDebounce = setTimeout(runSearch, 400);
   });
 
   document.getElementById('refreshBtn').addEventListener('click', function(){
-    loadSummary();
+    allItems = [];
+    loadStatusSummary();
+    if (document.getElementById('search').value.trim()) runSearch();
   });
 
   loadRegionChips();
-  loadSummary();
+  loadStatusSummary();
 </script>
 
 </body>
