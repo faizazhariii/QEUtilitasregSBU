@@ -167,13 +167,37 @@
   <div class="panel">
     <div class="panel-head">
       <div class="title-wrap">
+        <div class="panel-icon" style="background:rgba(168,85,247,.15); color:var(--purple);">&#127760;</div>
+        <h2>Jumlah LOP per District TIF</h2>
+      </div>
+      <span class="panel-badge" id="districtTotalBadge">-</span>
+    </div>
+    <div class="panel-sub">Sebaran pekerjaan per District TIF</div>
+    <div id="districtList"><div class="loading">Memuat...</div></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <div class="title-wrap">
         <div class="panel-icon" style="background:rgba(59,110,246,.15); color:var(--accent2);">&#128200;</div>
-        <h2>Overview Status</h2>
+        <h2>Jumlah Status Progres</h2>
       </div>
       <span class="panel-badge" id="statusTotalBadge">-</span>
     </div>
     <div class="panel-sub">Status progres pekerjaan QE Utilitas</div>
     <div id="statusList"><div class="loading">Memuat...</div></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <div class="title-wrap">
+        <div class="panel-icon" style="background:rgba(20,184,166,.15); color:var(--teal);">&#128230;</div>
+        <h2>Total Material (Plan)</h2>
+      </div>
+      <span class="panel-badge" id="materialTotalBadge">-</span>
+    </div>
+    <div class="panel-sub">Jumlah total tiap jenis material sesuai Plan</div>
+    <div id="materialList"><div class="loading">Memuat...</div></div>
   </div>
 
   <div class="panel" id="progressPanel" style="display:none;">
@@ -240,6 +264,8 @@
 
   function loadStatusSummary(){
     document.getElementById('statusList').innerHTML = '<div class="loading">Memuat...</div>';
+    document.getElementById('districtList').innerHTML = '<div class="loading">Memuat...</div>';
+    document.getElementById('materialList').innerHTML = '<div class="loading">Memuat...</div>';
 
     fetch(API_URL + '?action=summary' + buildQuery().replace('?', '&'))
       .then(function(res){ return res.json(); })
@@ -247,11 +273,41 @@
         if (!data.ok) throw new Error(data.error || 'Gagal memuat data');
         document.getElementById('showingLabel').innerHTML = 'Menampilkan <b>' + data.totalSites + '</b> site';
         document.getElementById('statusTotalBadge').textContent = data.totalSites + ' site';
+        document.getElementById('districtTotalBadge').textContent = data.districtCounts.length + ' district';
+        document.getElementById('materialTotalBadge').textContent = data.itemTotals.length + ' jenis';
+
         renderCountPanel('statusList', data.statusCounts, 'count');
+        renderCountPanel('districtList', data.districtCounts, 'count');
+        renderMaterialPanel('materialList', data.itemTotals);
       })
       .catch(function(err){
         document.getElementById('statusList').innerHTML = '<div class="empty">Gagal memuat: ' + escapeHtml(err.message) + '</div>';
+        document.getElementById('districtList').innerHTML = '';
+        document.getElementById('materialList').innerHTML = '';
       });
+  }
+
+  function renderMaterialPanel(elId, items){
+    var el = document.getElementById(elId);
+    if (!items || items.length === 0) {
+      el.innerHTML = '<div class="empty">Belum ada data.</div>';
+      return;
+    }
+    var sorted = items.slice().sort(function(a,b){ return b.planSum - a.planSum; });
+    var maxVal = sorted[0].planSum || 1;
+    el.innerHTML = sorted.map(function(it, idx){
+      var widthPct = maxVal > 0 ? Math.round((it.planSum / maxVal) * 100) : 0;
+      var color = palette[idx % palette.length];
+      return '' +
+        '<div class="stat-row">' +
+          '<div class="stat-top">' +
+            '<span class="stat-dot" style="background:' + color + '"></span>' +
+            '<span class="stat-name">' + escapeHtml(it.label) + '</span>' +
+            '<span class="stat-count">' + Math.round(it.planSum) + '</span>' +
+          '</div>' +
+          '<div class="bar-track"><div class="bar-fill" style="width:' + widthPct + '%; background:' + color + '"></div></div>' +
+        '</div>';
+    }).join('');
   }
 
   function renderCountPanel(elId, entries, field){
