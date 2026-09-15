@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>QE Project Management</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root{
+    --bg:#0b1120; --bg2:#0e1729;
+    --card:#141d33; --card-border:#232f4d;
+    --text:#e7ebf5; --sub:#8b95ab;
+    --accent:#3b6ef6; --accent2:#6d9bff; --accent-soft:#1b2a4d;
+    --green:#22c55e; --orange:#f59e0b; --red:#ef4444; --purple:#a855f7; --teal:#14b8a6; --pink:#ec4899;
+    --shadow:0 4px 18px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:var(--bg); color:var(--text); padding-bottom:90px;
+  }
+
+  header{
+    background:var(--bg2); padding:16px; border-bottom:1px solid var(--card-border);
+    display:flex; align-items:center; gap:12px;
+  }
+  .avatar{
+    width:44px; height:44px; border-radius:12px; background:var(--accent-soft);
+    display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0;
+  }
+  header .titles{flex:1; min-width:0;}
+  header h1{margin:0; font-size:16px; font-weight:800;}
+  header p{margin:2px 0 0; font-size:11px; color:var(--sub);}
+  header .refresh{
+    width:38px; height:38px; border-radius:10px; border:1px solid var(--card-border); background:var(--card);
+    display:flex; align-items:center; justify-content:center; color:var(--accent2); font-size:16px; flex-shrink:0;
+  }
+
+  .section{padding:14px;}
+
+  .search-card{
+    background:var(--card); border:1px solid var(--card-border); border-radius:14px; padding:12px 14px;
+    margin-bottom:10px; box-shadow:var(--shadow);
+  }
+  .search-row{display:flex; align-items:center; gap:8px;}
+  .search-row span.ic{color:var(--sub); font-size:14px;}
+  .search-row input{
+    flex:1; border:none; background:transparent; color:var(--text); font-size:14px; padding:6px 0;
+  }
+  .search-row input:focus{outline:none;}
+  .search-tip{font-size:10.5px; color:var(--sub); margin-top:6px;}
+
+  .filter-scroll{display:flex; gap:8px; overflow-x:auto; padding:2px 0 4px; margin-bottom:4px;}
+  .filter-scroll::-webkit-scrollbar{display:none;}
+  .chip{
+    flex-shrink:0; display:flex; align-items:center; gap:6px; padding:8px 12px; border-radius:999px;
+    border:1px solid var(--card-border); background:var(--card); font-size:12px; font-weight:600; color:var(--sub);
+    white-space:nowrap;
+  }
+  .chip.active{border-color:var(--accent); color:var(--accent2); background:var(--accent-soft);}
+  .chip .dot{width:6px; height:6px; border-radius:50%; background:currentColor;}
+
+  .showing{font-size:11.5px; color:var(--sub); margin:0 2px 12px; text-align:right;}
+  .showing b{color:var(--text);}
+
+  .panel{
+    background:var(--card); border-radius:14px; padding:15px; border:1px solid var(--card-border);
+    margin-bottom:12px; box-shadow:var(--shadow);
+  }
+  .panel-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;}
+  .panel-head .title-wrap{display:flex; align-items:center; gap:9px;}
+  .panel-icon{
+    width:30px; height:30px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:14px;
+  }
+  .panel-head h2{margin:0; font-size:13.5px; font-weight:800;}
+  .panel-badge{
+    font-size:10.5px; font-weight:700; padding:4px 9px; border-radius:999px; background:var(--accent-soft); color:var(--accent2);
+  }
+  .panel-sub{font-size:11px; color:var(--sub); margin:2px 0 12px;}
+
+  .stat-row{margin-bottom:12px; padding-bottom:12px; border-bottom:1px solid var(--card-border);}
+  .stat-row:last-child{margin-bottom:0; padding-bottom:0; border-bottom:none;}
+  .stat-top{display:flex; align-items:center; gap:8px; margin-bottom:5px;}
+  .stat-dot{width:8px; height:8px; border-radius:50%; flex-shrink:0;}
+  .stat-name{font-size:12.5px; font-weight:700; flex:1;}
+  .stat-count{font-size:13px; font-weight:800; color:var(--accent2);}
+  .stat-sub{font-size:11px; color:var(--sub); margin-bottom:6px; padding-left:16px;}
+  .bar-track{width:100%; height:6px; border-radius:99px; background:var(--bg2); overflow:hidden; border:1px solid var(--card-border);}
+  .bar-fill{height:100%; border-radius:99px;}
+
+  .loading, .empty{font-size:13px; color:var(--sub); text-align:center; padding:16px;}
+
+  .bottom-nav{
+    position:fixed; left:0; right:0; bottom:0; padding:14px 16px calc(14px + env(safe-area-inset-bottom));
+    display:flex; justify-content:center; gap:14px; background:linear-gradient(180deg, rgba(11,17,32,0) 0%, var(--bg) 35%);
+  }
+  .fab{
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+    width:76px; height:64px; border-radius:18px; text-decoration:none; color:#fff; font-size:10.5px; font-weight:700;
+    box-shadow:0 6px 18px rgba(0,0,0,.4);
+  }
+  .fab .ic{font-size:19px;}
+  .fab.blue{background:linear-gradient(135deg, var(--accent) 0%, #274fc9 100%);}
+  .fab.green{background:linear-gradient(135deg, var(--green) 0%, #15803d 100%);}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="avatar">&#128225;</div>
+  <div class="titles">
+    <h1>QE Project Management</h1>
+    <p>ED REG Sumbagut &middot; Tracking QE Utilitas</p>
+  </div>
+  <div class="refresh" id="refreshBtn">&#8635;</div>
+</header>
+
+<div class="section">
+
+  <div class="search-card">
+    <div class="search-row">
+      <span class="ic">&#128269;</span>
+      <input type="text" id="search" placeholder="Cari Nama LOP, ID Digasss, STO..." autocomplete="off" />
+    </div>
+    <div class="search-tip">Bisa bulk search dipisah koma, misal: QE-0272,QE-0301</div>
+  </div>
+
+  <div class="filter-scroll" id="regionFilters"></div>
+  <div class="showing" id="showingLabel">Memuat...</div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <div class="title-wrap">
+        <div class="panel-icon" style="background:rgba(59,110,246,.15); color:var(--accent2);">&#128200;</div>
+        <h2>Overview Status</h2>
+      </div>
+      <span class="panel-badge" id="statusTotalBadge">-</span>
+    </div>
+    <div class="panel-sub">Status progres pekerjaan QE Utilitas</div>
+    <div id="statusList"><div class="loading">Memuat...</div></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <div class="title-wrap">
+        <div class="panel-icon" style="background:rgba(168,85,247,.15); color:var(--purple);">&#127760;</div>
+        <h2>Overview Region</h2>
+      </div>
+      <span class="panel-badge" id="regionTotalBadge">-</span>
+    </div>
+    <div class="panel-sub">Sebaran site per region</div>
+    <div id="regionList"><div class="loading">Memuat...</div></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <div class="title-wrap">
+        <div class="panel-icon" style="background:rgba(20,184,166,.15); color:var(--teal);">&#128295;</div>
+        <h2>Overview Progress Item</h2>
+      </div>
+      <span class="panel-badge" id="itemTotalBadge">-</span>
+    </div>
+    <div class="panel-sub">Total Aktual vs Plan per jenis pekerjaan</div>
+    <div id="itemList"><div class="loading">Memuat...</div></div>
+  </div>
+
+</div>
+
+<div class="bottom-nav">
+  <a class="fab blue" href="cekprogress-qe.html">
+    <span class="ic">&#128202;</span>
+    Cek Progress
+  </a>
+  <a class="fab green" href="updateprogress-qe.html">
+    <span class="ic">&#9999;&#65039;</span>
+    Input Progress
+  </a>
+</div>
+
+<script>
+  var API_URL = 'https://script.google.com/macros/s/AKfycby-aLVUMoaoGpXtPoer9CziAg46aw5A67zJ-6NyqBEuhebJC_Jrft6LbPUpMz881LuG/exec';
+
+  var tg = window.Telegram ? window.Telegram.WebApp : null;
+  if (tg) { tg.ready(); tg.expand(); }
+
+  var palette = ['#3b6ef6','#22c55e','#f59e0b','#a855f7','#ef4444','#14b8a6','#eab308','#6d9bff','#ec4899'];
+  var activeRegion = '';
+  var searchDebounce = null;
+
+  function escapeHtml(str){
+    return String(str == null ? '' : str)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function buildQuery(){
+    var params = [];
+    var q = document.getElementById('search').value.trim();
+    if (q) params.push('q=' + encodeURIComponent(q.split(',')[0].trim()));
+    if (activeRegion) params.push('region=' + encodeURIComponent(activeRegion));
+    return params.length ? ('?' + params.join('&')) : '';
+  }
+
+  function loadRegionChips(){
+    fetch(API_URL + '?action=summary')
+      .then(function(res){ return res.json(); })
+      .then(function(data){
+        if (!data.ok) return;
+        var wrap = document.getElementById('regionFilters');
+        var chip = '<div class="chip active" data-region="" id="chip-all">Semua Region</div>';
+        data.regionCounts.forEach(function(r){
+          chip += '<div class="chip" data-region="' + escapeHtml(r.name) + '"><span class="dot"></span>' + escapeHtml(r.name) + '</div>';
+        });
+        wrap.innerHTML = chip;
+        Array.prototype.forEach.call(wrap.querySelectorAll('.chip'), function(el){
+          el.addEventListener('click', function(){
+            activeRegion = el.getAttribute('data-region');
+            Array.prototype.forEach.call(wrap.querySelectorAll('.chip'), function(c){ c.classList.remove('active'); });
+            el.classList.add('active');
+            loadSummary();
+          });
+        });
+      })
+      .catch(function(){});
+  }
+
+  function loadSummary(){
+    document.getElementById('statusList').innerHTML = '<div class="loading">Memuat...</div>';
+    document.getElementById('regionList').innerHTML = '<div class="loading">Memuat...</div>';
+    document.getElementById('itemList').innerHTML = '<div class="loading">Memuat...</div>';
+
+    fetch(API_URL + '?action=summary' + buildQuery().replace('?', '&'))
+      .then(function(res){ return res.json(); })
+      .then(function(data){
+        if (!data.ok) throw new Error(data.error || 'Gagal memuat data');
+
+        document.getElementById('showingLabel').innerHTML = 'Menampilkan <b>' + data.totalSites + '</b> site';
+        document.getElementById('statusTotalBadge').textContent = data.totalSites + ' site';
+        document.getElementById('regionTotalBadge').textContent = data.regionCounts.length + ' region';
+        document.getElementById('itemTotalBadge').textContent = data.itemTotals.length + ' item';
+
+        renderCountPanel('statusList', data.statusCounts, 'count');
+        renderCountPanel('regionList', data.regionCounts, 'count');
+        renderItemPanel('itemList', data.itemTotals);
+      })
+      .catch(function(err){
+        document.getElementById('statusList').innerHTML = '<div class="empty">Gagal memuat: ' + escapeHtml(err.message) + '</div>';
+        document.getElementById('regionList').innerHTML = '';
+        document.getElementById('itemList').innerHTML = '';
+      });
+  }
+
+  function renderCountPanel(elId, entries, field){
+    var el = document.getElementById(elId);
+    if (!entries || entries.length === 0) {
+      el.innerHTML = '<div class="empty">Belum ada data.</div>';
+      return;
+    }
+    var maxVal = entries[0][field];
+    el.innerHTML = entries.map(function(e, idx){
+      var widthPct = maxVal > 0 ? Math.round((e[field] / maxVal) * 100) : 0;
+      var color = palette[idx % palette.length];
+      return '' +
+        '<div class="stat-row">' +
+          '<div class="stat-top">' +
+            '<span class="stat-dot" style="background:' + color + '"></span>' +
+            '<span class="stat-name">' + escapeHtml(e.name) + '</span>' +
+            '<span class="stat-count">' + e[field] + ' site</span>' +
+          '</div>' +
+          '<div class="bar-track"><div class="bar-fill" style="width:' + widthPct + '%; background:' + color + '"></div></div>' +
+        '</div>';
+    }).join('');
+  }
+
+  function renderItemPanel(elId, items){
+    var el = document.getElementById(elId);
+    if (!items || items.length === 0) {
+      el.innerHTML = '<div class="empty">Belum ada data.</div>';
+      return;
+    }
+    el.innerHTML = items.map(function(it, idx){
+      var pct = it.planSum > 0 ? Math.round((it.aktualSum / it.planSum) * 100) : 0;
+      pct = Math.max(0, Math.min(100, pct));
+      var color = palette[idx % palette.length];
+      return '' +
+        '<div class="stat-row">' +
+          '<div class="stat-top">' +
+            '<span class="stat-dot" style="background:' + color + '"></span>' +
+            '<span class="stat-name">' + escapeHtml(it.label) + '</span>' +
+            '<span class="stat-count">' + pct + '%</span>' +
+          '</div>' +
+          '<div class="stat-sub">Aktual ' + Math.round(it.aktualSum) + ' / Plan ' + Math.round(it.planSum) + '</div>' +
+          '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%; background:' + color + '"></div></div>' +
+        '</div>';
+    }).join('');
+  }
+
+  document.getElementById('search').addEventListener('input', function(){
+    clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(loadSummary, 400);
+  });
+
+  document.getElementById('refreshBtn').addEventListener('click', function(){
+    loadSummary();
+  });
+
+  loadRegionChips();
+  loadSummary();
+</script>
+
+</body>
+</html>
