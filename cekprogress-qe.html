@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>Cek Progress QE Utilitas</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root{
+    --bg:#f2f2f7; --card:#ffffff; --text:#1c1c1e; --sub:#6b6b70;
+    --accent:#0088cc; --border:#e5e5ea;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:var(--bg); color:var(--text); padding-bottom:24px;
+  }
+  header{
+    background:var(--accent); color:#fff; padding:16px; position:sticky; top:0; z-index:10;
+  }
+  header h1{margin:0; font-size:18px; font-weight:600;}
+  header p{margin:2px 0 0; font-size:12px; opacity:.85;}
+
+  .filters{
+    padding:12px 16px; display:flex; flex-direction:column; gap:8px; background:var(--card);
+    border-bottom:1px solid var(--border);
+  }
+  .filters input, .filters select{
+    width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:10px;
+    font-size:14px; background:var(--bg); color:var(--text);
+  }
+  .filter-row{display:flex; gap:8px;}
+  .filter-row select{flex:1;}
+
+  .list{padding:12px;}
+  .card{
+    background:var(--card); border-radius:12px; padding:14px; margin-bottom:10px;
+    box-shadow:0 1px 2px rgba(0,0,0,.05); border:1px solid var(--border);
+  }
+  .card .top{display:flex; justify-content:space-between; align-items:flex-start; gap:8px;}
+  .card .lop{font-weight:600; font-size:14px; line-height:1.35;}
+  .card .loc{font-size:12px; color:var(--sub); margin-top:4px;}
+  .badge{
+    display:inline-block; font-size:11px; font-weight:600; padding:4px 8px; border-radius:999px;
+    background:#e8f4fb; color:var(--accent); white-space:nowrap;
+  }
+  .badge.closed{background:#e6f7ec; color:#1a9e4d;}
+  .badge.drop{background:#fbe9e9; color:#c0392b;}
+  .card .team{font-size:12px; color:var(--sub); margin-top:8px;}
+
+  .empty, .loading{
+    text-align:center; color:var(--sub); font-size:13px; padding:32px 16px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Cek Progress QE Utilitas</h1>
+  <p id="count-label">Memuat data...</p>
+</header>
+
+<div class="filters">
+  <input type="text" id="search" placeholder="Cari nama LOP..." />
+  <div class="filter-row">
+    <select id="regionFilter"><option value="">Semua Region</option></select>
+    <select id="stoFilter"><option value="">Semua STO</option></select>
+  </div>
+  <select id="statusFilter"><option value="">Semua Status</option></select>
+</div>
+
+<div class="list" id="list">
+  <div class="loading">Memuat data...</div>
+</div>
+
+<script>
+  // TODO Faiz: ganti dengan URL deployment Apps Script (Code_QEUtilitas.gs) setelah di-deploy
+  var API_URL = 'https://script.google.com/macros/s/AKfycby-aLVUMoaoGpXtPoer9CziAg46aw5A67zJ-6NyqBEuhebJC_Jrft6LbPUpMz881LuG/exec';
+
+  var tg = window.Telegram ? window.Telegram.WebApp : null;
+  if (tg) { tg.ready(); tg.expand(); }
+
+  var allItems = [];
+
+  function badgeClass(status){
+    var s = (status || '').toUpperCase();
+    if (s.indexOf('CLOSED') !== -1) return 'badge closed';
+    if (s.indexOf('DROP') !== -1) return 'badge drop';
+    return 'badge';
+  }
+
+  function uniqueSorted(values){
+    var set = {};
+    values.forEach(function(v){ if (v) set[v] = true; });
+    return Object.keys(set).sort();
+  }
+
+  function populateFilters(items){
+    var regionSel = document.getElementById('regionFilter');
+    var stoSel = document.getElementById('stoFilter');
+    var statusSel = document.getElementById('statusFilter');
+
+    uniqueSorted(items.map(function(i){ return i.region; })).forEach(function(v){
+      var opt = document.createElement('option'); opt.value = v; opt.textContent = v;
+      regionSel.appendChild(opt);
+    });
+    uniqueSorted(items.map(function(i){ return i.sto; })).forEach(function(v){
+      var opt = document.createElement('option'); opt.value = v; opt.textContent = v;
+      stoSel.appendChild(opt);
+    });
+    uniqueSorted(items.map(function(i){ return i.statusProgres; })).forEach(function(v){
+      var opt = document.createElement('option'); opt.value = v; opt.textContent = v;
+      statusSel.appendChild(opt);
+    });
+  }
+
+  function render(items){
+    var listEl = document.getElementById('list');
+    document.getElementById('count-label').textContent = items.length + ' pekerjaan';
+
+    if (items.length === 0) {
+      listEl.innerHTML = '<div class="empty">Tidak ada data yang cocok.</div>';
+      return;
+    }
+
+    listEl.innerHTML = items.map(function(item){
+      return '' +
+        '<div class="card">' +
+          '<div class="top">' +
+            '<div class="lop">' + escapeHtml(item.namaLop) + '</div>' +
+            '<span class="' + badgeClass(item.statusProgres) + '">' + escapeHtml(item.statusProgres || '-') + '</span>' +
+          '</div>' +
+          '<div class="loc">' + escapeHtml(item.region) + ' &middot; ' + escapeHtml(item.districtTif) + ' &middot; STO ' + escapeHtml(item.sto) + '</div>' +
+          '<div class="team">Waspang: ' + escapeHtml(item.timWaspang || '-') + ' | UT: ' + escapeHtml(item.timUt || '-') + '</div>' +
+        '</div>';
+    }).join('');
+  }
+
+  function escapeHtml(str){
+    return String(str == null ? '' : str)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function applyFilters(){
+    var q = document.getElementById('search').value.trim().toUpperCase();
+    var region = document.getElementById('regionFilter').value;
+    var sto = document.getElementById('stoFilter').value;
+    var status = document.getElementById('statusFilter').value;
+
+    var filtered = allItems.filter(function(item){
+      if (q && item.namaLop.toUpperCase().indexOf(q) === -1) return false;
+      if (region && item.region !== region) return false;
+      if (sto && item.sto !== sto) return false;
+      if (status && item.statusProgres !== status) return false;
+      return true;
+    });
+    render(filtered);
+  }
+
+  ['search','regionFilter','stoFilter','statusFilter'].forEach(function(id){
+    document.getElementById(id).addEventListener('input', applyFilters);
+    document.getElementById(id).addEventListener('change', applyFilters);
+  });
+
+  fetch(API_URL + '?action=list')
+    .then(function(res){ return res.json(); })
+    .then(function(data){
+      if (!data.ok) throw new Error(data.error || 'Gagal memuat data');
+      allItems = data.items;
+      populateFilters(allItems);
+      render(allItems);
+    })
+    .catch(function(err){
+      document.getElementById('list').innerHTML =
+        '<div class="empty">Gagal memuat data.<br>' + escapeHtml(err.message) + '</div>';
+      document.getElementById('count-label').textContent = 'Error';
+    });
+</script>
+
+</body>
+</html>
