@@ -99,6 +99,8 @@
 
   .stat-row{margin-bottom:12px; padding-bottom:12px; border-bottom:1px solid var(--card-border);}
   .stat-row:last-child{margin-bottom:0; padding-bottom:0; border-bottom:none;}
+  .stat-row.clickable{cursor:pointer; border-radius:10px; padding:8px; margin:0 -8px 4px; }
+  .stat-row.clickable:active{background:var(--bg2);}
   .stat-top{display:flex; align-items:center; gap:8px; margin-bottom:5px;}
   .stat-dot{width:8px; height:8px; border-radius:50%; flex-shrink:0;}
   .stat-name{font-size:12.5px; font-weight:700; flex:1;}
@@ -106,6 +108,35 @@
   .stat-sub{font-size:11px; color:var(--sub); margin-bottom:6px; padding-left:16px;}
   .bar-track{width:100%; height:6px; border-radius:99px; background:var(--bg2); overflow:hidden; border:1px solid var(--card-border);}
   .bar-fill{height:100%; border-radius:99px;}
+
+  .evidence-title{font-size:11px; font-weight:700; color:var(--accent2); text-transform:uppercase; letter-spacing:.4px; margin:16px 0 8px;}
+  .evidence-grid{display:grid; grid-template-columns:repeat(3, 1fr); gap:8px;}
+  .evidence-item{display:block; border-radius:10px; overflow:hidden; border:1px solid var(--card-border); position:relative; aspect-ratio:1;}
+  .evidence-item img{width:100%; height:100%; object-fit:cover; display:block;}
+  .evidence-date{
+    position:absolute; left:0; right:0; bottom:0; background:rgba(0,0,0,.6); color:#fff;
+    font-size:9.5px; padding:2px 5px; text-align:center;
+  }
+
+  /* Bottom data table (opened by clicking any overview row) */
+  .data-table-panel{
+    background:var(--card); border-radius:14px; padding:15px; border:1px solid var(--card-border);
+    margin-bottom:12px; box-shadow:var(--shadow); display:none;
+  }
+  .data-table-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;}
+  .data-table-head h2{margin:0; font-size:13.5px; font-weight:800;}
+  .data-table-close{
+    width:26px; height:26px; border-radius:8px; background:var(--bg2); border:1px solid var(--card-border);
+    color:var(--sub); display:flex; align-items:center; justify-content:center; font-size:13px; cursor:pointer;
+  }
+  .data-table-wrap{overflow-x:auto;}
+  table.data-table{width:100%; border-collapse:collapse; font-size:12px;}
+  table.data-table th{
+    text-align:left; color:var(--accent2); font-size:10.5px; text-transform:uppercase; letter-spacing:.3px;
+    padding:6px 8px; border-bottom:1px solid var(--card-border); white-space:nowrap;
+  }
+  table.data-table td{padding:7px 8px; border-bottom:1px solid var(--card-border); white-space:nowrap;}
+  table.data-table tr:last-child td{border-bottom:none;}
 
   .loading, .empty{font-size:13px; color:var(--sub); text-align:center; padding:16px;}
   .hint{font-size:12.5px; color:var(--sub); text-align:center; padding:14px 8px;}
@@ -219,6 +250,17 @@
     <div class="panel-sub">Jumlah total tiap jenis material sesuai Plan</div>
     <div id="materialList"><div class="loading">Memuat...</div></div>
   </div>
+  <div class="panel">
+    <div class="panel-head">
+      <div class="title-wrap">
+        <div class="panel-icon" style="background:rgba(236,72,153,.15); color:var(--pink);">&#128203;</div>
+        <h2>Klasifikasi LOP</h2>
+      </div>
+      <span class="panel-badge" id="klasifikasiTotalBadge">-</span>
+    </div>
+    <div class="panel-sub">Jumlah LOP per klasifikasi</div>
+    <div id="klasifikasiList"><div class="loading">Memuat...</div></div>
+  </div>
   </div>
   <div class="scroll-hint">&#8592; geser untuk lihat panel lainnya &#8594;</div>
 
@@ -230,6 +272,14 @@
       </div>
     </div>
     <div id="progressPanelBody"></div>
+  </div>
+
+  <div class="data-table-panel" id="dataTablePanel">
+    <div class="data-table-head">
+      <h2 id="dataTableTitle">Data</h2>
+      <div class="data-table-close" id="dataTableClose">&#10005;</div>
+    </div>
+    <div class="data-table-wrap" id="dataTableWrap"><div class="loading">Memuat...</div></div>
   </div>
 
 </div>
@@ -261,6 +311,10 @@
     return params.length ? ('?' + params.join('&')) : '';
   }
 
+  function stripPrefix(s){
+    return String(s || '').replace(/^\d+\.\s*/, '');
+  }
+
   function loadRegionChips(){
     fetch(API_URL + '?action=summary')
       .then(function(res){ return res.json(); })
@@ -269,7 +323,7 @@
         var wrap = document.getElementById('regionFilters');
         var chip = '<div class="chip active" data-region="" id="chip-all">Semua Region</div>';
         data.regionCounts.forEach(function(r){
-          chip += '<div class="chip" data-region="' + escapeHtml(r.name) + '"><span class="dot"></span>' + escapeHtml(r.name) + '</div>';
+          chip += '<div class="chip" data-region="' + escapeHtml(r.name) + '"><span class="dot"></span>' + escapeHtml(stripPrefix(r.name)) + '</div>';
         });
         wrap.innerHTML = chip;
         Array.prototype.forEach.call(wrap.querySelectorAll('.chip'), function(el){
@@ -288,6 +342,7 @@
     document.getElementById('statusList').innerHTML = '<div class="loading">Memuat...</div>';
     document.getElementById('districtList').innerHTML = '<div class="loading">Memuat...</div>';
     document.getElementById('materialList').innerHTML = '<div class="loading">Memuat...</div>';
+    document.getElementById('klasifikasiList').innerHTML = '<div class="loading">Memuat...</div>';
 
     fetch(API_URL + '?action=summary' + buildQuery().replace('?', '&'))
       .then(function(res){ return res.json(); })
@@ -297,15 +352,18 @@
         document.getElementById('statusTotalBadge').textContent = data.totalSites + ' site';
         document.getElementById('districtTotalBadge').textContent = data.districtCounts.length + ' district';
         document.getElementById('materialTotalBadge').textContent = data.itemTotals.length + ' jenis';
+        document.getElementById('klasifikasiTotalBadge').textContent = data.klasifikasiCounts.length + ' kelas';
 
-        renderCountPanel('statusList', data.statusCounts, 'count');
-        renderCountPanel('districtList', data.districtCounts, 'count');
+        renderCountPanel('statusList', data.statusCounts, 'count', 'status');
+        renderCountPanel('districtList', data.districtCounts, 'count', 'district');
+        renderCountPanel('klasifikasiList', data.klasifikasiCounts, 'count', 'klasifikasi');
         renderMaterialPanel('materialList', data.itemTotals);
       })
       .catch(function(err){
         document.getElementById('statusList').innerHTML = '<div class="empty">Gagal memuat: ' + escapeHtml(err.message) + '</div>';
         document.getElementById('districtList').innerHTML = '';
         document.getElementById('materialList').innerHTML = '';
+        document.getElementById('klasifikasiList').innerHTML = '';
       });
   }
 
@@ -321,7 +379,7 @@
       var widthPct = maxVal > 0 ? Math.round((it.planSum / maxVal) * 100) : 0;
       var color = palette[idx % palette.length];
       return '' +
-        '<div class="stat-row">' +
+        '<div class="stat-row clickable" data-value="' + escapeHtml(it.label) + '">' +
           '<div class="stat-top">' +
             '<span class="stat-dot" style="background:' + color + '"></span>' +
             '<span class="stat-name">' + escapeHtml(it.label) + '</span>' +
@@ -330,9 +388,15 @@
           '<div class="bar-track"><div class="bar-fill" style="width:' + widthPct + '%; background:' + color + '"></div></div>' +
         '</div>';
     }).join('');
+    Array.prototype.forEach.call(el.querySelectorAll('.stat-row'), function(row){
+      row.addEventListener('click', function(){
+        var val = row.getAttribute('data-value');
+        loadDataTable('item', val, 'Site dengan material: ' + val);
+      });
+    });
   }
 
-  function renderCountPanel(elId, entries, field){
+  function renderCountPanel(elId, entries, field, filterKey){
     var el = document.getElementById(elId);
     if (!entries || entries.length === 0) {
       el.innerHTML = '<div class="empty">Belum ada data.</div>';
@@ -342,17 +406,68 @@
     el.innerHTML = entries.map(function(e, idx){
       var widthPct = maxVal > 0 ? Math.round((e[field] / maxVal) * 100) : 0;
       var color = palette[idx % palette.length];
+      var displayName = filterKey === 'district' || filterKey === 'region' ? stripPrefix(e.name) : e.name;
       return '' +
-        '<div class="stat-row">' +
+        '<div class="stat-row clickable" data-value="' + escapeHtml(e.name) + '">' +
           '<div class="stat-top">' +
             '<span class="stat-dot" style="background:' + color + '"></span>' +
-            '<span class="stat-name">' + escapeHtml(e.name) + '</span>' +
+            '<span class="stat-name">' + escapeHtml(displayName) + '</span>' +
             '<span class="stat-count">' + e[field] + ' site</span>' +
           '</div>' +
           '<div class="bar-track"><div class="bar-fill" style="width:' + widthPct + '%; background:' + color + '"></div></div>' +
         '</div>';
     }).join('');
+    Array.prototype.forEach.call(el.querySelectorAll('.stat-row'), function(row){
+      row.addEventListener('click', function(){
+        var val = row.getAttribute('data-value');
+        var displayVal = filterKey === 'district' || filterKey === 'region' ? stripPrefix(val) : val;
+        loadDataTable(filterKey, val, 'Site: ' + displayVal);
+      });
+    });
   }
+
+  // --- Bottom data table (opened by clicking a row in any overview panel) ---
+  function loadDataTable(filterKey, value, title){
+    var panel = document.getElementById('dataTablePanel');
+    var wrap = document.getElementById('dataTableWrap');
+    document.getElementById('dataTableTitle').textContent = title;
+    wrap.innerHTML = '<div class="loading">Memuat...</div>';
+    panel.style.display = 'block';
+    panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    var params = [filterKey + '=' + encodeURIComponent(value)];
+    if (activeRegion) params.push('region=' + encodeURIComponent(activeRegion));
+
+    fetch(API_URL + '?action=list&' + params.join('&'))
+      .then(function(res){ return res.json(); })
+      .then(function(data){
+        if (!data.ok) throw new Error(data.error || 'Gagal memuat data');
+        if (data.items.length === 0) {
+          wrap.innerHTML = '<div class="empty">Tidak ada data.</div>';
+          return;
+        }
+        var rows = data.items.map(function(it, idx){
+          return '<tr>' +
+            '<td>' + (idx + 1) + '</td>' +
+            '<td>' + escapeHtml(it.namaLop) + '</td>' +
+            '<td>' + escapeHtml(it.sto) + '</td>' +
+            '<td>' + escapeHtml(it.idDigasss || '-') + '</td>' +
+            '<td>' + escapeHtml(it.statusProgres || '-') + '</td>' +
+          '</tr>';
+        }).join('');
+        wrap.innerHTML =
+          '<table class="data-table"><thead><tr>' +
+            '<th>No</th><th>Nama LOP</th><th>STO</th><th>ID Digasss</th><th>Status</th>' +
+          '</tr></thead><tbody>' + rows + '</tbody></table>';
+      })
+      .catch(function(err){
+        wrap.innerHTML = '<div class="empty">Gagal memuat: ' + escapeHtml(err.message) + '</div>';
+      });
+  }
+
+  document.getElementById('dataTableClose').addEventListener('click', function(){
+    document.getElementById('dataTablePanel').style.display = 'none';
+  });
 
   // --- Cek Progress via search (replaces separate Cek Progress page) ---
   function ensureAllItemsLoaded(cb){
@@ -364,6 +479,25 @@
         cb();
       })
       .catch(function(){ cb(); });
+  }
+
+  function driveThumb_(url){
+    var m = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+    if (m) return 'https://drive.google.com/thumbnail?id=' + m[1] + '&sz=w400';
+    return url;
+  }
+
+  function parseEvidence(text){
+    if (!text) return [];
+    var out = [];
+    String(text).split('\n').forEach(function(line){
+      var m = line.match(/\[Foto:\s*(https?:\/\/[^\]]+)\]/);
+      if (!m) return;
+      var url = m[1].trim();
+      var dateMatch = line.match(/^\(([^)]+)\)/);
+      out.push({ url: url, thumb: driveThumb_(url), date: dateMatch ? dateMatch[1] : '' });
+    });
+    return out;
   }
 
   function pct(aktual, plan){
@@ -417,7 +551,7 @@
 
         var html = '' +
           '<div class="job-title">' + escapeHtml(it.namaLop) + '</div>' +
-          '<div class="job-loc">' + escapeHtml(it.region) + ' \u00b7 ' + escapeHtml(it.districtTif) + ' \u00b7 STO ' + escapeHtml(it.sto) + ' \u00b7 ID ' + escapeHtml(it.idDigasss || '-') + '</div>' +
+          '<div class="job-loc">' + escapeHtml(stripPrefix(it.region)) + ' \u00b7 ' + escapeHtml(it.districtTif) + ' \u00b7 STO ' + escapeHtml(it.sto) + ' \u00b7 ID ' + escapeHtml(it.idDigasss || '-') + '</div>' +
           '<div class="overall-progress">' +
             '<div class="row"><span class="label">Progress Keseluruhan</span><span class="pct">' + overall + '%</span></div>' +
             '<div class="bar-track"><div class="bar-fill" style="width:' + overall + '%; background:linear-gradient(90deg, var(--accent) 0%, var(--accent2) 100%)"></div></div>' +
@@ -438,6 +572,17 @@
                 '<div class="bar-track"><div class="bar-fill" style="width:' + p + '%; background:' + barColor(p) + '"></div></div>' +
               '</div>';
           }).join('');
+        }
+
+        var evidence = parseEvidence(it.detailStatus);
+        if (evidence.length) {
+          html += '<div class="evidence-title">Evidence Foto (' + evidence.length + ')</div>';
+          html += '<div class="evidence-grid">' + evidence.map(function(ev){
+            return '<a class="evidence-item" href="' + escapeHtml(ev.url) + '" target="_blank" rel="noopener">' +
+              '<img src="' + escapeHtml(ev.thumb) + '" loading="lazy" alt="evidence" />' +
+              (ev.date ? '<span class="evidence-date">' + escapeHtml(ev.date) + '</span>' : '') +
+            '</a>';
+          }).join('') + '</div>';
         }
 
         html += '<div class="back-link" id="backToResults">&larr; Cari pekerjaan lain</div>';
