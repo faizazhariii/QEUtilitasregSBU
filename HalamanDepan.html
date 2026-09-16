@@ -141,6 +141,8 @@
   }
   table.data-table td{padding:7px 8px; border-bottom:1px solid var(--card-border); white-space:nowrap;}
   table.data-table tr:last-child td{border-bottom:none;}
+  table.data-table tr.clickable-row{cursor:pointer;}
+  table.data-table tr.clickable-row:active td{background:var(--bg2);}
 
   .loading, .empty{font-size:13px; color:var(--sub); text-align:center; padding:16px;}
   .hint{font-size:12.5px; color:var(--sub); text-align:center; padding:14px 8px;}
@@ -431,6 +433,9 @@
   }
 
   // --- Bottom data table (opened by clicking a row in any overview panel) ---
+  var lastTableItems = [];
+  var lastTableTitle = '';
+
   function loadDataTable(filterKey, value, title){
     var panel = document.getElementById('dataTablePanel');
     var wrap = document.getElementById('dataTableWrap');
@@ -446,26 +451,61 @@
       .then(function(res){ return res.json(); })
       .then(function(data){
         if (!data.ok) throw new Error(data.error || 'Gagal memuat data');
-        if (data.items.length === 0) {
-          wrap.innerHTML = '<div class="empty">Tidak ada data.</div>';
-          return;
-        }
-        var rows = data.items.map(function(it, idx){
-          return '<tr>' +
-            '<td>' + (idx + 1) + '</td>' +
-            '<td>' + escapeHtml(it.namaLop) + '</td>' +
-            '<td>' + escapeHtml(it.sto) + '</td>' +
-            '<td>' + escapeHtml(it.idDigasss || '-') + '</td>' +
-            '<td>' + escapeHtml(it.statusProgres || '-') + '</td>' +
-          '</tr>';
-        }).join('');
-        wrap.innerHTML =
-          '<table class="data-table"><thead><tr>' +
-            '<th>No</th><th>Nama LOP</th><th>STO</th><th>ID Digasss</th><th>Status</th>' +
-          '</tr></thead><tbody>' + rows + '</tbody></table>';
+        lastTableItems = data.items;
+        lastTableTitle = title;
+        renderDataTableRows();
       })
       .catch(function(err){
         wrap.innerHTML = '<div class="empty">Gagal memuat: ' + escapeHtml(err.message) + '</div>';
+      });
+  }
+
+  function renderDataTableRows(){
+    document.getElementById('dataTableTitle').textContent = lastTableTitle;
+    var wrap = document.getElementById('dataTableWrap');
+    if (lastTableItems.length === 0) {
+      wrap.innerHTML = '<div class="empty">Tidak ada data.</div>';
+      return;
+    }
+    var rows = lastTableItems.map(function(it, idx){
+      return '<tr class="clickable-row" data-idx="' + idx + '">' +
+        '<td>' + (idx + 1) + '</td>' +
+        '<td>' + escapeHtml(it.namaLop) + '</td>' +
+        '<td>' + escapeHtml(it.sto) + '</td>' +
+        '<td>' + escapeHtml(it.idDigasss || '-') + '</td>' +
+        '<td>' + escapeHtml(it.statusProgres || '-') + '</td>' +
+      '</tr>';
+    }).join('');
+    wrap.innerHTML =
+      '<table class="data-table"><thead><tr>' +
+        '<th>No</th><th>Nama LOP</th><th>STO</th><th>ID Digasss</th><th>Status</th>' +
+      '</tr></thead><tbody>' + rows + '</tbody></table>';
+
+    Array.prototype.forEach.call(wrap.querySelectorAll('.clickable-row'), function(tr){
+      tr.addEventListener('click', function(){
+        showTableRowDetail(parseInt(tr.getAttribute('data-idx'), 10));
+      });
+    });
+  }
+
+  function showTableRowDetail(idx){
+    var item = lastTableItems[idx];
+    if (!item) return;
+    var wrap = document.getElementById('dataTableWrap');
+    document.getElementById('dataTableTitle').textContent = item.namaLop;
+    wrap.innerHTML = '<div class="loading">Memuat rincian...</div>';
+
+    fetch(API_URL + '?action=detail&row=' + item.rowIndex)
+      .then(function(res){ return res.json(); })
+      .then(function(data){
+        if (!data.ok) throw new Error(data.error || 'Gagal memuat detail');
+        var html = buildJobDetailHtml(data.item);
+        html += '<div class="back-link" id="backToTableList">&larr; Kembali ke daftar</div>';
+        wrap.innerHTML = html;
+        document.getElementById('backToTableList').addEventListener('click', renderDataTableRows);
+      })
+      .catch(function(err){
+        wrap.innerHTML = '<div class="empty">Gagal memuat rincian: ' + escapeHtml(err.message) + '</div>';
       });
   }
 
@@ -527,6 +567,51 @@
     document.getElementById('scrollHint').style.display = '';
   }
 
+  function buildJobDetailHtml(it){
+    var items = it.items || [];
+    var totalPlan = 0, totalAktual = 0;
+    items.forEach(function(x){ totalPlan += parseFloat(x.plan) || 0; totalAktual += parseFloat(x.aktual) || 0; });
+    var overall = totalPlan > 0 ? Math.max(0, Math.min(100, Math.round((totalAktual / totalPlan) * 100))) : 0;
+
+    var html = '' +
+      '<div class="job-title">' + escapeHtml(it.namaLop) + '</div>' +
+      '<div class="job-loc">' + escapeHtml(stripPrefix(it.region)) + ' \u00b7 ' + escapeHtml(it.districtTif) + ' \u00b7 STO ' + escapeHtml(it.sto) + ' \u00b7 ID ' + escapeHtml(it.idDigasss || '-') + '</div>' +
+      '<div class="overall-progress">' +
+        '<div class="row"><span class="label">Progress Keseluruhan</span><span class="pct">' + overall + '%</span></div>' +
+        '<div class="bar-track"><div class="bar-fill" style="width:' + overall + '%; background:linear-gradient(90deg, var(--accent) 0%, var(--accent2) 100%)"></div></div>' +
+      '</div>';
+
+    if (items.length === 0) {
+      html += '<div class="empty">Tidak ada item plan untuk pekerjaan ini.</div>';
+    } else {
+      html += items.map(function(x){
+        var p = pct(x.aktual, x.plan);
+        return '' +
+          '<div class="item-card">' +
+            '<div class="item-top">' +
+              '<div class="item-name">' + escapeHtml(x.label) + '</div>' +
+              '<div class="item-pct">' + p + '%</div>' +
+            '</div>' +
+            '<div class="item-vals">Aktual <b>' + escapeHtml(x.aktual || 0) + '</b> / Plan <b>' + escapeHtml(x.plan) + '</b></div>' +
+            '<div class="bar-track"><div class="bar-fill" style="width:' + p + '%; background:' + barColor(p) + '"></div></div>' +
+          '</div>';
+      }).join('');
+    }
+
+    var evidence = parseEvidence(it.detailStatus);
+    if (evidence.length) {
+      html += '<div class="evidence-title">Evidence Foto (' + evidence.length + ')</div>';
+      html += '<div class="evidence-grid">' + evidence.map(function(ev){
+        return '<a class="evidence-item" href="' + escapeHtml(ev.url) + '" target="_blank" rel="noopener">' +
+          '<img src="' + escapeHtml(ev.thumb) + '" loading="lazy" alt="evidence" />' +
+          (ev.date ? '<span class="evidence-date">' + escapeHtml(ev.date) + '</span>' : '') +
+        '</a>';
+      }).join('') + '</div>';
+    }
+
+    return html;
+  }
+
   function renderResultPicker(matches){
     document.getElementById('progressPanelTitle').textContent = 'Hasil Pencarian';
     var body = document.getElementById('progressPanelBody');
@@ -554,49 +639,7 @@
       .then(function(res){ return res.json(); })
       .then(function(data){
         if (!data.ok) throw new Error(data.error || 'Gagal memuat detail');
-        var it = data.item;
-        var items = it.items || [];
-
-        var totalPlan = 0, totalAktual = 0;
-        items.forEach(function(x){ totalPlan += parseFloat(x.plan) || 0; totalAktual += parseFloat(x.aktual) || 0; });
-        var overall = totalPlan > 0 ? Math.max(0, Math.min(100, Math.round((totalAktual / totalPlan) * 100))) : 0;
-
-        var html = '' +
-          '<div class="job-title">' + escapeHtml(it.namaLop) + '</div>' +
-          '<div class="job-loc">' + escapeHtml(stripPrefix(it.region)) + ' \u00b7 ' + escapeHtml(it.districtTif) + ' \u00b7 STO ' + escapeHtml(it.sto) + ' \u00b7 ID ' + escapeHtml(it.idDigasss || '-') + '</div>' +
-          '<div class="overall-progress">' +
-            '<div class="row"><span class="label">Progress Keseluruhan</span><span class="pct">' + overall + '%</span></div>' +
-            '<div class="bar-track"><div class="bar-fill" style="width:' + overall + '%; background:linear-gradient(90deg, var(--accent) 0%, var(--accent2) 100%)"></div></div>' +
-          '</div>';
-
-        if (items.length === 0) {
-          html += '<div class="empty">Tidak ada item plan untuk pekerjaan ini.</div>';
-        } else {
-          html += items.map(function(x){
-            var p = pct(x.aktual, x.plan);
-            return '' +
-              '<div class="item-card">' +
-                '<div class="item-top">' +
-                  '<div class="item-name">' + escapeHtml(x.label) + '</div>' +
-                  '<div class="item-pct">' + p + '%</div>' +
-                '</div>' +
-                '<div class="item-vals">Aktual <b>' + escapeHtml(x.aktual || 0) + '</b> / Plan <b>' + escapeHtml(x.plan) + '</b></div>' +
-                '<div class="bar-track"><div class="bar-fill" style="width:' + p + '%; background:' + barColor(p) + '"></div></div>' +
-              '</div>';
-          }).join('');
-        }
-
-        var evidence = parseEvidence(it.detailStatus);
-        if (evidence.length) {
-          html += '<div class="evidence-title">Evidence Foto (' + evidence.length + ')</div>';
-          html += '<div class="evidence-grid">' + evidence.map(function(ev){
-            return '<a class="evidence-item" href="' + escapeHtml(ev.url) + '" target="_blank" rel="noopener">' +
-              '<img src="' + escapeHtml(ev.thumb) + '" loading="lazy" alt="evidence" />' +
-              (ev.date ? '<span class="evidence-date">' + escapeHtml(ev.date) + '</span>' : '') +
-            '</a>';
-          }).join('') + '</div>';
-        }
-
+        var html = buildJobDetailHtml(data.item);
         html += '<div class="back-link" id="backToResults">&larr; Cari pekerjaan lain</div>';
         body.innerHTML = html;
         document.getElementById('backToResults').addEventListener('click', function(){
