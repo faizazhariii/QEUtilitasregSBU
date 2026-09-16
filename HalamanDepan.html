@@ -64,21 +64,25 @@
   .showing b{color:var(--text);}
 
   .panel-row{
-    display:flex; gap:12px; overflow-x:auto; scroll-snap-type:x mandatory; padding-bottom:4px;
-    margin:0 -14px 12px; padding-left:14px; padding-right:14px;
+    display:flex; gap:10px; overflow-x:auto; scroll-snap-type:x mandatory; padding-bottom:4px;
+    margin:0 -14px 8px; padding-left:14px; padding-right:14px;
   }
   .panel-row::-webkit-scrollbar{display:none;}
   .panel-row .panel{
-    flex:0 0 88%; scroll-snap-align:start; margin-bottom:0;
+    flex:0 0 calc(100vw - 58px); max-width:340px; scroll-snap-align:start; margin-bottom:0;
+    display:flex; flex-direction:column;
   }
-  .scroll-hint{font-size:10.5px; color:var(--sub); text-align:center; margin:-4px 0 12px;}
+  .panel-row .panel .panel-list{
+    max-height:330px; overflow-y:auto; padding-right:2px;
+  }
+  .scroll-hint{font-size:10.5px; color:var(--sub); text-align:center; margin:0 0 14px;}
 
-  @media (min-width: 860px){
+  @media (min-width: 900px){
     .panel-row{
-      display:grid; grid-template-columns:repeat(3, 1fr); overflow-x:visible;
+      display:grid; grid-template-columns:repeat(4, 1fr); overflow-x:visible;
       margin:0 0 12px; padding-left:0; padding-right:0;
     }
-    .panel-row .panel{flex:none;}
+    .panel-row .panel{flex:none; max-width:none;}
     .scroll-hint{display:none;}
   }
 
@@ -165,7 +169,7 @@
   .item-top{display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:8px;}
   .item-name{font-size:13px; font-weight:600;}
   .item-pct{font-size:12px; font-weight:700; color:var(--accent2); white-space:nowrap;}
-  .item-vals{font-size:11.5px; color:var(--sub); margin-bottom:8px;}
+  .item-vals{font-size:11.5px; color:var(--sub); margin-bottom:8px; text-align:right;}
   .item-vals b{color:var(--text);}
 
   .back-link{
@@ -214,7 +218,7 @@
   <div class="filter-scroll" id="regionFilters"></div>
   <div class="showing" id="showingLabel">Memuat...</div>
 
-  <div class="panel-row">
+  <div class="panel-row" id="overviewPanels">
   <div class="panel">
     <div class="panel-head">
       <div class="title-wrap">
@@ -224,7 +228,7 @@
       <span class="panel-badge" id="districtTotalBadge">-</span>
     </div>
     <div class="panel-sub">Sebaran pekerjaan per District TIF</div>
-    <div id="districtList"><div class="loading">Memuat...</div></div>
+    <div class="panel-list" id="districtList"><div class="loading">Memuat...</div></div>
   </div>
 
   <div class="panel">
@@ -236,7 +240,7 @@
       <span class="panel-badge" id="statusTotalBadge">-</span>
     </div>
     <div class="panel-sub">Status progres pekerjaan QE Utilitas</div>
-    <div id="statusList"><div class="loading">Memuat...</div></div>
+    <div class="panel-list" id="statusList"><div class="loading">Memuat...</div></div>
   </div>
 
   <div class="panel">
@@ -248,7 +252,7 @@
       <span class="panel-badge" id="materialTotalBadge">-</span>
     </div>
     <div class="panel-sub">Jumlah total tiap jenis material sesuai Plan</div>
-    <div id="materialList"><div class="loading">Memuat...</div></div>
+    <div class="panel-list" id="materialList"><div class="loading">Memuat...</div></div>
   </div>
   <div class="panel">
     <div class="panel-head">
@@ -259,10 +263,10 @@
       <span class="panel-badge" id="klasifikasiTotalBadge">-</span>
     </div>
     <div class="panel-sub">Jumlah LOP per klasifikasi</div>
-    <div id="klasifikasiList"><div class="loading">Memuat...</div></div>
+    <div class="panel-list" id="klasifikasiList"><div class="loading">Memuat...</div></div>
   </div>
   </div>
-  <div class="scroll-hint">&#8592; geser untuk lihat panel lainnya &#8594;</div>
+  <div class="scroll-hint" id="scrollHint">&#8592; geser untuk lihat panel lainnya &#8594;</div>
 
   <div class="panel" id="progressPanel" style="display:none;">
     <div class="panel-head">
@@ -512,8 +516,16 @@
     return 'var(--orange)';
   }
 
-  function showProgressPanel(){ document.getElementById('progressPanel').style.display = 'block'; }
-  function hideProgressPanel(){ document.getElementById('progressPanel').style.display = 'none'; }
+  function showProgressPanel(){
+    document.getElementById('progressPanel').style.display = 'block';
+    document.getElementById('overviewPanels').style.display = 'none';
+    document.getElementById('scrollHint').style.display = 'none';
+  }
+  function hideProgressPanel(){
+    document.getElementById('progressPanel').style.display = 'none';
+    document.getElementById('overviewPanels').style.display = '';
+    document.getElementById('scrollHint').style.display = '';
+  }
 
   function renderResultPicker(matches){
     document.getElementById('progressPanelTitle').textContent = 'Hasil Pencarian';
