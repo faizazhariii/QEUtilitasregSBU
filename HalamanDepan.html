@@ -158,6 +158,13 @@
   /* Job detail (read-only cek progress) */
   .job-title{font-weight:700; font-size:15px; margin-bottom:2px;}
   .job-loc{font-size:12px; color:var(--sub); margin-bottom:14px;}
+  .duration-badge{
+    display:inline-flex; align-items:center; gap:5px; font-size:12.5px; font-weight:600; color:var(--orange);
+    background:rgba(245,158,11,.12); border:1px solid rgba(245,158,11,.3); border-radius:999px;
+    padding:6px 12px; margin-bottom:14px;
+  }
+  .duration-badge b{font-weight:800;}
+  .duration-sub{font-size:11px; font-weight:500; color:var(--sub);}
   .overall-progress{margin-bottom:16px;}
   .overall-progress .row{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px;}
   .overall-progress .pct{font-size:20px; font-weight:800; color:var(--accent2);}
@@ -576,7 +583,15 @@
 
     var html = '' +
       '<div class="job-title">' + escapeHtml(it.namaLop) + '</div>' +
-      '<div class="job-loc">' + escapeHtml(stripPrefix(it.region)) + ' \u00b7 ' + escapeHtml(it.districtTif) + ' \u00b7 STO ' + escapeHtml(it.sto) + ' \u00b7 ID ' + escapeHtml(it.idDigasss || '-') + '</div>' +
+      '<div class="job-loc">' + escapeHtml(stripPrefix(it.region)) + ' \u00b7 ' + escapeHtml(it.districtTif) + ' \u00b7 STO ' + escapeHtml(it.sto) + ' \u00b7 ID ' + escapeHtml(it.idDigasss || '-') + '</div>';
+
+    if (it.durasiQeDays !== null && it.durasiQeDays !== undefined) {
+      html += '<div class="duration-badge">&#9203; Durasi QE: <b>' + it.durasiQeDays + ' hari</b>' +
+        (it.ndeTanggal ? ' <span class="duration-sub">(sejak NDE ' + escapeHtml(it.ndeTanggal) + ')</span>' : '') +
+      '</div>';
+    }
+
+    html += '' +
       '<div class="overall-progress">' +
         '<div class="row"><span class="label">Progress Keseluruhan</span><span class="pct">' + overall + '%</span></div>' +
         '<div class="bar-track"><div class="bar-fill" style="width:' + overall + '%; background:linear-gradient(90deg, var(--accent) 0%, var(--accent2) 100%)"></div></div>' +
