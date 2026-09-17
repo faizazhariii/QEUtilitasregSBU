@@ -21,7 +21,12 @@
   }
   header{
     background:var(--bg2); padding:16px; position:sticky; top:0; z-index:10;
-    border-bottom:1px solid var(--card-border);
+    border-bottom:1px solid var(--card-border); display:flex; align-items:center; gap:12px;
+  }
+  .back-btn{
+    width:34px; height:34px; border-radius:9px; background:var(--card); border:1px solid var(--card-border);
+    color:var(--accent2); display:flex; align-items:center; justify-content:center; font-size:16px;
+    text-decoration:none; flex-shrink:0;
   }
   header h1{margin:0; font-size:17px; font-weight:700;}
   header p{margin:3px 0 0; font-size:12px; color:var(--sub);}
@@ -124,8 +129,11 @@
 <body>
 
 <header>
-  <h1>Input Progress QE Utilitas</h1>
-  <p>ED REG Sumbagut</p>
+  <a class="back-btn" href="HalamanDepan.html" aria-label="Kembali">&#8592;</a>
+  <div>
+    <h1>Input Progress QE Utilitas</h1>
+    <p>ED REG Sumbagut</p>
+  </div>
 </header>
 
 <div class="section">
@@ -305,8 +313,14 @@
             '<div class="item-pct" id="itemPct-' + idx + '">' + p + '%</div>' +
           '</div>' +
           '<div class="item-mid">' +
-            '<span class="plan-tag">Plan <b>' + escapeHtml(it.plan) + '</b></span>' +
-            '<input type="number" inputmode="decimal" data-idx="' + idx + '" class="aktual-input" value="' + escapeHtml(it.aktual) + '" />' +
+            '<div class="item-col">' +
+              '<div class="col-label">Aktual</div>' +
+              '<input type="number" inputmode="decimal" data-idx="' + idx + '" class="aktual-input" value="' + escapeHtml(it.aktual) + '" />' +
+            '</div>' +
+            '<div class="item-col">' +
+              '<div class="col-label">Plan</div>' +
+              '<div class="plan-value">' + escapeHtml(it.plan) + '</div>' +
+            '</div>' +
           '</div>' +
           '<div class="item-bar bar-track"><div class="bar-fill" id="itemBar-' + idx + '" style="width:' + p + '%; background:' + barColor(p) + '"></div></div>' +
         '</div>';
