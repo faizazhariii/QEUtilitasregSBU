@@ -58,6 +58,13 @@
   .selected-card.show{display:block;}
   .selected-card .lop{font-weight:700; font-size:15px; margin-bottom:2px;}
   .selected-card .loc{font-size:12px; color:var(--sub); margin-bottom:14px;}
+  .duration-badge{
+    display:inline-flex; align-items:center; gap:5px; font-size:12.5px; font-weight:600; color:var(--orange);
+    background:rgba(245,158,11,.12); border:1px solid rgba(245,158,11,.3); border-radius:999px;
+    padding:6px 12px; margin-bottom:14px;
+  }
+  .duration-badge b{font-weight:800;}
+  .duration-sub{font-size:11px; font-weight:500; color:var(--sub);}
 
   .overall-progress{margin-bottom:4px;}
   .overall-progress .row{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px;}
@@ -147,6 +154,7 @@
   <div class="card selected-card" id="selected-card">
     <div class="lop" id="sel-lop"></div>
     <div class="loc" id="sel-loc"></div>
+    <div id="sel-duration"></div>
 
     <div class="overall-progress">
       <div class="row">
@@ -266,12 +274,20 @@
     document.getElementById('items-list').innerHTML = '';
     updateOverallProgress();
 
+    document.getElementById('sel-duration').innerHTML = '';
+
     fetch(API_URL + '?action=detail&row=' + item.rowIndex)
       .then(function(res){ return res.json(); })
       .then(function(data){
         if (!data.ok) throw new Error(data.error || 'Gagal memuat detail');
         detailItems = data.item.items || [];
         renderItems();
+        if (data.item.durasiQeDays !== null && data.item.durasiQeDays !== undefined) {
+          document.getElementById('sel-duration').innerHTML =
+            '<div class="duration-badge">&#9203; Durasi QE: <b>' + data.item.durasiQeDays + ' hari</b>' +
+            (data.item.ndeTanggal ? ' <span class="duration-sub">(sejak NDE ' + escapeHtml(data.item.ndeTanggal) + ')</span>' : '') +
+            '</div>';
+        }
       })
       .catch(function(err){
         document.getElementById('items-loading').textContent = 'Gagal memuat item: ' + err.message;
