@@ -50,6 +50,20 @@
   .search-row input:focus{outline:none;}
   .search-tip{font-size:10.5px; color:var(--sub); margin-top:6px;}
 
+  .module-row{margin-bottom:10px;}
+  .module-card{
+    display:flex; align-items:center; gap:12px; background:var(--card); border:1px solid var(--card-border);
+    border-radius:14px; padding:12px 14px; text-decoration:none; color:var(--text); box-shadow:var(--shadow);
+  }
+  .module-card:active{border-color:var(--accent);}
+  .module-icon{
+    width:38px; height:38px; border-radius:10px; background:rgba(236,72,153,.15); color:var(--pink);
+    display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0;
+  }
+  .module-title{font-size:13px; font-weight:700;}
+  .module-desc{font-size:10.5px; color:var(--sub); margin-top:2px;}
+  .module-arrow{margin-left:auto; color:var(--sub); font-size:18px;}
+
   .filter-scroll{display:flex; gap:8px; overflow-x:auto; padding:2px 0 4px; margin-bottom:4px;}
   .filter-scroll::-webkit-scrollbar{display:none;}
   .chip{
@@ -235,6 +249,27 @@
       <input type="text" id="search" placeholder="Cari Nama LOP, ID Digasss, STO untuk cek progress..." autocomplete="off" />
     </div>
     <div class="search-tip">Ketik untuk langsung lihat progress per item pekerjaan</div>
+  </div>
+
+  <div class="module-row">
+    <a class="module-card" href="Timeline-BRT.html">
+      <div class="module-icon">&#128198;</div>
+      <div class="module-text">
+        <div class="module-title">BRT Medan &middot; Timeline</div>
+        <div class="module-desc">Cek progress Zona &middot; Segmen &middot; Sisi Kiri/Kanan (prototype)</div>
+      </div>
+      <div class="module-arrow">&#8250;</div>
+    </a>
+  </div>
+  <div class="module-row">
+    <a class="module-card" href="InputBRT.html">
+      <div class="module-icon" style="background:rgba(34,197,94,.15); color:var(--green);">&#9999;&#65039;</div>
+      <div class="module-text">
+        <div class="module-title">BRT Medan &middot; Input Progress</div>
+        <div class="module-desc">Update Aktual per Zona &middot; Segmen &middot; Sisi (prototype)</div>
+      </div>
+      <div class="module-arrow">&#8250;</div>
+    </a>
   </div>
 
   <div class="filter-scroll" id="regionFilters"></div>
