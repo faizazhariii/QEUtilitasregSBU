@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>Timeline BRT (Prototype)</title>
+<style>
+  :root{
+    --bg:#0b1120; --bg2:#0e1729;
+    --card:#141d33; --card-border:#232f4d;
+    --text:#e7ebf5; --sub:#8b95ab;
+    --accent:#3b6ef6; --accent2:#6d9bff; --accent-soft:#1b2a4d;
+    --green:#22c55e; --orange:#f59e0b; --red:#ef4444; --purple:#a855f7; --teal:#14b8a6; --pink:#ec4899; --yellow:#eab308;
+    --shadow:0 4px 18px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:var(--bg); color:var(--text); padding-bottom:40px;
+  }
+  header{
+    background:var(--bg2); padding:16px; border-bottom:1px solid var(--card-border);
+  }
+  header h1{margin:0; font-size:16px; font-weight:800;}
+  header p{margin:2px 0 0; font-size:11px; color:var(--sub);}
+
+  .section{padding:14px;}
+
+  .toolbar{
+    display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:14px;
+  }
+  .toolbar label{font-size:11px; color:var(--sub); font-weight:700;}
+  .toolbar input[type=date], .toolbar select{
+    background:var(--bg2); border:1px solid var(--card-border); color:var(--text); border-radius:8px;
+    padding:7px 9px; font-size:12.5px; font-family:inherit;
+  }
+  .toolbar button{
+    background:var(--accent); color:#fff; border:none; border-radius:8px; padding:8px 14px;
+    font-size:12.5px; font-weight:700; cursor:pointer;
+  }
+  .toolbar .hint{font-size:10.5px; color:var(--sub); width:100%; margin-top:-2px;}
+
+  .legend{display:flex; gap:12px; flex-wrap:wrap; margin-bottom:14px; font-size:10.5px; color:var(--sub);}
+  .legend span{display:inline-flex; align-items:center; gap:5px;}
+  .legend i{width:9px; height:9px; border-radius:3px; display:inline-block;}
+
+  .panel{
+    background:var(--card); border-radius:14px; border:1px solid var(--card-border);
+    margin-bottom:12px; box-shadow:var(--shadow); overflow:hidden;
+  }
+  .panel-head{
+    display:flex; justify-content:space-between; align-items:center; padding:13px 15px; cursor:pointer;
+    border-bottom:1px solid var(--card-border);
+  }
+  .panel-head.collapsed{border-bottom:none;}
+  .panel-title{font-size:13px; font-weight:700;}
+  .segmen-badge{
+    display:inline-block; font-size:9.5px; font-weight:700; padding:2px 8px; border-radius:999px;
+    background:var(--accent-soft); color:var(--accent2); vertical-align:middle; margin-left:4px;
+  }
+  .segmen-badge.segmen-empty{background:rgba(245,158,11,.12); color:var(--orange);}
+  .panel-loc{font-size:10.5px; color:var(--sub); margin-top:2px;}
+  .panel-toggle{font-size:12px; color:var(--sub); transition:transform .15s; flex-shrink:0;}
+  .panel-body{padding:0;}
+  .panel-body.hidden{display:none;}
+  .empty-zona{
+    padding:14px 15px; font-size:12px; color:var(--orange); background:rgba(245,158,11,.08);
+  }
+
+  .gantt-scroll{overflow-x:auto; overflow-y:hidden; max-height:70vh;}
+
+  table.day-grid{border-collapse:collapse; font-size:10.5px;}
+  table.day-grid th, table.day-grid td{border:1px solid var(--card-border); padding:0;}
+  .month-th{
+    font-size:9.5px; font-weight:800; text-align:center; background:var(--bg2); color:var(--accent2);
+    padding:4px 2px; position:sticky; top:0; z-index:3;
+  }
+  .day-th{
+    width:22px; min-width:22px; max-width:22px; font-size:8px; text-align:center; padding:3px 0;
+    color:var(--sub); font-weight:600; position:sticky; top:23px; z-index:3; background:var(--bg2);
+  }
+  .day-th.weekend{color:var(--orange);}
+  .day-th.today-col{background:var(--accent); color:#fff; font-weight:800;}
+  .day-td.today-col{box-shadow:inset 2px 0 0 var(--accent2), inset -2px 0 0 var(--accent2);}
+  .corner{
+    position:sticky; left:0; z-index:4; background:var(--bg2); min-width:170px;
+  }
+  .item-td{
+    position:sticky; left:0; background:var(--card); min-width:170px; max-width:170px;
+    font-size:10.5px; font-weight:700; padding:6px 9px; border-right:2px solid var(--card-border);
+    z-index:2; white-space:nowrap;
+  }
+  .item-dates{font-size:8.5px; color:var(--sub); font-weight:500; margin-top:1px;}
+  .item-qty{font-size:8.5px; color:var(--accent2); font-weight:600; margin-top:1px;}
+  .item-qty b{font-weight:800;}
+
+  .segmen-row .segmen-td{
+    position:sticky; left:0; background:linear-gradient(90deg, var(--accent-soft), transparent);
+    color:var(--accent2); font-size:10px; font-weight:800; padding:6px 9px; border-right:none;
+    text-transform:uppercase; letter-spacing:.3px;
+  }
+  .sisi-header-row .sisi-header-td{
+    position:sticky; left:0; font-size:9px; font-weight:800; padding:4px 9px; border-right:none;
+    text-transform:uppercase; letter-spacing:.4px;
+  }
+  .sisi-header-row.sisi-kiri .sisi-header-td{background:rgba(59,110,246,.18); color:var(--accent2);}
+  .sisi-header-row.sisi-kanan .sisi-header-td{background:rgba(236,72,153,.18); color:var(--pink);}
+  tr.sisi-kiri-bg .item-td{background:rgba(59,110,246,.06);}
+  tr.sisi-kanan-bg .item-td{background:rgba(236,72,153,.06);}
+  .item-td.sisi-empty{
+    color:var(--sub); font-weight:600; font-style:italic;
+  }
+  .day-td{width:22px; min-width:22px; max-width:22px; height:24px;}
+  .day-td.weekend-col{background:rgba(255,255,255,.02);}
+
+  .loading, .empty{font-size:13px; color:var(--sub); text-align:center; padding:16px;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Timeline BRT &middot; Prototype</h1>
+  <p>Sumber: sheet BRT MEDAN &middot; belum digabung ke Mini Web QE</p>
+</header>
+
+<div class="section">
+
+  <div class="toolbar">
+    <label>STO</label>
+    <select id="stoFilter"><option value="">Semua STO</option></select>
+    <div class="hint">Tabel timeline di bawah bisa digeser ke kanan/kiri. Garis biru terang menandai hari ini.</div>
+  </div>
+
+  <div class="legend">
+    <span><i style="background:var(--accent2)"></i> KABEL</span>
+    <span><i style="background:var(--orange)"></i> GALIAN</span>
+    <span><i style="background:var(--purple)"></i> HDPE/SUBDUCT</span>
+    <span><i style="background:var(--pink)"></i> TIANG</span>
+    <span><i style="background:var(--teal)"></i> ODP</span>
+    <span><i style="background:var(--yellow)"></i> ODC</span>
+    <span><i style="background:var(--red)"></i> HH-PIT</span>
+    <span><i style="background:var(--green)"></i> DROPCORE</span>
+    <span><i style="background:#ffffff"></i> CO</span>
+  </div>
+
+  <div id="lopList"><div class="loading">Memuat...</div></div>
+
+</div>
+
+<script>
+  var API_URL = 'https://script.google.com/macros/s/AKfycbyIYDJ4Btr5MuTNsK8PcqICFm0woRzbK7gV91igtabsBiM_quoIvsOYJy1OvkszlSZYrQ/exec';
+
+  var ITEM_COLORS = {
+    'KABEL': '#6d9bff', 'GALIAN': '#f59e0b', 'HDPE/SUBDUCT': '#a855f7',
+    'TIANG': '#ec4899', 'ODP': '#14b8a6', 'ODC': '#eab308',
+    'HH-PIT': '#ef4444', 'DROPCORE': '#22c55e', 'CO': '#ffffff'
+  };
+
+  var allRows = [];
+  var allZonas = [];
+  var MONTH_ID = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+
+  function escapeHtml(str){
+    return String(str == null ? '' : str)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function loadSto(rows){
+    var stoSet = {};
+    rows.forEach(function(r){ if (r.sto) stoSet[r.sto] = true; });
+    var sel = document.getElementById('stoFilter');
+    Object.keys(stoSet).sort().forEach(function(s){
+      var opt = document.createElement('option');
+      opt.value = s; opt.textContent = s;
+      sel.appendChild(opt);
+    });
+  }
+
+  function zonaDateRange(zona){
+    var minTs = null, maxTs = null;
+    zona.segmenList.forEach(function(seg){
+      ['KIRI', 'KANAN'].forEach(function(k){
+        var sisiData = seg.sisi[k];
+        if (!sisiData) return;
+        sisiData.items.forEach(function(it){
+          var s = new Date(it.start + 'T00:00:00').getTime();
+          var e = new Date(it.end + 'T00:00:00').getTime();
+          if (minTs === null || s < minTs) minTs = s;
+          if (maxTs === null || e > maxTs) maxTs = e;
+        });
+      });
+    });
+    if (minTs === null) return null;
+
+    var todayTs = new Date(new Date().toDateString()).getTime();
+    if (todayTs < minTs) minTs = todayTs; // make sure "today" is always reachable in-range
+    if (todayTs > maxTs) maxTs = todayTs;
+
+    var from = new Date(minTs); from.setDate(from.getDate() - 3);
+    var to = new Date(maxTs); to.setDate(to.getDate() + 5);
+    return { from: from, to: to };
+  }
+
+  function buildDateArray(fromDate, toDate){
+    var dates = [];
+    var cur = new Date(fromDate);
+    cur.setHours(0,0,0,0);
+    var end = new Date(toDate);
+    end.setHours(0,0,0,0);
+    while (cur.getTime() <= end.getTime()) {
+      dates.push(new Date(cur));
+      cur.setDate(cur.getDate() + 1);
+    }
+    return dates;
+  }
+
+  function isToday(d){
+    var t = new Date();
+    return d.getFullYear() === t.getFullYear() && d.getMonth() === t.getMonth() && d.getDate() === t.getDate();
+  }
+
+  function monthGroups(dates){
+    var groups = [];
+    dates.forEach(function(d){
+      var label = MONTH_ID[d.getMonth()] + ' ' + d.getFullYear();
+      if (groups.length && groups[groups.length - 1].label === label) {
+        groups[groups.length - 1].count++;
+      } else {
+        groups.push({ label: label, count: 1 });
+      }
+    });
+    return groups;
+  }
+
+  function renderGanttForZona(zona, dates){
+    var groups = monthGroups(dates);
+    var monthRow = '<tr><th class="corner"></th>' + groups.map(function(g){
+      return '<th colspan="' + g.count + '" class="month-th">' + g.label + '</th>';
+    }).join('') + '</tr>';
+
+    var dayRow = '<tr><th class="corner">Segmen / Sisi / Item</th>' + dates.map(function(d){
+      var isWeekend = d.getDay() === 0 || d.getDay() === 6;
+      var today = isToday(d);
+      return '<th class="day-th' + (isWeekend ? ' weekend' : '') + (today ? ' today-col' : '') + '">' + d.getDate() + '</th>';
+    }).join('') + '</tr>';
+
+    var colCount = dates.length;
+    var bodyRows = zona.segmenList.map(function(seg){
+      var segRow = '<tr class="segmen-row"><td class="segmen-td" colspan="' + (colCount + 1) + '">' + escapeHtml(seg.label || 'Segmen belum diberi nama') + '</td></tr>';
+
+      var sisiRows = ['KIRI', 'KANAN'].map(function(sisiKey){
+        var sisiData = seg.sisi[sisiKey];
+        var sisiClass = sisiKey === 'KIRI' ? 'sisi-kiri' : 'sisi-kanan';
+        var sisiLabelText = sisiKey === 'KIRI' ? 'Sisi Kiri' : 'Sisi Kanan';
+
+        var subHeaderRow = '<tr class="sisi-header-row ' + sisiClass + '"><td class="sisi-header-td" colspan="' + (colCount + 1) + '">' + sisiLabelText + '</td></tr>';
+
+        if (!sisiData) {
+          return subHeaderRow + '<tr class="' + sisiClass + '-bg"><td class="item-td sisi-empty">Belum ada data</td>' +
+            dates.map(function(d){ return '<td class="day-td' + (isToday(d) ? ' today-col' : '') + '"></td>'; }).join('') + '</tr>';
+        }
+
+        var itemRows = sisiData.items.map(function(it){
+          var s = new Date(it.start + 'T00:00:00').getTime();
+          var e = new Date(it.end + 'T00:00:00').getTime();
+          var color = ITEM_COLORS[it.label] || '#6d9bff';
+          var cells = dates.map(function(d){
+            var dt = d.getTime();
+            var active = dt >= s && dt <= e;
+            var isWeekend = d.getDay() === 0 || d.getDay() === 6;
+            var today = isToday(d);
+            var style = active ? ('background:' + color + ';') : '';
+            return '<td class="day-td' + (isWeekend ? ' weekend-col' : '') + (today ? ' today-col' : '') + '" style="' + style + '" title="' + escapeHtml(it.label) + '"></td>';
+          }).join('');
+          var qtyLine = (it.plan !== null && it.plan !== undefined)
+            ? '<div class="item-qty">Aktual <b>' + escapeHtml(it.aktual !== null && it.aktual !== undefined ? it.aktual : 0) + '</b> / Plan <b>' + escapeHtml(it.plan) + '</b></div>'
+            : '';
+          return '<tr class="' + sisiClass + '-bg"><td class="item-td">' + escapeHtml(it.label) +
+            '<div class="item-dates">' + escapeHtml(it.startDisplay) + ' - ' + escapeHtml(it.endDisplay) + '</div>' +
+            qtyLine + '</td>' +
+            cells + '</tr>';
+        }).join('');
+
+        return subHeaderRow + itemRows;
+      }).join('');
+
+      return segRow + sisiRows;
+    }).join('');
+
+    return '<div class="gantt-scroll"><table class="day-grid"><thead>' + monthRow + dayRow + '</thead><tbody>' + bodyRows + '</tbody></table></div>';
+  }
+
+  function groupByZona(rows){
+    var zonaMap = {};
+    var zonaOrder = [];
+
+    rows.forEach(function(r){
+      if (!zonaMap[r.namaLop]) {
+        zonaMap[r.namaLop] = {
+          namaLop: r.namaLop, district: r.district, sto: r.sto,
+          segmenMap: {}, segmenList: []
+        };
+        zonaOrder.push(r.namaLop);
+      }
+      var zona = zonaMap[r.namaLop];
+      var segKey = r.segmen || '(tanpa segmen)';
+      if (!zona.segmenMap[segKey]) {
+        var segObj = { label: r.segmen, sisi: {} };
+        zona.segmenMap[segKey] = segObj;
+        zona.segmenList.push(segObj);
+      }
+      zona.segmenMap[segKey].sisi[r.sisi] = r;
+    });
+
+    return zonaOrder.map(function(name){ return zonaMap[name]; });
+  }
+
+  function render(){
+    var stoVal = document.getElementById('stoFilter').value;
+    var listEl = document.getElementById('lopList');
+
+    var filteredRows = allRows.filter(function(r){
+      return !stoVal || r.sto === stoVal;
+    });
+
+    var zonasWithData = groupByZona(filteredRows);
+    var zonasWithDataNames = {};
+    zonasWithData.forEach(function(z){ zonasWithDataNames[z.namaLop] = true; });
+
+    var emptyZonas = allZonas.filter(function(z){
+      if (stoVal && z.sto !== stoVal) return false;
+      if (zonasWithDataNames[z.namaLop]) return false;
+      return true;
+    });
+
+    if (zonasWithData.length === 0 && emptyZonas.length === 0) {
+      listEl.innerHTML = '<div class="empty">Tidak ada LOP untuk STO ini.</div>';
+      return;
+    }
+
+    var withDataHtml = zonasWithData.map(function(zona, idx){
+      var segCount = zona.segmenList.length;
+      var range = zonaDateRange(zona);
+      var body = range ? renderGanttForZona(zona, buildDateArray(range.from, range.to)) : '<div class="empty">Belum ada tanggal timeplan.</div>';
+      return '<div class="panel">' +
+        '<div class="panel-head" data-idx="' + idx + '">' +
+          '<div><div class="panel-title">' + escapeHtml(zona.namaLop) + '</div>' +
+          '<div class="panel-loc">' + escapeHtml(zona.district) + ' &middot; STO ' + escapeHtml(zona.sto) + ' &middot; ' + segCount + ' segmen</div></div>' +
+          '<div class="panel-toggle" id="toggle-' + idx + '">&#9660;</div>' +
+        '</div>' +
+        '<div class="panel-body" id="body-' + idx + '">' + body + '</div>' +
+      '</div>';
+    }).join('');
+
+    var emptyHtml = emptyZonas.map(function(z){
+      return '<div class="panel">' +
+        '<div class="panel-head collapsed">' +
+          '<div><div class="panel-title">' + escapeHtml(z.namaLop) + '</div>' +
+          '<div class="panel-loc">' + escapeHtml(z.district) + ' &middot; STO ' + escapeHtml(z.sto) + '</div></div>' +
+        '</div>' +
+        '<div class="empty-zona">&#128203; Belum ada progress / segmen &amp; timeplan belum diisi</div>' +
+      '</div>';
+    }).join('');
+
+    listEl.innerHTML = withDataHtml + emptyHtml;
+
+    Array.prototype.forEach.call(listEl.querySelectorAll('.panel-head'), function(head){
+      head.addEventListener('click', function(){
+        var idx = head.getAttribute('data-idx');
+        var body = document.getElementById('body-' + idx);
+        var toggle = document.getElementById('toggle-' + idx);
+        var isHidden = body.classList.toggle('hidden');
+        head.classList.toggle('collapsed', isHidden);
+        toggle.style.transform = isHidden ? 'rotate(-90deg)' : 'rotate(0deg)';
+      });
+    });
+
+    // Auto-scroll each table so "today" is visible near the left edge.
+    Array.prototype.forEach.call(listEl.querySelectorAll('.gantt-scroll'), function(scrollEl){
+      var todayCell = scrollEl.querySelector('.today-col');
+      if (todayCell) {
+        scrollEl.scrollLeft = Math.max(0, todayCell.offsetLeft - 90);
+      }
+    });
+  }
+
+  document.getElementById('stoFilter').addEventListener('change', render);
+
+  fetch(API_URL + '?action=brtTimeline')
+    .then(function(res){ return res.json(); })
+    .then(function(data){
+      if (!data.ok) throw new Error(data.error || 'Gagal memuat data');
+      allRows = data.rows;
+      allZonas = data.zonas || [];
+      loadSto(allRows);
+      render();
+    })
+    .catch(function(err){
+      document.getElementById('lopList').innerHTML = '<div class="empty">Gagal memuat data: ' + escapeHtml(err.message) + '</div>';
+    });
+</script>
+
+</body>
+</html>
