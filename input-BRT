@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>Input Progress BRT</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root{
+    --bg:#0b1120; --bg2:#0e1729;
+    --card:#141d33; --card-border:#232f4d;
+    --text:#e7ebf5; --sub:#8b95ab;
+    --accent:#3b6ef6; --accent2:#6d9bff; --accent-soft:#1b2a4d;
+    --green:#22c55e; --orange:#f59e0b; --red:#ef4444; --pink:#ec4899;
+    --shadow:0 4px 18px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:var(--bg); color:var(--text); padding-bottom:32px;
+  }
+  header{
+    background:var(--bg2); padding:16px; position:sticky; top:0; z-index:10;
+    border-bottom:1px solid var(--card-border); display:flex; align-items:center; gap:12px;
+  }
+  .back-btn{
+    width:34px; height:34px; border-radius:9px; background:var(--card); border:1px solid var(--card-border);
+    color:var(--accent2); display:flex; align-items:center; justify-content:center; font-size:16px;
+    text-decoration:none; flex-shrink:0;
+  }
+  header h1{margin:0; font-size:16px; font-weight:800;}
+  header p{margin:2px 0 0; font-size:11px; color:var(--sub);}
+
+  .section{padding:14px;}
+  .card{
+    background:var(--card); border-radius:14px; padding:15px; border:1px solid var(--card-border);
+    margin-bottom:12px; box-shadow:var(--shadow);
+  }
+  label{display:block; font-size:11px; font-weight:700; color:var(--accent2); margin-bottom:6px; text-transform:uppercase; letter-spacing:.4px;}
+
+  .step-label{font-size:10.5px; font-weight:800; color:var(--sub); text-transform:uppercase; letter-spacing:.4px; margin-bottom:8px;}
+
+  .zona-item{
+    padding:11px 12px; border-radius:10px; cursor:pointer; font-size:13.5px; font-weight:600; margin-bottom:6px;
+    background:var(--bg2); border:1px solid var(--card-border);
+  }
+  .zona-item .loc{font-size:10.5px; color:var(--sub); font-weight:500; margin-top:3px;}
+  .zona-item:active{border-color:var(--accent);}
+
+  .breadcrumb{font-size:11.5px; color:var(--sub); margin-bottom:12px;}
+  .breadcrumb b{color:var(--accent2); cursor:pointer;}
+
+  .segmen-item{
+    padding:12px; border-radius:10px; cursor:pointer; margin-bottom:8px;
+    background:var(--bg2); border:1px solid var(--card-border);
+  }
+  .segmen-item .seg-title{font-size:12.5px; font-weight:700;}
+  .segmen-item .seg-sub{font-size:10.5px; color:var(--sub); margin-top:3px;}
+  .segmen-item:active{border-color:var(--accent);}
+
+  .sisi-choice{display:flex; gap:10px; margin-bottom:4px;}
+  .sisi-btn{
+    flex:1; padding:14px; border-radius:12px; text-align:center; cursor:pointer; font-weight:800; font-size:13px;
+    border:1.5px solid var(--card-border); background:var(--bg2); color:var(--sub);
+  }
+  .sisi-btn.kiri{border-color:rgba(59,110,246,.4);}
+  .sisi-btn.kanan{border-color:rgba(236,72,153,.4);}
+  .sisi-btn .sisi-count{display:block; font-size:10px; font-weight:600; margin-top:3px; text-transform:none;}
+
+  .item-card{
+    background:var(--bg2); border:1px solid var(--card-border); border-radius:12px;
+    padding:11px 12px; margin-bottom:8px;
+  }
+  .item-top{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
+  .item-name{font-size:13px; font-weight:700;}
+  .item-mid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .item-col .col-label{
+    font-size:10px; font-weight:700; color:var(--sub); text-transform:uppercase;
+    letter-spacing:.4px; margin-bottom:5px; text-align:center;
+  }
+  .item-mid input[type=number]{width:100%; text-align:center; padding:9px 8px; border-radius:10px; border:1px solid var(--card-border); background:var(--bg); color:var(--text); font-size:14px; font-family:inherit;}
+  .item-mid input[type=number]:focus{outline:none; border-color:var(--accent);}
+  .plan-value{
+    width:100%; text-align:center; padding:9px 8px; border-radius:10px;
+    background:var(--card); border:1px solid var(--card-border); font-size:14px; font-weight:700;
+  }
+
+  button.submit{
+    width:100%; padding:14px; border:none; border-radius:12px;
+    background:linear-gradient(135deg, var(--accent) 0%, #274fc9 100%); color:#fff;
+    font-size:15px; font-weight:700; cursor:pointer; margin-top:6px;
+    box-shadow:0 4px 14px rgba(59,110,246,.35);
+  }
+  button.submit:disabled{opacity:.5; box-shadow:none;}
+
+  .toast{
+    position:fixed; left:16px; right:16px; bottom:16px; padding:12px 14px; border-radius:10px;
+    font-size:14px; text-align:center; color:#fff; display:none; z-index:50; box-shadow:var(--shadow);
+  }
+  .toast.success{background:var(--green);}
+  .toast.error{background:var(--red);}
+
+  .loading, .empty{font-size:13px; color:var(--sub); text-align:center; padding:16px;}
+</style>
+</head>
+<body>
+
+<header>
+  <a class="back-btn" href="HalamanDepan.html" aria-label="Kembali">&#8592;</a>
+  <div>
+    <h1>Input Progress BRT</h1>
+    <p>BRT Medan &middot; ED REG Sumbagut</p>
+  </div>
+</header>
+
+<div class="section" id="app">
+  <div class="loading">Memuat data...</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  var API_URL = 'https://script.google.com/macros/s/AKfycbyIYDJ4Btr5MuTNsK8PcqICFm0woRzbK7gV91igtabsBiM_quoIvsOYJy1OvkszlSZYrQ/exec';
+
+  var tg = window.Telegram ? window.Telegram.WebApp : null;
+  if (tg) { tg.ready(); tg.expand(); }
+
+  var allZonas = [];
+  var allRows = [];
+  var state = { zona: null, segmenKey: null, sisi: null };
+
+  function escapeHtml(str){
+    return String(str == null ? '' : str)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function showToast(msg, type){
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast ' + type;
+    t.style.display = 'block';
+    setTimeout(function(){ t.style.display = 'none'; }, 3000);
+  }
+
+  function groupZona(namaLop){
+    var zonaRows = allRows.filter(function(r){ return r.namaLop === namaLop; });
+    var segMap = {}; var segList = [];
+    zonaRows.forEach(function(r){
+      var key = r.segmen || '(tanpa segmen)';
+      if (!segMap[key]) { segMap[key] = { label: r.segmen, sisi: {} }; segList.push(key); }
+      segMap[key].sisi[r.sisi] = r;
+    });
+    return { segMap: segMap, segList: segList };
+  }
+
+  function renderZonaList(){
+    var app = document.getElementById('app');
+    if (allZonas.length === 0) { app.innerHTML = '<div class="empty">Belum ada Zona BRT di sheet.</div>'; return; }
+    app.innerHTML = '<div class="card">' +
+      '<div class="step-label">Pilih Zona</div>' +
+      allZonas.map(function(z, idx){
+        return '<div class="zona-item" data-idx="' + idx + '">' + escapeHtml(z.namaLop) +
+          '<div class="loc">' + escapeHtml(z.district) + ' &middot; STO ' + escapeHtml(z.sto) + '</div></div>';
+      }).join('') +
+    '</div>';
+    Array.prototype.forEach.call(app.querySelectorAll('.zona-item'), function(el){
+      el.addEventListener('click', function(){
+        state.zona = allZonas[parseInt(el.getAttribute('data-idx'), 10)];
+        state.segmenKey = null; state.sisi = null;
+        renderSegmenList();
+      });
+    });
+  }
+
+  function renderSegmenList(){
+    var app = document.getElementById('app');
+    var grouped = groupZona(state.zona.namaLop);
+
+    if (grouped.segList.length === 0) {
+      app.innerHTML =
+        '<div class="breadcrumb"><b id="bcZona">' + escapeHtml(state.zona.namaLop) + '</b></div>' +
+        '<div class="card"><div class="empty">Segmen &amp; Sisi belum diisi di sheet untuk Zona ini.</div></div>';
+      document.getElementById('bcZona').addEventListener('click', renderZonaList);
+      return;
+    }
+
+    app.innerHTML =
+      '<div class="breadcrumb"><b id="bcZona">Ganti Zona</b> &middot; ' + escapeHtml(state.zona.namaLop) + '</div>' +
+      '<div class="card">' +
+        '<div class="step-label">Pilih Segmen</div>' +
+        grouped.segList.map(function(key, idx){
+          var seg = grouped.segMap[key];
+          var kiriCount = seg.sisi.KIRI ? seg.sisi.KIRI.items.length : 0;
+          var kananCount = seg.sisi.KANAN ? seg.sisi.KANAN.items.length : 0;
+          return '<div class="segmen-item" data-idx="' + idx + '">' +
+            '<div class="seg-title">' + escapeHtml(seg.label || 'Segmen') + '</div>' +
+            '<div class="seg-sub">Kiri: ' + kiriCount + ' item terisi &middot; Kanan: ' + kananCount + ' item terisi</div>' +
+          '</div>';
+        }).join('') +
+      '</div>';
+
+    document.getElementById('bcZona').addEventListener('click', renderZonaList);
+    Array.prototype.forEach.call(app.querySelectorAll('.segmen-item'), function(el){
+      el.addEventListener('click', function(){
+        state.segmenKey = grouped.segList[parseInt(el.getAttribute('data-idx'), 10)];
+        state.sisi = null;
+        renderSisiChoice(grouped);
+      });
+    });
+  }
+
+  function renderSisiChoice(grouped){
+    var app = document.getElementById('app');
+    var seg = grouped.segMap[state.segmenKey];
+    var kiriCount = seg.sisi.KIRI ? seg.sisi.KIRI.items.length : 0;
+    var kananCount = seg.sisi.KANAN ? seg.sisi.KANAN.items.length : 0;
+
+    app.innerHTML =
+      '<div class="breadcrumb"><b id="bcZona2">' + escapeHtml(state.zona.namaLop) + '</b> &middot; <b id="bcSeg">Ganti Segmen</b> &middot; ' + escapeHtml(seg.label || 'Segmen') + '</div>' +
+      '<div class="card">' +
+        '<div class="step-label">Pilih Sisi</div>' +
+        '<div class="sisi-choice">' +
+          '<div class="sisi-btn kiri" data-sisi="KIRI">Sisi Kiri<span class="sisi-count">' + kiriCount + ' item</span></div>' +
+          '<div class="sisi-btn kanan" data-sisi="KANAN">Sisi Kanan<span class="sisi-count">' + kananCount + ' item</span></div>' +
+        '</div>' +
+      '</div>';
+
+    document.getElementById('bcZona2').addEventListener('click', renderZonaList);
+    document.getElementById('bcSeg').addEventListener('click', renderSegmenList);
+    Array.prototype.forEach.call(app.querySelectorAll('.sisi-btn'), function(el){
+      el.addEventListener('click', function(){
+        var sisiKey = el.getAttribute('data-sisi');
+        var sisiData = seg.sisi[sisiKey];
+        if (!sisiData) { showToast('Sisi ini belum ada baris di sheet.', 'error'); return; }
+        state.sisi = sisiKey;
+        renderItemForm(sisiData, seg);
+      });
+    });
+  }
+
+  function renderItemForm(sisiData, seg){
+    var app = document.getElementById('app');
+
+    if (sisiData.items.length === 0) {
+      app.innerHTML =
+        '<div class="breadcrumb"><b id="bcBack">&larr; Kembali</b></div>' +
+        '<div class="card"><div class="empty">Belum ada item dengan Plan terisi di Sisi ini.</div></div>';
+      document.getElementById('bcBack').addEventListener('click', function(){ renderSisiChoice(groupZona(state.zona.namaLop)); });
+      return;
+    }
+
+    app.innerHTML =
+      '<div class="breadcrumb"><b id="bcBack">&larr; Kembali</b> &middot; ' + escapeHtml(state.zona.namaLop) + ' &middot; ' + escapeHtml(seg.label || 'Segmen') + ' &middot; Sisi ' + (state.sisi === 'KIRI' ? 'Kiri' : 'Kanan') + '</div>' +
+      '<div class="card" id="formCard">' +
+        '<div class="step-label">Update Aktual per Item</div>' +
+        '<div id="itemsList"></div>' +
+        '<button class="submit" id="submitBtn">Simpan Update</button>' +
+      '</div>';
+
+    document.getElementById('bcBack').addEventListener('click', function(){ renderSisiChoice(groupZona(state.zona.namaLop)); });
+
+    var itemsList = document.getElementById('itemsList');
+    itemsList.innerHTML = sisiData.items.map(function(it, idx){
+      return '<div class="item-card">' +
+        '<div class="item-top"><div class="item-name">' + escapeHtml(it.label) + '</div></div>' +
+        '<div class="item-mid">' +
+          '<div class="item-col"><div class="col-label">Aktual</div>' +
+            '<input type="number" inputmode="decimal" data-idx="' + idx + '" class="aktual-input" value="' + escapeHtml(it.aktual) + '" /></div>' +
+          '<div class="item-col"><div class="col-label">Plan</div>' +
+            '<div class="plan-value">' + escapeHtml(it.plan) + '</div></div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+
+    document.getElementById('submitBtn').addEventListener('click', function(){
+      var updates = [];
+      Array.prototype.forEach.call(itemsList.querySelectorAll('.aktual-input'), function(input){
+        var idx = parseInt(input.getAttribute('data-idx'), 10);
+        var original = sisiData.items[idx];
+        var newVal = input.value;
+        if (newVal !== '' && String(newVal) !== String(original.aktual)) {
+          updates.push({ label: original.label, aktual: newVal });
+        }
+      });
+
+      if (updates.length === 0) {
+        showToast('Gak ada perubahan angka Aktual.', 'error');
+        return;
+      }
+
+      var btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Menyimpan...';
+
+      fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'updateAktual', row: sisiData.rowIndex, updates: updates })
+      })
+        .then(function(res){ return res.json(); })
+        .then(function(data){
+          btn.disabled = false;
+          btn.textContent = 'Simpan Update';
+          if (!data.ok) throw new Error(data.error || 'Gagal menyimpan');
+          showToast('Berhasil disimpan!', 'success');
+          updates.forEach(function(u){
+            var it = sisiData.items.find(function(d){ return d.label === u.label; });
+            if (it) it.aktual = u.aktual;
+          });
+        })
+        .catch(function(err){
+          btn.disabled = false;
+          btn.textContent = 'Simpan Update';
+          showToast('Gagal: ' + err.message, 'error');
+        });
+    });
+  }
+
+  fetch(API_URL + '?action=brtStructure')
+    .then(function(res){ return res.json(); })
+    .then(function(data){
+      if (!data.ok) throw new Error(data.error || 'Gagal memuat data');
+      allZonas = data.zonas || [];
+      allRows = data.rows || [];
+      renderZonaList();
+    })
+    .catch(function(err){
+      document.getElementById('app').innerHTML = '<div class="empty">Gagal memuat data: ' + escapeHtml(err.message) + '</div>';
+    });
+</script>
+
+</body>
+</html>
