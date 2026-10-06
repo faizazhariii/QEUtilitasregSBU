@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-<title>Timeline BRT (Prototype)</title>
+<title>Timeline BRT</title>
 <style>
   :root{
     --bg:#0b1120; --bg2:#0e1729;
@@ -120,6 +120,39 @@
   .day-td.weekend-col{background:rgba(255,255,255,.02);}
 
   .loading, .empty{font-size:13px; color:var(--sub); text-align:center; padding:16px;}
+
+  /* ===== Tab + Kurva S ===== */
+  .tabs{display:flex; background:var(--card); border:1px solid var(--card-border); border-radius:12px; padding:4px; margin-bottom:12px;}
+  .tabs button{flex:1; background:none; border:none; color:var(--sub); font-size:13px; font-weight:700; padding:8px; border-radius:9px; cursor:pointer; font-family:inherit;}
+  .tabs button.on{background:var(--accent2); color:#04122b;}
+  .sc-chips{display:flex; gap:8px; margin-bottom:10px; overflow-x:auto; padding-bottom:2px;}
+  .sc-chip-btn{padding:7px 14px; border-radius:99px; border:1px solid var(--card-border); background:var(--card); font-size:12.5px; color:var(--sub); white-space:nowrap; cursor:pointer;}
+  .sc-chip-btn.on{background:#1b3a6b; color:#fff; border-color:var(--accent2);}
+  .sc-card{background:var(--card); border:1px solid var(--card-border); border-radius:14px; padding:14px; margin-bottom:12px;}
+  .sc-t{font-size:13px; font-weight:700; margin-bottom:6px;}
+  .sc-kp{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; text-align:center;}
+  .sc-kp b{display:block; font-size:20px;} .sc-kp span{font-size:11px; color:var(--sub);}
+  .sc-badge{display:inline-block; margin-top:10px; padding:5px 12px; border-radius:99px; font-size:12px; font-weight:700;}
+  .sc-up{background:rgba(34,197,94,.15); color:var(--green);} .sc-eq{background:rgba(139,149,171,.15); color:var(--sub);} .sc-bad{background:rgba(239,68,68,.15); color:var(--red);}
+  .sc-chip{font-size:11.5px; font-weight:700; padding:2px 9px; border-radius:99px;}
+  .sc-leg{display:flex; gap:14px; flex-wrap:wrap; font-size:12px; color:var(--sub); margin-top:6px;}
+  .sc-leg i{display:inline-block; width:14px; height:3px; border-radius:2px; margin-right:5px; vertical-align:middle;}
+  .sc-note{font-size:11px; color:var(--sub); margin-top:8px; line-height:1.5;}
+  .sc-dr{padding:9px 0; border-bottom:1px solid var(--card-border); font-size:13px;} .sc-dr:last-of-type{border-bottom:0;}
+  .sc-h{display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;}
+  .sc-g{display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; text-align:center;}
+  .sc-g b{display:block; font-size:14px;} .sc-g span{font-size:10.5px; color:var(--sub);}
+  .sc-cum{font-size:11.5px; color:var(--sub); margin-top:6px;}
+  .sc-dr details summary, .sc-guide summary{font-size:11.5px; color:var(--sub); cursor:pointer; margin-top:6px;}
+  .sc-win{display:flex; justify-content:space-between; font-size:11.5px; padding:3px 0; color:var(--sub);} .sc-win.on{color:var(--text);}
+  .sc-ir{padding:7px 0;} .sc-it{display:flex; justify-content:space-between; font-size:13px; gap:8px;}
+  .sc-tb{display:flex; align-items:center; gap:8px; margin-top:4px;} .sc-lb{font-size:10.5px; color:var(--sub); width:34px;}
+  .sc-tk{flex:1; height:7px; background:var(--card-border); border-radius:5px; overflow:hidden;} .sc-tk div{height:100%; border-radius:5px;}
+  .sc-tab{display:flex; justify-content:space-between; font-size:13px; padding:8px 0; border-bottom:1px solid var(--card-border);} .sc-tab:last-child{border:0;}
+  .sc-guide{background:var(--card); border:1px solid var(--card-border); border-radius:14px; padding:12px 14px; margin-bottom:12px;}
+  .sc-guide summary{font-size:13px; font-weight:700; color:var(--text); margin:0;}
+  .sc-guide ul{margin:8px 0 0; padding-left:18px; font-size:12px; color:var(--sub); line-height:1.6;} .sc-guide li b{color:var(--text);}
+  .sc-guide .sw{display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:4px; vertical-align:middle;}
 </style>
 </head>
 <body>
@@ -127,32 +160,41 @@
 <header>
   <a class="back-btn" href="HalamanDepan.html" aria-label="Kembali">&#8592;</a>
   <div>
-    <h1>Timeline BRT &middot; Prototype</h1>
-    <p>Sumber: sheet BRT MEDAN &middot; belum digabung ke Mini Web QE</p>
+    <h1>Timeline &amp; Kurva S &middot; BRT Medan</h1>
+    <p>Sumber: sheet BRT MEDAN</p>
   </div>
 </header>
 
 <div class="section">
 
+  <div class="tabs">
+    <button id="tabTl" class="on" onclick="setTab('tl')">Timeline</button>
+    <button id="tabSc" onclick="setTab('sc')">Kurva S</button>
+  </div>
+
   <div class="toolbar">
     <label>STO</label>
     <select id="stoFilter"><option value="">Semua STO</option></select>
-    <div class="hint">Tabel timeline di bawah bisa digeser ke kanan/kiri. Garis biru terang menandai hari ini.</div>
+    <div class="hint" id="tlHint">Tabel timeline di bawah bisa digeser ke kanan/kiri. Garis biru terang menandai hari ini.</div>
   </div>
 
-  <div class="legend">
-    <span><i style="background:var(--accent2)"></i> KABEL</span>
-    <span><i style="background:var(--orange)"></i> GALIAN</span>
-    <span><i style="background:var(--purple)"></i> HDPE/SUBDUCT</span>
-    <span><i style="background:var(--pink)"></i> TIANG</span>
-    <span><i style="background:var(--teal)"></i> ODP</span>
-    <span><i style="background:var(--yellow)"></i> ODC</span>
-    <span><i style="background:var(--red)"></i> HH-PIT</span>
-    <span><i style="background:var(--green)"></i> DROPCORE</span>
-    <span><i style="background:#ffffff"></i> CO</span>
+  <div id="viewTimeline">
+    <div class="legend">
+      <span><i style="background:var(--accent2)"></i> KABEL</span>
+      <span><i style="background:var(--orange)"></i> GALIAN</span>
+      <span><i style="background:var(--purple)"></i> HDPE/SUBDUCT</span>
+      <span><i style="background:var(--pink)"></i> TIANG</span>
+      <span><i style="background:var(--teal)"></i> ODP</span>
+      <span><i style="background:var(--yellow)"></i> ODC</span>
+      <span><i style="background:var(--red)"></i> HH-PIT</span>
+      <span><i style="background:var(--green)"></i> DROPCORE</span>
+      <span><i style="background:#ffffff"></i> CO</span>
+    </div>
+
+    <div id="lopList"><div class="loading">Memuat...</div></div>
   </div>
 
-  <div id="lopList"><div class="loading">Memuat...</div></div>
+  <div id="viewScurve" style="display:none"></div>
 
 </div>
 
@@ -393,7 +435,351 @@
     });
   }
 
-  document.getElementById('stoFilter').addEventListener('change', render);
+  // ==== SCURVE-CORE ====
+  var SC_ITEMS = ['KABEL','GALIAN','HDPE/SUBDUCT','TIANG','ODP','ODC','HH-PIT','DROPCORE'];
+  var SC_UNIT = {'KABEL':'m','GALIAN':'m','HDPE/SUBDUCT':'m','TIANG':'pcs','ODP':'pcs','ODC':'pcs','HH-PIT':'pcs','DROPCORE':'m'};
+  var SC_DAY = 864e5;
+  
+  function scIsoDay(iso){
+    var p = String(iso).split('-');
+    return Date.UTC(+p[0], +p[1]-1, +p[2]) / SC_DAY;
+  }
+  function scTodayDay(){
+    var n = new Date();
+    return Date.UTC(n.getFullYear(), n.getMonth(), n.getDate()) / SC_DAY;
+  }
+  function scNum(v){ var n = parseFloat(v); return isNaN(n) ? 0 : n; }
+  
+  // Progres linear satu Sisi: 0 sebelum START, 1 setelah END, di antaranya (hari - START) / (END - START)
+  function scFrac(d, s, e){
+    if (e <= s) return d >= e ? 1 : 0;
+    if (d <= s) return 0;
+    if (d >= e) return 1;
+    return (d - s) / (e - s);
+  }
+  
+  function scSegShort(seg){
+    var m = String(seg || '').match(/SEGMEN\s*\d+/i);
+    if (m) return m[0].replace(/SEGMEN\s*/i, 'Seg ');
+    return String(seg || 'Segmen').split('|')[0].trim();
+  }
+  
+  // rows (hasil brtTimeline) -> daftar item {label, unit, total, aktual, wins[], first, last}
+  function scBuildModel(rows){
+    var m = {};
+    rows.forEach(function(r){
+      (r.items || []).forEach(function(it){
+        if (SC_ITEMS.indexOf(it.label) < 0) return;
+        var vol = scNum(it.plan);
+        if (!(vol > 0) || !it.start || !it.end) return;
+        var o = m[it.label];
+        if (!o) o = m[it.label] = { label: it.label, unit: SC_UNIT[it.label], total: 0, aktual: 0, wins: [], first: Infinity, last: -Infinity };
+        var s = scIsoDay(it.start), e = scIsoDay(it.end);
+        o.total += vol;
+        o.aktual += scNum(it.aktual);
+        o.wins.push({ seg: scSegShort(r.segmen), sisi: r.sisi, vol: vol, s: s, e: e });
+        if (s < o.first) o.first = s;
+        if (e > o.last) o.last = e;
+      });
+    });
+    return SC_ITEMS.filter(function(l){ return m[l]; }).map(function(l){ return m[l]; });
+  }
+  
+  function scPlanAt(o, d){
+    var t = 0;
+    o.wins.forEach(function(w){ t += w.vol * scFrac(d, w.s, w.e); });
+    return t;
+  }
+  
+  function scSelected(list, mode){
+    if (mode === 'GAB') return list;
+    return list.filter(function(o){ return o.label === mode; });
+  }
+  
+  // Nilai Plan pada hari d: gabungan = rata-rata % semua item (bobot sama rata); item = satuan asli
+  function scPlanValue(list, mode, d){
+    var sel = scSelected(list, mode);
+    if (!sel.length) return 0;
+    if (mode === 'GAB') {
+      var sum = 0;
+      sel.forEach(function(o){ sum += scPlanAt(o, d) / o.total * 100; });
+      return sum / sel.length;
+    }
+    return scPlanAt(sel[0], d);
+  }
+  
+  // aktualByItem: {label: nilai}
+  function scAktualValue(list, mode, aktualByItem){
+    var sel = scSelected(list, mode);
+    if (!sel.length) return 0;
+    if (mode === 'GAB') {
+      var sum = 0;
+      sel.forEach(function(o){ sum += (aktualByItem[o.label] || 0) / o.total * 100; });
+      return sum / sel.length;
+    }
+    return aktualByItem[sel[0].label] || 0;
+  }
+  
+  // log [{date,zona,item,aktual}] -> [[day, value]] urut tanggal. zona=null => semua zona dijumlah
+  function scLogSeries(log, zona, list, mode){
+    var byDate = {};
+    (log || []).forEach(function(r){
+      if (zona && r.zona !== zona) return;
+      var d = scIsoDay(r.date);
+      var o = byDate[d] || (byDate[d] = {});
+      o[r.item] = (o[r.item] || 0) + scNum(r.aktual);
+    });
+    return Object.keys(byDate).map(Number).sort(function(a,b){ return a-b; }).map(function(d){
+      return [d, scAktualValue(list, mode, byDate[d])];
+    });
+  }
+  
+  // Target harian skala Zona (akumulasi)
+  function scDaily(o, today){
+    var active = [], tgNow = 0;
+    var upcoming = null;
+    o.wins.forEach(function(w){
+      var rate = w.vol / Math.max(1, (w.e - w.s));
+      w.rate = rate;
+      if (w.s <= today && today < w.e) { tgNow += rate; active.push(w); }
+      if (w.s > today && (!upcoming || w.s < upcoming.s)) upcoming = w;
+    });
+    var started = o.first <= today;
+    var elapsed = started ? Math.max(1, today - o.first) : 0;
+    var left = Math.max(1, o.last - today);
+    var firstWinRate = 0;
+    o.wins.forEach(function(w){ if (w.s === o.first) firstWinRate += w.vol / Math.max(1, (w.e - w.s)); });
+    return {
+      started: started, tgNow: tgNow, active: active,
+      avg: elapsed ? o.aktual / elapsed : 0,
+      need: Math.max(0, (o.total - o.aktual) / left),
+      startRate: firstWinRate, first: o.first, last: o.last,
+      planToday: scPlanAt(o, today),
+      done: today >= o.last
+    };
+  }
+  // ==== END SCURVE-CORE ====
+  
+
+  // ==== SCURVE-UI ====
+  var scState = { zona: '', item: 'GAB' };
+  var scLog = [];
+  var scColor = { plan: '#6d9bff', akt: '#22c55e', today: '#ef4444' };
+  
+  function scFmt(v, unit, dec){
+    if (unit === '%') return (Math.round(v * 10) / 10).toLocaleString('id-ID') + '%';
+    var d = dec == null ? 0 : dec;
+    return v.toLocaleString('id-ID', { maximumFractionDigits: d }) + (unit ? ' ' + unit : '');
+  }
+  function scDayLabel(d){
+    var dt = new Date(d * SC_DAY);
+    return dt.getUTCDate() + ' ' + MONTH_ID[dt.getUTCMonth()];
+  }
+  function scZonaShort(name){
+    var m = String(name).match(/ZONA\s*\d+/i);
+    return m ? m[0].toUpperCase().replace(/ZONA\s*/, 'Zona ') : String(name).slice(0, 18);
+  }
+  
+  function scRowsForView(){
+    var stoVal = document.getElementById('stoFilter').value;
+    return allRows.filter(function(r){
+      if (stoVal && r.sto !== stoVal) return false;
+      if (scState.zona && r.namaLop !== scState.zona) return false;
+      return true;
+    });
+  }
+  
+  function scChartSvg(list, mode, today, aktSeries){
+    var sel = scSelected(list, mode);
+    var from = Infinity, to = -Infinity;
+    sel.forEach(function(o){ if (o.first < from) from = o.first; if (o.last > to) to = o.last; });
+    if (today < from) from = today;
+    if (today > to) to = today;
+    var span = Math.max(1, to - from);
+    var isPct = mode === 'GAB';
+    var unit = isPct ? '%' : sel[0].unit;
+    var tot = isPct ? 100 : sel[0].total;
+  
+    var L = 46, R = 392, T = 10, B = 205, W = R - L, H = B - T;
+    var x = function(d){ return L + W * (d - from) / span; };
+    var y = function(v){ return B - H * Math.min(v, tot) / tot; };
+  
+    var s = '';
+    for (var g = 0; g <= 4; g++) {
+      var v = tot * g / 4;
+      s += '<line x1="' + L + '" x2="' + R + '" y1="' + y(v) + '" y2="' + y(v) + '" stroke="#232f4d"/>' +
+           '<text x="' + (L - 5) + '" y="' + (y(v) + 4) + '" font-size="9" fill="#8b95ab" text-anchor="end">' +
+           (isPct ? Math.round(v) + '%' : Math.round(v).toLocaleString('id-ID')) + '</text>';
+    }
+    // penanda awal tiap bulan
+    var d0 = new Date(from * SC_DAY);
+    for (var mi = 1; mi <= 14; mi++) {
+      var md = Date.UTC(d0.getUTCFullYear(), d0.getUTCMonth() + mi, 1) / SC_DAY;
+      if (md > to - 6) break;
+      s += '<line x1="' + x(md) + '" x2="' + x(md) + '" y1="' + B + '" y2="' + (B + 4) + '" stroke="#8b95ab"/>' +
+           '<text x="' + x(md) + '" y="222" font-size="9" fill="#8b95ab" text-anchor="middle">1 ' + MONTH_ID[new Date(md * SC_DAY).getUTCMonth()] + '</text>';
+    }
+    s += '<text x="' + R + '" y="238" font-size="9" fill="#8b95ab" text-anchor="end">selesai ' + scDayLabel(to) + '</text>';
+    s += '<text x="' + L + '" y="238" font-size="9" fill="#8b95ab">mulai ' + scDayLabel(from) + '</text>';
+  
+    var pts = [];
+    for (var d = from; d <= to; d++) pts.push(x(d) + ',' + y(scPlanValue(list, mode, d)));
+    s += '<path d="M' + pts.join(' L') + ' L' + x(to) + ',' + B + ' L' + x(from) + ',' + B + 'Z" fill="rgba(109,155,255,.12)"/>' +
+         '<polyline points="' + pts.join(' ') + '" fill="none" stroke="' + scColor.plan + '" stroke-width="2.5"/>';
+  
+    var tx = x(today);
+    s += '<line x1="' + tx + '" x2="' + tx + '" y1="' + T + '" y2="' + B + '" stroke="' + scColor.today + '" stroke-dasharray="4 3"/>';
+  
+    var as = aktSeries.filter(function(p){ return p[0] >= from && p[0] <= to; });
+    if (as.length > 1) {
+      s += '<polyline points="' + as.map(function(p){ return x(p[0]) + ',' + y(p[1]); }).join(' ') + '" fill="none" stroke="' + scColor.akt + '" stroke-width="2.5"/>';
+    }
+    var last = as.length ? as[as.length - 1] : null;
+    if (last) {
+      var lx = x(last[0]), ly = y(last[1]);
+      s += '<circle cx="' + lx + '" cy="' + ly + '" r="5" fill="' + scColor.akt + '" stroke="#0b1120" stroke-width="2"/>' +
+           '<text x="' + (lx > R - 60 ? lx - 8 : lx + 8) + '" y="' + Math.min(ly - 8, B - 14) + '" font-size="10" fill="' + scColor.akt + '" font-weight="700" text-anchor="' + (lx > R - 60 ? 'end' : 'start') + '">' + scFmt(last[1], unit, 1) + '</text>';
+    }
+    return '<svg viewBox="0 0 400 244" width="100%">' + s + '</svg>';
+  }
+  
+  function scDailyRow(o, today){
+    var dd = scDaily(o, today), un = o.unit;
+    var head = '<div class="sc-h"><span><b>' + escapeHtml(o.label) + '</b></span>';
+    var cells;
+    if (dd.done) {
+      head += '<span class="sc-chip sc-eq">Jadwal selesai</span></div>';
+      cells = [[scFmt(o.aktual, un), 'Aktual', 'akt'], [scFmt(o.total, un), 'Total Plan', ''], [scFmt(Math.max(0, o.total - o.aktual), un), 'Sisa', '']];
+    } else if (!dd.started) {
+      head += '<span class="sc-chip sc-eq">Belum mulai &middot; ' + scDayLabel(dd.first) + '</span></div>';
+      cells = [[scFmt(dd.startRate, '', 1), 'Target/hari saat mulai (' + un + ')', 'plan'], ['&ndash;', 'Aktual/hari', ''], [scFmt(dd.need, '', 1), 'Perlu/hari rata-rata ke depan', '']];
+    } else {
+      var ok = dd.avg >= dd.tgNow - 0.05;
+      head += '<span class="sc-chip ' + (ok ? 'sc-up' : 'sc-bad') + '">' + (ok ? '&#10004; Tercapai' : '&#10006; Belum tercapai') + '</span></div>';
+      cells = [[scFmt(dd.tgNow, '', 1), 'Target/hari ini (' + un + ')', 'plan'], [scFmt(dd.avg, '', 1), 'Aktual/hari (rata2 sejak ' + scDayLabel(dd.first) + ')', 'akt'], [scFmt(dd.need, '', 1), 'Perlu/hari rata-rata ke depan', '']];
+    }
+    var grid = '<div class="sc-g">' + cells.map(function(c){
+      var col = c[2] === 'plan' ? scColor.plan : c[2] === 'akt' ? scColor.akt : 'inherit';
+      return '<div><b style="color:' + col + '">' + c[0] + '</b><span>' + c[1] + '</span></div>';
+    }).join('') + '</div>';
+    var cum = '<div class="sc-cum">Kumulatif: Plan s/d hari ini <b style="color:' + scColor.plan + '">' + scFmt(dd.planToday, un, 1) + '</b> &middot; Aktual <b style="color:' + scColor.akt + '">' + scFmt(o.aktual, un, 1) + '</b> &middot; Sisa ' + scFmt(Math.max(0, o.total - o.aktual), un) + ' dari ' + scFmt(o.total, un) + ' (selesai ' + scDayLabel(dd.last) + ')</div>';
+    var wins = o.wins.slice().sort(function(a, b){ return a.s - b.s; }).map(function(w){
+      var st = today >= w.e ? 'selesai' : today >= w.s ? 'aktif' : 'belum';
+      var rate = w.vol / Math.max(1, w.e - w.s);
+      return '<div class="sc-win' + (st === 'aktif' ? ' on' : '') + '"><span>' + escapeHtml(w.seg) + ' ' + (w.sisi === 'KIRI' ? 'Kiri' : 'Kanan') + ' &middot; ' + scDayLabel(w.s) + '&ndash;' + scDayLabel(w.e) + '</span><span>' + scFmt(rate, un, 1) + '/hari' + (st === 'aktif' ? ' &#9679; aktif' : st === 'selesai' ? ' &#10003;' : '') + '</span></div>';
+    }).join('');
+    return '<div class="sc-dr">' + head + grid + cum + '<details><summary>Target per Segmen &amp; Sisi</summary>' + wins + '</details></div>';
+  }
+  
+  function scRincian(list, mode, today){
+    if (mode !== 'GAB') {
+      var o = scSelected(list, mode)[0];
+      return '<div class="sc-tab"><span>Total Plan</span><span>' + scFmt(o.total, o.unit) + '</span></div>' +
+             '<div class="sc-tab"><span>Aktual</span><span style="color:' + scColor.akt + '">' + scFmt(o.aktual, o.unit) + ' (' + scFmt(o.aktual / o.total * 100, '%') + ')</span></div>' +
+             '<div class="sc-tab"><span>Sisa</span><span>' + scFmt(Math.max(0, o.total - o.aktual), o.unit) + '</span></div>';
+    }
+    return list.map(function(o){
+      var p = scPlanAt(o, today) / o.total * 100, a = o.aktual / o.total * 100, d = a - p;
+      var chip = d > 0.05 ? '<span class="sc-chip sc-up">+' + scFmt(d, '%') + '</span>' : d < -0.05 ? '<span class="sc-chip sc-bad">' + scFmt(d, '%') + '</span>' : '<span class="sc-chip sc-eq">sesuai plan</span>';
+      return '<div class="sc-ir"><div class="sc-it"><span>' + escapeHtml(o.label) + '</span><span><span style="color:var(--sub)">Plan ' + scFmt(p, '%') + ' &middot; </span><b style="color:' + scColor.akt + '">Aktual ' + scFmt(a, '%') + '</b> ' + chip + '</span></div>' +
+        '<div class="sc-tb"><span class="sc-lb">Plan</span><div class="sc-tk"><div style="width:' + Math.min(100, p) + '%;background:' + scColor.plan + '"></div></div></div>' +
+        '<div class="sc-tb"><span class="sc-lb">Aktual</span><div class="sc-tk"><div style="width:' + Math.min(100, a) + '%;background:' + scColor.akt + '"></div></div></div></div>';
+    }).join('');
+  }
+  
+  function renderScurve(){
+    var el = document.getElementById('viewScurve');
+    var stoVal = document.getElementById('stoFilter').value;
+    var zonaNames = [];
+    allRows.forEach(function(r){
+      if (stoVal && r.sto !== stoVal) return;
+      if (zonaNames.indexOf(r.namaLop) < 0) zonaNames.push(r.namaLop);
+    });
+    if (scState.zona && zonaNames.indexOf(scState.zona) < 0) scState.zona = '';
+  
+    var list = scBuildModel(scRowsForView());
+    var zChips = '<div class="sc-chips"><div class="sc-chip-btn' + (!scState.zona ? ' on' : '') + '" data-zona="">Semua Zona</div>' +
+      zonaNames.map(function(n){ return '<div class="sc-chip-btn' + (scState.zona === n ? ' on' : '') + '" data-zona="' + escapeHtml(n) + '">' + escapeHtml(scZonaShort(n)) + '</div>'; }).join('') + '</div>';
+  
+    if (!list.length) {
+      el.innerHTML = zChips + '<div class="empty">Belum ada item dengan jadwal (START/END) dan volume Plan untuk dihitung kurva S.</div>';
+      scBind(el);
+      return;
+    }
+    if (scState.item !== 'GAB' && !list.some(function(o){ return o.label === scState.item; })) scState.item = 'GAB';
+    var mode = scState.item;
+    var iChips = '<div class="sc-chips"><div class="sc-chip-btn' + (mode === 'GAB' ? ' on' : '') + '" data-item="GAB">Gabungan (%)</div>' +
+      list.map(function(o){ return '<div class="sc-chip-btn' + (mode === o.label ? ' on' : '') + '" data-item="' + escapeHtml(o.label) + '">' + escapeHtml(o.label) + '</div>'; }).join('') + '</div>';
+  
+    var today = scTodayDay();
+    var sel = scSelected(list, mode);
+    var isPct = mode === 'GAB';
+    var unit = isPct ? '%' : sel[0].unit;
+  
+    var akNow = {};
+    list.forEach(function(o){ akNow[o.label] = o.aktual; });
+    var aktNowVal = scAktualValue(list, mode, akNow);
+    var planNow = scPlanValue(list, mode, today);
+    var diff = aktNowVal - planNow;
+  
+    var series = scLogSeries(scLog, scState.zona || null, list, mode).filter(function(p){ return p[0] < today; });
+    series.push([today, aktNowVal]);
+  
+    var badge = Math.abs(diff) < 0.05 ? '<span class="sc-badge sc-eq">Sesuai rencana</span>' :
+      diff > 0 ? '<span class="sc-badge sc-up">&#9650; Lebih cepat dari rencana</span>' : '<span class="sc-badge sc-bad">&#9660; Terlambat dari rencana</span>';
+    var dec = isPct ? 1 : 0;
+    var kpi = '<div class="sc-card"><div class="sc-kp">' +
+      '<div><b style="color:' + scColor.plan + '">' + scFmt(planNow, unit, dec) + '</b><span>Plan hari ini</span></div>' +
+      '<div><b style="color:' + scColor.akt + '">' + scFmt(aktNowVal, unit, dec) + '</b><span>Aktual</span></div>' +
+      '<div><b>' + (diff > 0.05 ? '+' : '') + scFmt(diff, unit, dec) + '</b><span>Selisih</span></div></div>' +
+      '<div style="text-align:center">' + badge + '</div></div>';
+  
+    var title = (scState.zona ? scZonaShort(scState.zona) : 'Semua Zona') + ' &middot; ' + (isPct ? 'Gabungan (% bobot sama rata)' : sel[0].label + ' (' + unit + ' kumulatif)');
+    var chart = '<div class="sc-card"><div class="sc-t">Kurva S &mdash; ' + title + '</div>' + scChartSvg(list, mode, today, series) +
+      '<div class="sc-leg"><span><i style="background:' + scColor.plan + '"></i>Plan</span><span><i style="background:' + scColor.akt + '"></i>Aktual</span><span><i style="background:' + scColor.today + '"></i>Hari ini (' + scDayLabel(today) + ')</span></div>' +
+      '<div class="sc-note">' + (series.length > 1 ? 'Garis Aktual dari snapshot harian + nilai terbaru.' : 'Garis Aktual mulai terbentuk sejak snapshot harian tercatat; saat ini baru 1 titik.') + '</div></div>';
+  
+    var daily = '<div class="sc-card"><div class="sc-t">Target harian vs Aktual</div>' + sel.map(function(o){ return scDailyRow(o, today); }).join('') +
+      '<div class="sc-note">Semua angka akumulasi satu Zona, sama seperti kurva S. Target/hari ini = jumlah target Sisi yang sedang aktif (volume &divide; hari jadwal). Aktual/hari = Aktual Zona &divide; hari sejak item mulai. Perlu/hari = sisa volume &divide; sisa hari sampai END terakhir.</div></div>';
+  
+    var rinc = '<div class="sc-card"><div class="sc-t">Rincian' + (isPct ? ' per item (hari ini)' : '') + '</div>' + scRincian(list, mode, today) + '</div>';
+  
+    var guide = '<details class="sc-guide" open><summary>&#8505;&#65039; Cara membaca &amp; menghitung</summary><ul>' +
+      '<li><b><span class="sw" style="background:' + scColor.plan + '"></span>Garis Plan</b>: target kumulatif dari timeplan. Per item per Sisi: <b>volume Plan &divide; hari jadwal &times; hari berjalan</b> (hari jadwal = END &minus; START). Sebelum START = 0, setelah END = penuh. Lalu dijumlah semua Segmen &amp; Sisi dalam Zona.</li>' +
+      '<li><b><span class="sw" style="background:' + scColor.akt + '"></span>Titik/garis Aktual</b>: realisasi dari kolom AKTUAL PEKERJAAN yang diinput di InputBRT. Garis terbentuk dari snapshot harian (akhir hari).</li>' +
+      '<li><b>Garis merah putus-putus</b>: posisi hari ini. Aktual di atas garis Plan = lebih cepat, di bawah = terlambat.</li>' +
+      '<li><b>Tab per item</b>: satuan asli (m / pcs), tidak digabung karena satuannya berbeda.</li>' +
+      '<li><b>Gabungan (%)</b>: tiap item dinormalisasi ke persen (Aktual &divide; Plan), lalu dirata-rata dengan bobot sama rata.</li>' +
+      '<li><b>Target harian</b>: skala Zona, sama dengan kurva S. Target hari ini = jumlah target per hari semua Sisi yang sedang aktif. &#10004; tercapai bila Aktual/hari &ge; Target/hari. <b>Perlu/hari ke depan</b> = sisa volume &divide; sisa hari agar selesai tepat waktu.</li>' +
+      '<li><b>Selisih</b> = Aktual &minus; Plan hari ini. Plus berarti di depan jadwal.</li>' +
+      '<li>Hari libur belum diperhitungkan. KABEL &amp; ODP berundak karena jadwalnya hanya beberapa hari per Sisi. Item tanpa tanggal atau volume Plan di sheet belum dihitung.</li></ul></details>';
+  
+    el.innerHTML = zChips + iChips + kpi + chart + daily + rinc + guide;
+    scBind(el);
+  }
+  
+  function scBind(el){
+    Array.prototype.forEach.call(el.querySelectorAll('[data-zona]'), function(b){
+      b.addEventListener('click', function(){ scState.zona = b.getAttribute('data-zona'); renderScurve(); });
+    });
+    Array.prototype.forEach.call(el.querySelectorAll('[data-item]'), function(b){
+      b.addEventListener('click', function(){ scState.item = b.getAttribute('data-item'); renderScurve(); });
+    });
+  }
+  
+  function setTab(which){
+    var sc = which === 'sc';
+    document.getElementById('viewTimeline').style.display = sc ? 'none' : '';
+    document.getElementById('viewScurve').style.display = sc ? '' : 'none';
+    document.getElementById('tabTl').classList.toggle('on', !sc);
+    document.getElementById('tabSc').classList.toggle('on', sc);
+    document.getElementById('tlHint').style.display = sc ? 'none' : '';
+    if (sc) renderScurve();
+  }
+  // ==== END SCURVE-UI ====
+  
+
+  document.getElementById('stoFilter').addEventListener('change', function(){ render(); if (document.getElementById('viewScurve').style.display !== 'none') renderScurve(); });
 
   fetch(API_URL + '?action=brtTimeline')
     .then(function(res){ return res.json(); })
@@ -403,6 +789,10 @@
       allZonas = data.zonas || [];
       loadSto(allRows);
       render();
+      fetch(API_URL + '?action=brtAktualLog')
+        .then(function(r){ return r.json(); })
+        .then(function(d){ if (d.ok) { scLog = d.log || []; if (document.getElementById('viewScurve').style.display !== 'none') renderScurve(); } })
+        .catch(function(){});
     })
     .catch(function(err){
       document.getElementById('lopList').innerHTML = '<div class="empty">Gagal memuat data: ' + escapeHtml(err.message) + '</div>';
