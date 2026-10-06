@@ -10,7 +10,521 @@
     --bg:#0b1120; --bg2:#0e1729;
     --card:#141d33; --card-border:#232f4d;
     --text:#e7ebf5; --sub:#8b95ab;
+    --accent:#3b6ef6; --accent2:#6d9bff; --accent-soft:#1b2a4d;<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>Input Progress QE Utilitas</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root{
+    --bg:#0b1120; --bg2:#0e1729;
+    --card:#141d33; --card-border:#232f4d;
+    --text:#e7ebf5; --sub:#8b95ab;
     --accent:#3b6ef6; --accent2:#6d9bff; --accent-soft:#1b2a4d;
+    --green:#22c55e; --orange:#f59e0b; --red:#ef4444;
+    --shadow:0 4px 18px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:var(--bg); color:var(--text); padding-bottom:28px;
+  }
+  header{
+    background:var(--bg2); padding:16px; position:sticky; top:0; z-index:10;
+    border-bottom:1px solid var(--card-border); display:flex; align-items:center; gap:12px;
+  }
+  .back-btn{
+    width:34px; height:34px; border-radius:9px; background:var(--card); border:1px solid var(--card-border);
+    color:var(--accent2); display:flex; align-items:center; justify-content:center; font-size:16px;
+    text-decoration:none; flex-shrink:0;
+  }
+  header h1{margin:0; font-size:17px; font-weight:700;}
+  header p{margin:3px 0 0; font-size:12px; color:var(--sub);}
+
+  .section{padding:14px;}
+  .card{
+    background:var(--card); border-radius:14px; padding:15px; border:1px solid var(--card-border);
+    margin-bottom:12px; box-shadow:var(--shadow);
+  }
+  label{display:block; font-size:11px; font-weight:700; color:var(--accent2); margin-bottom:6px; text-transform:uppercase; letter-spacing:.4px;}
+  input[type=text], input[type=number], textarea{
+    width:100%; padding:12px; border:1px solid var(--card-border); border-radius:10px;
+    font-size:14px; background:var(--bg2); color:var(--text); font-family:inherit;
+  }
+  input[type=text]:focus, input[type=number]:focus, textarea:focus{
+    outline:none; border-color:var(--accent);
+  }
+  textarea{resize:vertical; min-height:70px;}
+  ::placeholder{color:#5b6478;}
+
+  .result-item{
+    padding:11px 12px; border-radius:10px; cursor:pointer; font-size:14px; margin-top:6px;
+    background:var(--bg2); border:1px solid var(--card-border);
+  }
+  .result-item .loc{font-size:11px; color:var(--sub); margin-top:3px;}
+  .result-item:active{border-color:var(--accent);}
+
+  .selected-card{display:none;}
+  .selected-card.show{display:block;}
+  .selected-card .lop{font-weight:700; font-size:15px; margin-bottom:2px;}
+  .selected-card .loc{font-size:12px; color:var(--sub); margin-bottom:14px;}
+  .duration-badge{
+    display:inline-flex; align-items:center; gap:5px; font-size:12.5px; font-weight:600; color:var(--orange);
+    background:rgba(245,158,11,.12); border:1px solid rgba(245,158,11,.3); border-radius:999px;
+    padding:6px 12px; margin-bottom:14px;
+  }
+  .duration-badge b{font-weight:800;}
+  .duration-sub{font-size:11px; font-weight:500; color:var(--sub);}
+
+  .overall-progress{margin-bottom:4px;}
+  .overall-progress .row{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px;}
+  .overall-progress .pct{font-size:20px; font-weight:800; color:var(--accent2);}
+  .overall-progress .label{font-size:11px; color:var(--sub); text-transform:uppercase; letter-spacing:.4px;}
+  .bar-track{width:100%; height:8px; border-radius:99px; background:var(--bg2); overflow:hidden; border:1px solid var(--card-border);}
+  .bar-fill{height:100%; border-radius:99px; background:linear-gradient(90deg, var(--accent) 0%, var(--accent2) 100%); transition:width .25s ease;}
+
+  .field{margin-bottom:14px;}
+  .section-title{font-size:11px; font-weight:700; color:var(--accent2); text-transform:uppercase; letter-spacing:.4px; margin:16px 0 8px;}
+
+  .item-card{
+    background:var(--bg2); border:1px solid var(--card-border); border-radius:12px;
+    padding:11px 12px; margin-bottom:8px;
+  }
+  .item-top{display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:10px;}
+  .item-name{font-size:13px; font-weight:600; flex:1;}
+  .item-pct{font-size:12px; font-weight:700; color:var(--accent2); white-space:nowrap;}
+  .item-mid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .item-col .col-label{
+    font-size:10px; font-weight:700; color:var(--sub); text-transform:uppercase;
+    letter-spacing:.4px; margin-bottom:5px; text-align:center;
+  }
+  .item-mid input[type=number]{width:100%; text-align:center; padding:9px 8px;}
+  .plan-value{
+    width:100%; text-align:center; padding:9px 8px; border-radius:10px;
+    background:var(--card); border:1px solid var(--card-border); font-size:14px; font-weight:700;
+  }
+  .item-bar{margin-top:10px;}
+
+  .empty-items{font-size:13px; color:var(--sub); padding:8px 0;}
+
+  .evidence-preview{
+    width:100%; max-height:220px; object-fit:cover; border-radius:10px; margin-top:8px; display:none;
+    border:1px solid var(--card-border);
+  }
+  .evidence-buttons{display:flex; gap:8px;}
+  .evidence-buttons label{
+    flex:1; text-align:center; padding:12px; border:1.5px dashed var(--accent); border-radius:10px;
+    background:var(--accent-soft); color:var(--accent2); font-size:13px; font-weight:700; cursor:pointer;
+    margin-bottom:0; text-transform:none;
+  }
+  .evidence-buttons input[type=file]{display:none;}
+  .evidence-clear{
+    text-align:center; font-size:12px; color:var(--red); margin-top:6px; cursor:pointer; display:none;
+  }
+
+  button.submit{
+    width:100%; padding:14px; border:none; border-radius:12px;
+    background:linear-gradient(135deg, var(--accent) 0%, #274fc9 100%); color:#fff;
+    font-size:15px; font-weight:700; cursor:pointer; margin-top:6px;
+    box-shadow:0 4px 14px rgba(59,110,246,.35);
+  }
+  button.submit:disabled{opacity:.5; box-shadow:none;}
+  .change-link{
+    text-align:center; font-size:13px; color:var(--accent2); margin-top:10px; cursor:pointer; font-weight:600;
+  }
+
+  .toast{
+    position:fixed; left:16px; right:16px; bottom:16px; padding:12px 14px; border-radius:10px;
+    font-size:14px; text-align:center; color:#fff; display:none; z-index:50; box-shadow:var(--shadow);
+  }
+  .toast.success{background:var(--green);}
+  .toast.error{background:var(--red);}
+
+  .empty{font-size:13px; color:var(--sub); padding:10px;}
+</style>
+</head>
+<body>
+
+<header>
+  <a class="back-btn" href="HalamanDepan.html" aria-label="Kembali">&#8592;</a>
+  <div>
+    <h1>Input Progress QE Utilitas</h1>
+    <p>ED REG Sumbagut</p>
+  </div>
+</header>
+
+<div class="section">
+
+  <div class="card" id="search-card">
+    <label for="search">Cari (Nama LOP atau ID Digasss)</label>
+    <input type="text" id="search" placeholder="Ketik nama LOP / ID Digasss..." autocomplete="off" />
+    <div id="results"></div>
+  </div>
+
+  <div class="card selected-card" id="selected-card">
+    <div class="lop" id="sel-lop"></div>
+    <div class="loc" id="sel-loc"></div>
+    <div id="sel-duration"></div>
+
+    <div class="overall-progress">
+      <div class="row">
+        <span class="label">Progress Keseluruhan</span>
+        <span class="pct" id="overallPct">0%</span>
+      </div>
+      <div class="bar-track"><div class="bar-fill" id="overallBar" style="width:0%"></div></div>
+    </div>
+
+    <div class="section-title">Progress Aktual per Item</div>
+    <div id="items-loading" class="empty-items">Memuat item...</div>
+    <div id="items-list"></div>
+
+    <div class="section-title">Catatan &amp; Evidence</div>
+    <div class="field">
+      <label for="noteInput">Catatan Progress Hari Ini</label>
+      <textarea id="noteInput" placeholder="Contoh: Tarik kabel selesai, proses CO menunggu drainase"></textarea>
+    </div>
+
+    <div class="field">
+      <label>Foto Evidence</label>
+      <div class="evidence-buttons">
+        <label>Ambil Foto
+          <input type="file" id="evidenceCamera" accept="image/*" capture="environment" />
+        </label>
+        <label>Upload dari Galeri
+          <input type="file" id="evidenceUpload" accept="image/*" />
+        </label>
+      </div>
+      <img id="evidencePreview" class="evidence-preview" />
+      <div class="evidence-clear" id="evidenceClear">Hapus foto</div>
+    </div>
+
+    <button class="submit" id="submitBtn">Simpan Update</button>
+    <div class="change-link" id="changeLink">Ganti pekerjaan lain</div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  var API_URL = 'https://script.google.com/macros/s/AKfycby-aLVUMoaoGpXtPoer9CziAg46aw5A67zJ-6NyqBEuhebJC_Jrft6LbPUpMz881LuG/exec';
+
+  // ---- Pemanggil API yang tahan gangguan (Safari/HP): baca teks dulu, coba ulang, cadangkan hasil terakhir ----
+  function apiGet(url, tries){
+    tries = tries || 3;
+    var key = 'apicache:' + url;
+    function showStale(){
+      if (document.getElementById('staleBanner')) return;
+      var b = document.createElement('div');
+      b.id = 'staleBanner';
+      b.style.cssText = 'position:fixed;left:12px;right:12px;bottom:12px;z-index:99;background:#3a2a0b;color:#fbbf24;border:1px solid #7a5a12;border-radius:10px;padding:8px 12px;font-size:12px;text-align:center;';
+      b.textContent = '\u26A0 Server belum merespons \u2014 menampilkan data tersimpan terakhir';
+      document.body.appendChild(b);
+      setTimeout(function(){ if (b.parentNode) b.parentNode.removeChild(b); }, 6000);
+    }
+    function attempt(n){
+      return fetch(url).then(function(res){ return res.text(); }).then(function(t){
+        var d;
+        try { d = JSON.parse(t); }
+        catch (e) { throw new Error('Server belum merespons dengan benar, coba lagi sebentar'); }
+        try { localStorage.setItem(key, t); } catch (e) {}
+        return d;
+      }).catch(function(err){
+        if (n < tries) {
+          return new Promise(function(r){ setTimeout(r, 900 * n); }).then(function(){ return attempt(n + 1); });
+        }
+        var c = null;
+        try { c = localStorage.getItem(key); } catch (e) {}
+        if (c) {
+          try { var d2 = JSON.parse(c); showStale(); return d2; } catch (e) {}
+        }
+        throw err;
+      });
+    }
+    return attempt(1);
+  }
+
+  var tg = window.Telegram ? window.Telegram.WebApp : null;
+  if (tg) { tg.ready(); tg.expand(); }
+
+  var allItems = [];
+  var selected = null;
+  var detailItems = [];
+  var evidencePhoto = null; // { data, mimeType, fileName }
+
+  function escapeHtml(str){
+    return String(str == null ? '' : str)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function showToast(msg, type){
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast ' + type;
+    t.style.display = 'block';
+    setTimeout(function(){ t.style.display = 'none'; }, 3000);
+  }
+
+  apiGet(API_URL + '?action=list')
+    .then(function(data){
+      if (!data.ok) throw new Error(data.error || 'Gagal memuat data');
+      allItems = data.items;
+    })
+    .catch(function(err){
+      showToast('Gagal memuat data: ' + err.message, 'error');
+    });
+
+  document.getElementById('search').addEventListener('input', function(){
+    var q = this.value.trim().toUpperCase();
+    var resultsEl = document.getElementById('results');
+    if (!q) { resultsEl.innerHTML = ''; return; }
+
+    var matches = allItems.filter(function(item){
+      return item.namaLop.toUpperCase().indexOf(q) !== -1 ||
+             (item.idDigasss || '').toString().toUpperCase().indexOf(q) !== -1 ||
+             (item.sto || '').toUpperCase().indexOf(q) !== -1;
+    }).slice(0, 15);
+
+    if (matches.length === 0) {
+      resultsEl.innerHTML = '<div class="empty">Tidak ditemukan.</div>';
+      return;
+    }
+
+    resultsEl.innerHTML = matches.map(function(item, idx){
+      return '<div class="result-item" data-idx="' + idx + '">' +
+        escapeHtml(item.namaLop) +
+        '<div class="loc">ID Digasss: ' + escapeHtml(item.idDigasss || '-') + ' &middot; STO ' + escapeHtml(item.sto) + '</div>' +
+      '</div>';
+    }).join('');
+
+    Array.prototype.forEach.call(resultsEl.querySelectorAll('.result-item'), function(el){
+      el.addEventListener('click', function(){
+        selectItem(matches[parseInt(el.getAttribute('data-idx'), 10)]);
+      });
+    });
+  });
+
+  function selectItem(item){
+    selected = item;
+    document.getElementById('search-card').style.display = 'none';
+    document.getElementById('selected-card').classList.add('show');
+    document.getElementById('sel-lop').textContent = item.namaLop;
+    document.getElementById('sel-loc').textContent = item.region + ' \u00b7 ' + item.districtTif + ' \u00b7 STO ' + item.sto + ' \u00b7 ID ' + (item.idDigasss || '-');
+    document.getElementById('noteInput').value = '';
+    clearEvidence();
+
+    document.getElementById('items-loading').style.display = 'block';
+    document.getElementById('items-loading').textContent = 'Memuat item...';
+    document.getElementById('items-list').innerHTML = '';
+    updateOverallProgress();
+
+    document.getElementById('sel-duration').innerHTML = '';
+
+    apiGet(API_URL + '?action=detail&row=' + item.rowIndex)
+      .then(function(data){
+        if (!data.ok) throw new Error(data.error || 'Gagal memuat detail');
+        detailItems = data.item.items || [];
+        renderItems();
+        if (data.item.durasiQeDays !== null && data.item.durasiQeDays !== undefined) {
+          document.getElementById('sel-duration').innerHTML =
+            '<div class="duration-badge">&#9203; Durasi QE: <b>' + data.item.durasiQeDays + ' hari</b>' +
+            (data.item.ndeTanggal ? ' <span class="duration-sub">(sejak NDE ' + escapeHtml(data.item.ndeTanggal) + ')</span>' : '') +
+            '</div>';
+        }
+      })
+      .catch(function(err){
+        document.getElementById('items-loading').textContent = 'Gagal memuat item: ' + err.message;
+      });
+  }
+
+  function pct(aktual, plan){
+    var p = parseFloat(plan) || 0;
+    var a = parseFloat(aktual) || 0;
+    if (p <= 0) return 0;
+    var v = (a / p) * 100;
+    return Math.max(0, Math.min(100, Math.round(v)));
+  }
+
+  function barColor(p){
+    if (p >= 100) return 'var(--green)';
+    if (p >= 40) return 'var(--accent)';
+    return 'var(--orange)';
+  }
+
+  function renderItems(){
+    var listEl = document.getElementById('items-list');
+    var loadingEl = document.getElementById('items-loading');
+
+    if (detailItems.length === 0) {
+      loadingEl.textContent = 'Tidak ada item plan untuk pekerjaan ini.';
+      loadingEl.style.display = 'block';
+      updateOverallProgress();
+      return;
+    }
+    loadingEl.style.display = 'none';
+
+    listEl.innerHTML = detailItems.map(function(it, idx){
+      var p = pct(it.aktual, it.plan);
+      return '' +
+        '<div class="item-card">' +
+          '<div class="item-top">' +
+            '<div class="item-name">' + escapeHtml(it.label) + '</div>' +
+            '<div class="item-pct" id="itemPct-' + idx + '">' + p + '%</div>' +
+          '</div>' +
+          '<div class="item-mid">' +
+            '<div class="item-col">' +
+              '<div class="col-label">Aktual</div>' +
+              '<input type="number" inputmode="decimal" data-idx="' + idx + '" class="aktual-input" value="' + escapeHtml(it.aktual) + '" />' +
+            '</div>' +
+            '<div class="item-col">' +
+              '<div class="col-label">Plan</div>' +
+              '<div class="plan-value">' + escapeHtml(it.plan) + '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="item-bar bar-track"><div class="bar-fill" id="itemBar-' + idx + '" style="width:' + p + '%; background:' + barColor(p) + '"></div></div>' +
+        '</div>';
+    }).join('');
+
+    Array.prototype.forEach.call(listEl.querySelectorAll('.aktual-input'), function(input){
+      input.addEventListener('input', function(){
+        var idx = parseInt(this.getAttribute('data-idx'), 10);
+        var it = detailItems[idx];
+        var p = pct(this.value, it.plan);
+        document.getElementById('itemPct-' + idx).textContent = p + '%';
+        var bar = document.getElementById('itemBar-' + idx);
+        bar.style.width = p + '%';
+        bar.style.background = barColor(p);
+        updateOverallProgress();
+      });
+    });
+
+    updateOverallProgress();
+  }
+
+  function updateOverallProgress(){
+    var totalPlan = 0, totalAktual = 0;
+    var inputs = document.querySelectorAll('.aktual-input');
+    detailItems.forEach(function(it, idx){
+      var p = parseFloat(it.plan) || 0;
+      totalPlan += p;
+      var inputEl = inputs[idx];
+      var aVal = inputEl ? parseFloat(inputEl.value) : parseFloat(it.aktual);
+      totalAktual += (aVal || 0);
+    });
+    var overall = totalPlan > 0 ? Math.max(0, Math.min(100, Math.round((totalAktual / totalPlan) * 100))) : 0;
+    document.getElementById('overallPct').textContent = overall + '%';
+    var bar = document.getElementById('overallBar');
+    bar.style.width = overall + '%';
+    bar.style.background = overall >= 100
+      ? 'var(--green)'
+      : 'linear-gradient(90deg, var(--accent) 0%, var(--accent2) 100%)';
+  }
+
+  document.getElementById('changeLink').addEventListener('click', function(){
+    selected = null;
+    detailItems = [];
+    document.getElementById('selected-card').classList.remove('show');
+    document.getElementById('search-card').style.display = 'block';
+    document.getElementById('search').value = '';
+    document.getElementById('results').innerHTML = '';
+  });
+
+  // --- Evidence photo handling ---
+  function handleFile(file){
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(e){
+      var dataUrl = e.target.result;
+      var commaIdx = dataUrl.indexOf(',');
+      var meta = dataUrl.substring(5, dataUrl.indexOf(';'));
+      var base64 = dataUrl.substring(commaIdx + 1);
+      evidencePhoto = { data: base64, mimeType: meta, fileName: file.name || 'evidence.jpg' };
+      var img = document.getElementById('evidencePreview');
+      img.src = dataUrl;
+      img.style.display = 'block';
+      document.getElementById('evidenceClear').style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  document.getElementById('evidenceCamera').addEventListener('change', function(){
+    handleFile(this.files[0]);
+  });
+  document.getElementById('evidenceUpload').addEventListener('change', function(){
+    handleFile(this.files[0]);
+  });
+
+  function clearEvidence(){
+    evidencePhoto = null;
+    document.getElementById('evidencePreview').style.display = 'none';
+    document.getElementById('evidencePreview').src = '';
+    document.getElementById('evidenceClear').style.display = 'none';
+    document.getElementById('evidenceCamera').value = '';
+    document.getElementById('evidenceUpload').value = '';
+  }
+  document.getElementById('evidenceClear').addEventListener('click', clearEvidence);
+
+  // --- Submit ---
+  document.getElementById('submitBtn').addEventListener('click', function(){
+    if (!selected) return;
+    var note = document.getElementById('noteInput').value.trim();
+
+    var itemUpdates = [];
+    Array.prototype.forEach.call(document.querySelectorAll('.aktual-input'), function(input){
+      var idx = parseInt(input.getAttribute('data-idx'), 10);
+      var original = detailItems[idx];
+      var newVal = input.value;
+      if (newVal !== '' && String(newVal) !== String(original.aktual)) {
+        itemUpdates.push({ label: original.label, aktual: newVal });
+      }
+    });
+
+    if (!note && !evidencePhoto && itemUpdates.length === 0) {
+      showToast('Isi minimal salah satu: progress item, catatan, atau foto.', 'error');
+      return;
+    }
+
+    var btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = 'Menyimpan...';
+
+    var payload = {
+      action: 'update',
+      row: selected.rowIndex,
+      note: note,
+      itemUpdates: itemUpdates
+    };
+    if (evidencePhoto) payload.photo = evidencePhoto;
+
+    fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    })
+      .then(function(res){ return res.json(); })
+      .then(function(data){
+        btn.disabled = false;
+        btn.textContent = 'Simpan Update';
+        if (!data.ok) throw new Error(data.error || 'Gagal menyimpan');
+        showToast('Berhasil disimpan!', 'success');
+        document.getElementById('noteInput').value = '';
+        itemUpdates.forEach(function(u){
+          var it = detailItems.find(function(d){ return d.label === u.label; });
+          if (it) it.aktual = u.aktual;
+        });
+        clearEvidence();
+      })
+      .catch(function(err){
+        btn.disabled = false;
+        btn.textContent = 'Simpan Update';
+        showToast('Gagal: ' + err.message, 'error');
+      });
+  });
+</script>
+
+</body>
+</html>
     --green:#22c55e; --orange:#f59e0b; --red:#ef4444;
     --shadow:0 4px 18px rgba(0,0,0,.35);
   }
