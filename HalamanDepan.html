@@ -64,6 +64,17 @@
   .module-desc{font-size:10.5px; color:var(--sub); margin-top:2px;}
   .module-arrow{margin-left:auto; color:var(--sub); font-size:18px;}
 
+  .focus-box{
+    position:relative; margin:16px 0 14px; padding:20px 10px 10px; border-radius:18px;
+    border:1.5px solid var(--accent2); background:linear-gradient(180deg, rgba(59,110,246,.10), rgba(59,110,246,.03));
+    box-shadow:0 0 0 3px rgba(109,155,255,.10), 0 6px 22px rgba(59,110,246,.22);
+    display:flex; flex-direction:column; gap:8px;
+  }
+  .focus-tag{
+    position:absolute; top:-10px; left:16px; background:var(--accent2); color:#04122b;
+    font-size:10.5px; font-weight:800; letter-spacing:.3px; padding:3px 11px; border-radius:99px;
+  }
+  .focus-box .module-card{border-color:rgba(109,155,255,.35);}
   .filter-scroll{display:flex; gap:8px; overflow-x:auto; padding:2px 0 4px; margin-bottom:4px;}
   .filter-scroll::-webkit-scrollbar{display:none;}
   .chip{
@@ -251,28 +262,26 @@
     <div class="search-tip">Ketik untuk langsung lihat progress per item pekerjaan</div>
   </div>
 
-  <div class="module-row">
+  <div class="focus-box">
+    <div class="focus-tag">&#127919; Fokus Saat Ini</div>
     <a class="module-card" href="Timeline-BRT.html">
       <div class="module-icon">&#128198;</div>
       <div class="module-text">
-        <div class="module-title">BRT Medan &middot; Timeline</div>
-        <div class="module-desc">Cek progress Zona &middot; Segmen &middot; Sisi Kiri/Kanan (prototype)</div>
+        <div class="module-title">BRT Medan &middot; Timeline &amp; Kurva S</div>
+        <div class="module-desc">Jadwal Zona &middot; Segmen &middot; Sisi Kiri/Kanan, kurva S Plan vs Aktual, target harian</div>
       </div>
       <div class="module-arrow">&#8250;</div>
     </a>
-  </div>
-  <div class="module-row">
     <a class="module-card" href="InputBRT.html">
       <div class="module-icon" style="background:rgba(34,197,94,.15); color:var(--green);">&#9999;&#65039;</div>
       <div class="module-text">
         <div class="module-title">BRT Medan &middot; Input Progress</div>
-        <div class="module-desc">Update Aktual per Zona &middot; Segmen &middot; Sisi (prototype)</div>
+        <div class="module-desc">Update Aktual per Zona &middot; Segmen &middot; Sisi</div>
       </div>
       <div class="module-arrow">&#8250;</div>
     </a>
   </div>
 
-  <div class="filter-scroll" id="regionFilters"></div>
   <div class="showing" id="showingLabel">Memuat...</div>
 
   <div class="panel-row" id="overviewPanels">
@@ -375,29 +384,6 @@
 
   function stripPrefix(s){
     return String(s || '').replace(/^\d+\.\s*/, '');
-  }
-
-  function loadRegionChips(){
-    fetch(API_URL + '?action=summary')
-      .then(function(res){ return res.json(); })
-      .then(function(data){
-        if (!data.ok) return;
-        var wrap = document.getElementById('regionFilters');
-        var chip = '<div class="chip active" data-region="" id="chip-all">Semua Region</div>';
-        data.regionCounts.forEach(function(r){
-          chip += '<div class="chip" data-region="' + escapeHtml(r.name) + '"><span class="dot"></span>' + escapeHtml(stripPrefix(r.name)) + '</div>';
-        });
-        wrap.innerHTML = chip;
-        Array.prototype.forEach.call(wrap.querySelectorAll('.chip'), function(el){
-          el.addEventListener('click', function(){
-            activeRegion = el.getAttribute('data-region');
-            Array.prototype.forEach.call(wrap.querySelectorAll('.chip'), function(c){ c.classList.remove('active'); });
-            el.classList.add('active');
-            loadStatusSummary();
-          });
-        });
-      })
-      .catch(function(){});
   }
 
   function loadStatusSummary(){
@@ -781,7 +767,6 @@
     if (document.getElementById('search').value.trim()) runSearch();
   });
 
-  loadRegionChips();
   loadStatusSummary();
 </script>
 
