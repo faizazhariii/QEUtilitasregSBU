@@ -153,6 +153,7 @@
   .sc-guide summary{font-size:13px; font-weight:700; color:var(--text); margin:0;}
   .sc-guide ul{margin:8px 0 0; padding-left:18px; font-size:12px; color:var(--sub); line-height:1.6;} .sc-guide li b{color:var(--text);}
   .sc-guide .sw{display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:4px; vertical-align:middle;}
+  .hint-line{font-size:10.5px; color:var(--sub); margin-bottom:12px;}
 </style>
 </head>
 <body>
@@ -172,13 +173,8 @@
     <button id="tabSc" onclick="setTab('sc')">Kurva S</button>
   </div>
 
-  <div class="toolbar">
-    <label>STO</label>
-    <select id="stoFilter"><option value="">Semua STO</option></select>
-    <div class="hint" id="tlHint">Tabel timeline di bawah bisa digeser ke kanan/kiri. Garis biru terang menandai hari ini.</div>
-  </div>
-
   <div id="viewTimeline">
+    <div class="hint-line">Tabel timeline di bawah bisa digeser ke kanan/kiri. Garis biru terang menandai hari ini.</div>
     <div class="legend">
       <span><i style="background:var(--accent2)"></i> KABEL</span>
       <span><i style="background:var(--orange)"></i> GALIAN</span>
@@ -214,17 +210,6 @@
   function escapeHtml(str){
     return String(str == null ? '' : str)
       .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  }
-
-  function loadSto(rows){
-    var stoSet = {};
-    rows.forEach(function(r){ if (r.sto) stoSet[r.sto] = true; });
-    var sel = document.getElementById('stoFilter');
-    Object.keys(stoSet).sort().forEach(function(s){
-      var opt = document.createElement('option');
-      opt.value = s; opt.textContent = s;
-      sel.appendChild(opt);
-    });
   }
 
   function zonaDateRange(zona){
@@ -367,7 +352,7 @@
   }
 
   function render(){
-    var stoVal = document.getElementById('stoFilter').value;
+    var stoVal = '';
     var listEl = document.getElementById('lopList');
 
     var filteredRows = allRows.filter(function(r){
@@ -581,7 +566,7 @@
   }
   
   function scRowsForView(){
-    var stoVal = document.getElementById('stoFilter').value;
+    var stoVal = '';
     return allRows.filter(function(r){
       if (stoVal && r.sto !== stoVal) return false;
       if (scState.zona && r.namaLop !== scState.zona) return false;
@@ -689,7 +674,7 @@
   
   function renderScurve(){
     var el = document.getElementById('viewScurve');
-    var stoVal = document.getElementById('stoFilter').value;
+    var stoVal = '';
     var zonaNames = [];
     allRows.forEach(function(r){
       if (stoVal && r.sto !== stoVal) return;
@@ -773,13 +758,11 @@
     document.getElementById('viewScurve').style.display = sc ? '' : 'none';
     document.getElementById('tabTl').classList.toggle('on', !sc);
     document.getElementById('tabSc').classList.toggle('on', sc);
-    document.getElementById('tlHint').style.display = sc ? 'none' : '';
     if (sc) renderScurve();
   }
   // ==== END SCURVE-UI ====
   
 
-  document.getElementById('stoFilter').addEventListener('change', function(){ render(); if (document.getElementById('viewScurve').style.display !== 'none') renderScurve(); });
 
   fetch(API_URL + '?action=brtTimeline')
     .then(function(res){ return res.json(); })
@@ -787,7 +770,6 @@
       if (!data.ok) throw new Error(data.error || 'Gagal memuat data');
       allRows = data.rows;
       allZonas = data.zonas || [];
-      loadSto(allRows);
       render();
       fetch(API_URL + '?action=brtAktualLog')
         .then(function(r){ return r.json(); })
