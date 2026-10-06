@@ -122,6 +122,41 @@
 <script>
   var API_URL = 'https://script.google.com/macros/s/AKfycbyIYDJ4Btr5MuTNsK8PcqICFm0woRzbK7gV91igtabsBiM_quoIvsOYJy1OvkszlSZYrQ/exec';
 
+  // ---- Pemanggil API yang tahan gangguan (Safari/HP): baca teks dulu, coba ulang, cadangkan hasil terakhir ----
+  function apiGet(url, tries){
+    tries = tries || 3;
+    var key = 'apicache:' + url;
+    function showStale(){
+      if (document.getElementById('staleBanner')) return;
+      var b = document.createElement('div');
+      b.id = 'staleBanner';
+      b.style.cssText = 'position:fixed;left:12px;right:12px;bottom:12px;z-index:99;background:#3a2a0b;color:#fbbf24;border:1px solid #7a5a12;border-radius:10px;padding:8px 12px;font-size:12px;text-align:center;';
+      b.textContent = '\u26A0 Server belum merespons \u2014 menampilkan data tersimpan terakhir';
+      document.body.appendChild(b);
+      setTimeout(function(){ if (b.parentNode) b.parentNode.removeChild(b); }, 6000);
+    }
+    function attempt(n){
+      return fetch(url).then(function(res){ return res.text(); }).then(function(t){
+        var d;
+        try { d = JSON.parse(t); }
+        catch (e) { throw new Error('Server belum merespons dengan benar, coba lagi sebentar'); }
+        try { localStorage.setItem(key, t); } catch (e) {}
+        return d;
+      }).catch(function(err){
+        if (n < tries) {
+          return new Promise(function(r){ setTimeout(r, 900 * n); }).then(function(){ return attempt(n + 1); });
+        }
+        var c = null;
+        try { c = localStorage.getItem(key); } catch (e) {}
+        if (c) {
+          try { var d2 = JSON.parse(c); showStale(); return d2; } catch (e) {}
+        }
+        throw err;
+      });
+    }
+    return attempt(1);
+  }
+
   var tg = window.Telegram ? window.Telegram.WebApp : null;
   if (tg) { tg.ready(); tg.expand(); }
 
@@ -315,8 +350,7 @@
     });
   }
 
-  fetch(API_URL + '?action=brtStructure')
-    .then(function(res){ return res.json(); })
+  apiGet(API_URL + '?action=brtStructure')
     .then(function(data){
       if (!data.ok) throw new Error(data.error || 'Gagal memuat data');
       allZonas = data.zonas || [];
@@ -324,7 +358,7 @@
       renderZonaList();
     })
     .catch(function(err){
-      document.getElementById('app').innerHTML = '<div class="empty">Gagal memuat data: ' + escapeHtml(err.message) + '</div>';
+      document.getElementById('app').innerHTML = '<div class="empty">Gagal memuat data: ' + escapeHtml(err.message) + '<br><br><button onclick="location.reload()" style="background:#6d9bff;color:#04122b;border:none;border-radius:8px;padding:8px 16px;font-weight:700;font-size:13px;">Coba lagi</button></div>';
     });
 </script>
 
