@@ -327,7 +327,9 @@
       if (F.zona !== 'all' && F.zona !== zk) return;
       if (ROUTE_GEO[zk]) L.polyline(ROUTE_GEO[zk], { color: '#475569', weight: 2, opacity: .4, interactive: false }).addTo(segLayer);
       Object.keys(SEG_GEO[zk]).sort().forEach(function(num){
-        var pts = SEG_GEO[zk][num], col = SEG_COLORS[num] || '#fff';
+        var pts = SEG_GEO[zk][num].slice(), col = SEG_COLORS[num] || '#fff';
+        // arah kerja: progress dari sisi KANAN (timur) ke KIRI (barat) -> titik awal = ujung paling timur
+        if (pts[0][1] < pts[pts.length - 1][1]) pts.reverse();
         var kiri = Number(num) <= 3;
         var pc = segPct(zk, num);
         var info = (SEG_INFO[zk] && SEG_INFO[zk][num]) || '';
