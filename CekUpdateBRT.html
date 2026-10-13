@@ -21,13 +21,13 @@
   header p{margin:2px 0 0; font-size:11px; color:var(--sub);}
   .refresh{margin-left:auto; background:var(--card); border:1px solid var(--card-border); color:var(--accent2); border-radius:9px; width:34px; height:34px; font-size:15px; cursor:pointer;}
 
-  #map{height:270px; width:100%; background:#0a0f1d; border-bottom:1px solid var(--card-border);}
+  #map{height:270px; width:100%; background:#e8e6e1; border-bottom:1px solid var(--card-border);}
   .leaflet-container{font-family:inherit;}
-  .leaflet-popup-content-wrapper,.leaflet-popup-tip{background:var(--card); color:var(--text);}
+  .leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#fff; color:#0f172a;}
   .leaflet-popup-content{margin:10px 12px; font-size:12px; line-height:1.4;}
-  .pop-t{font-weight:800; font-size:12.5px;} .pop-s{color:var(--sub); font-size:11px; margin-top:2px;}
+  .pop-t{font-weight:800; font-size:12.5px;} .pop-s{color:#475569; font-size:11px; margin-top:2px;}
   .pop-img{display:block; margin-top:7px; width:150px; height:100px; object-fit:cover; border-radius:8px; border:1px solid var(--card-border);}
-  .nomap{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:var(--sub); font-size:12px; text-align:center; padding:20px; pointer-events:none; z-index:500;}
+  .nomap{color:#475569 !important; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:var(--sub); font-size:12px; text-align:center; padding:20px; pointer-events:none; z-index:500;}
   .mapwrap{position:relative;}
 
   .section{padding:12px 14px;}
@@ -90,7 +90,6 @@
 
 <div class="section">
   <div class="chips" id="chipsZona"></div>
-  <div class="chips" id="chipsPeriod"></div>
   <div class="sum" id="sum"></div>
   <div id="list"><div class="loading">Memuat update&hellip;</div></div>
 </div>
@@ -150,10 +149,11 @@
     }
   };
   var ROUTE_GEO = {'3': [[3.58923,98.61012],[3.58952,98.61052],[3.59076,98.60944],[3.59181,98.60867],[3.59448,98.60891],[3.59619,98.60905],[3.59782,98.60883],[3.59816,98.60909],[3.59759,98.61026],[3.5974,98.61072],[3.59717,98.61123],[3.59704,98.61156],[3.59679,98.61209],[3.59668,98.61241],[3.59656,98.61274],[3.59628,98.61335],[3.59598,98.61414],[3.59569,98.61483],[3.59543,98.61551],[3.59527,98.61586],[3.59496,98.61665],[3.59476,98.61712],[3.59462,98.61747],[3.59429,98.6184],[3.59409,98.61884],[3.59383,98.6195],[3.59361,98.62006],[3.59327,98.62093],[3.59294,98.62175],[3.59278,98.62217],[3.59241,98.62298],[3.59213,98.62374],[3.59174,98.62488],[3.59171,98.62544],[3.59168,98.6261],[3.59169,98.62679],[3.59164,98.62751],[3.5916,98.62804],[3.59161,98.6286],[3.59158,98.6291],[3.59153,98.62971],[3.59149,98.63039],[3.59147,98.63122],[3.59139,98.63207],[3.59139,98.63301],[3.59137,98.63351],[3.59134,98.63419],[3.5913,98.63486],[3.59124,98.63563],[3.59124,98.63618],[3.59123,98.63639],[3.59121,98.637],[3.59117,98.63749],[3.59113,98.63809],[3.59111,98.63892],[3.5911,98.63948],[3.59107,98.63981],[3.59104,98.64058],[3.59101,98.64113],[3.59096,98.64219],[3.59093,98.64277],[3.59086,98.6438],[3.59082,98.64443],[3.59078,98.64656],[3.59067,98.64779],[3.59054,98.64983],[3.59046,98.65167],[3.59042,98.65321],[3.59033,98.65447],[3.59023,98.6561],[3.59018,98.65829],[3.59019,98.6587],[3.59039,98.65968],[3.59065,98.6606],[3.59087,98.66143],[3.59148,98.66332],[3.59195,98.66455],[3.5923,98.6653],[3.59267,98.66649],[3.59309,98.66758],[3.59328,98.66854]]};
-  var SEG_COLORS = { '1':'#38bdf8', '2':'#f472b6', '3':'#facc15', '4':'#a78bfa', '5':'#fb923c', '6':'#2dd4bf' };
-  var ZONA_COLORS = { '1': '#3b6ef6', '2': '#f59e0b', '3': '#22c55e' };
+  var SEG_COLORS = { '1':'#0284c7', '2':'#db2777', '3':'#ca8a04', '4':'#7c3aed', '5':'#ea580c', '6':'#0d9488' };
+  var ZONA_COLORS = { '1': '#2563eb', '2': '#d97706', '3': '#16a34a' };
   var all = [];
-  var F = { zona: 'all', period: '7' };
+  var PLAN = {}; // 'zonaKey|segNum|LABEL' -> plan (data terbaru dari sheet)
+  var F = { zona: 'all' };
   var shown = 20;
   var map = null, layer = null, pins = {};
 
@@ -180,14 +180,7 @@
   function parse(u){ u._d = new Date(u.time); if (isNaN(u._d)) u._d = new Date(0); u._hasGeo = typeof u.lat === 'number' && typeof u.lng === 'number'; return u; }
 
   function filtered(){
-    var today = dayKey(new Date());
-    var cut = F.period === '7' ? Date.now() - 7 * 86400000 : 0;
-    return all.filter(function(u){
-      if (F.zona !== 'all' && zonaKey(u.zona) !== F.zona) return false;
-      if (F.period === 'today') return dayKey(u._d) === today;
-      if (F.period === '7') return u._d.getTime() >= cut;
-      return true;
-    });
+    return all.filter(function(u){ return F.zona === 'all' || zonaKey(u.zona) === F.zona; });
   }
 
   // ---------- chips ----------
@@ -201,19 +194,13 @@
     Array.prototype.forEach.call(zc.querySelectorAll('.chip'), function(b){
       b.addEventListener('click', function(){ F.zona = b.getAttribute('data-z'); shown = 20; renderAll(); });
     });
-    var P = [['today', 'Hari ini'], ['7', '7 hari'], ['all', 'Semua']];
-    var pc = document.getElementById('chipsPeriod');
-    pc.innerHTML = P.map(function(p){ return '<button class="chip' + (F.period === p[0] ? ' on' : '') + '" data-p="' + p[0] + '">' + p[1] + '</button>'; }).join('');
-    Array.prototype.forEach.call(pc.querySelectorAll('.chip'), function(b){
-      b.addEventListener('click', function(){ F.period = b.getAttribute('data-p'); shown = 20; renderAll(); });
-    });
   }
 
   // ---------- map ----------
   function initMap(){
     if (map || !window.L) return;
     map = L.map('map', { zoomControl: true, attributionControl: true }).setView([3.5952, 98.6722], 12);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
       maxZoom: 19, subdomains: 'abcd', attribution: '&copy; OpenStreetMap &copy; CARTO'
     }).addTo(map);
     layer = L.layerGroup().addTo(map);
@@ -222,7 +209,7 @@
   function popupHtml(u){
     var h = '<div class="pop-t">' + esc(zonaShort(u.zona)) + ' &middot; ' + esc(u.segmen) + '</div>' +
       '<div class="pop-s">' + esc(relTime(u._d)) + (u.user ? ' &middot; ' + esc(u.user) : '') + '</div>';
-    if (u.summary) h += '<div class="pop-s" style="color:#e7ebf5;margin-top:5px">' + esc(u.summary) + '</div>';
+    if (u.summary) h += '<div class="pop-s" style="color:#0f172a;margin-top:5px">' + esc(u.summary) + '</div>';
     if (u.photos && u.photos.length) h += '<img class="pop-img" src="' + thumb(u.photos[0], 300) + '" alt="foto" />';
     return h;
   }
@@ -256,7 +243,7 @@
       (u.items || []).forEach(function(it){
         if (seen[it.label]) return;
         seen[it.label] = 1;
-        var plan = Number(it.plan);
+        var plan = planOf(u, it);
         if (plan > 0){ sum += Math.min(100, Number(it.after) / plan * 100); n++; }
       });
     }
@@ -267,7 +254,7 @@
     var lg = document.getElementById('legend'); lg.innerHTML = '';
     Object.keys(SEG_GEO).sort().forEach(function(zk){
       if (F.zona !== 'all' && F.zona !== zk) return;
-      if (ROUTE_GEO[zk]) L.polyline(ROUTE_GEO[zk], { color: '#94a3b8', weight: 2, opacity: .35, interactive: false }).addTo(segLayer);
+      if (ROUTE_GEO[zk]) L.polyline(ROUTE_GEO[zk], { color: '#475569', weight: 2, opacity: .4, interactive: false }).addTo(segLayer);
       Object.keys(SEG_GEO[zk]).sort().forEach(function(num){
         var pts = SEG_GEO[zk][num], col = SEG_COLORS[num] || '#fff';
         var kiri = Number(num) <= 3;
@@ -281,7 +268,7 @@
           .bindPopup(pop).addTo(segLayer);
         var mid = midPoint(pts);
         L.marker(mid, { icon: L.divIcon({ className: '', iconSize: [22, 22], iconAnchor: [11, 11],
-          html: '<div style="width:22px;height:22px;border-radius:50%;background:' + col + ';color:#0b1120;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;border:2px solid #0b1120">' + num + '</div>' }),
+          html: '<div style="width:22px;height:22px;border-radius:50%;background:' + col + ';color:#fff;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.5)">' + num + '</div>' }),
           interactive: false }).addTo(segLayer);
         pts.forEach(function(q){ bounds.push(q); });
         var b = document.createElement('button');
@@ -332,8 +319,13 @@
       '<div><b>' + ph + '</b><span>Foto hari ini</span></div>';
   }
 
-  function itemLine(it){
-    var after = Number(it.after), plan = Number(it.plan);
+  function planOf(u, it){
+    var p = Number(it.plan);
+    if (p > 0) return p;
+    return PLAN[zonaKey(u.zona) + '|' + String(u.segmen).replace(/\D+/g, '') + '|' + String(it.label).toUpperCase()] || 0;
+  }
+  function itemLine(it, u){
+    var after = Number(it.after), plan = planOf(u, it);
     var unit = it.unit ? ' ' + esc(it.unit) : '';
     var hasPlan = plan > 0;
     var pct = hasPlan ? Math.round(after / plan * 100) : null;
@@ -344,7 +336,7 @@
   }
 
   function cardHtml(u){
-    var items = (u.items || []).length ? '<div class="u-items">' + u.items.map(itemLine).join('') + '</div>' : '';
+    var items = (u.items || []).length ? '<div class="u-items">' + u.items.map(function(it){ return itemLine(it, u); }).join('') + '</div>' : '';
     var cat = u.catatan ? '<div class="u-cat">' + esc(u.catatan) + '</div>' : '';
     var ph = (u.photos || []).length ? '<div class="u-photos">' + u.photos.slice(0, 4).map(function(id){
       return '<img loading="lazy" src="' + thumb(id, 400) + '" data-full="' + thumb(id, 1600) + '" alt="foto lapangan" />';
@@ -398,8 +390,18 @@
     renderList(list);
   }
 
+  function loadPlans(){
+    return apiGet(API_URL + '?action=brtStructure').then(function(d){
+      PLAN = {};
+      (d.rows || []).forEach(function(r){
+        var zk = zonaKey(r.namaLop), sn = String(r.segmen).replace(/\D+/g, '');
+        (r.items || []).forEach(function(it){ if (Number(it.plan) > 0) PLAN[zk + '|' + sn + '|' + String(it.label).toUpperCase()] = Number(it.plan); });
+      });
+    }).catch(function(){});
+  }
+
   function load(){
-    apiGet(API_URL + '?action=brtUpdates&limit=200')
+    loadPlans().then(function(){ return apiGet(API_URL + '?action=brtUpdates&limit=200'); })
       .then(function(data){
         if (!data.ok) throw new Error(data.error || 'Gagal memuat data');
         all = (data.updates || []).map(function(u, i){ u._i = i; return parse(u); });
