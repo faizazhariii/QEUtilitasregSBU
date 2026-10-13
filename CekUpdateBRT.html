@@ -47,6 +47,21 @@
   .u-time{margin-left:auto; font-size:11px; color:var(--sub); white-space:nowrap;}
   .u-user{font-size:11px; color:var(--sub); margin:3px 0 0 18px;}
   .u-items{margin:9px 0 0; display:flex; flex-direction:column; gap:5px;}
+  .prog-h{display:flex; align-items:center; justify-content:space-between; margin:4px 0 8px;}
+  .prog-h b{font-size:13px;} .prog-h span{font-size:11px; color:var(--sub);}
+  .pz{background:var(--card); border:1px solid var(--card-border); border-radius:14px; padding:12px; margin-bottom:10px;}
+  .pz-top{display:flex; justify-content:space-between; align-items:baseline; gap:8px;}
+  .pz-top b{font-size:14px;} .pz-top .big{font-size:20px; font-weight:800; color:var(--accent2);}
+  details.ps{background:var(--bg2); border:1px solid var(--card-border); border-radius:11px; margin-top:8px; overflow:hidden;}
+  details.ps summary{list-style:none; cursor:pointer; padding:9px 11px;}
+  details.ps summary::-webkit-details-marker{display:none;}
+  .ps-row{display:flex; align-items:center; gap:8px;}
+  .ps-n{width:20px; height:20px; border-radius:50%; color:#fff; font-size:11px; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+  .ps-t{font-size:12.5px; font-weight:700; flex:1;} .ps-p{font-size:13px; font-weight:800; color:var(--accent2);}
+  .ps-s{font-size:10.5px; color:var(--sub); margin:5px 0 0 28px;}
+  .ps-body{padding:2px 11px 10px;}
+  .pi{margin-top:8px;} .pi .row{display:flex; justify-content:space-between; gap:8px; font-size:12px;}
+  .pi .rp{font-weight:700;} .pi .rp i{font-style:normal; color:var(--sub); font-weight:500;} .pi .pc{color:var(--accent2); font-weight:800;}
   .u-item{display:block !important;}
   .u-item .row{display:flex; justify-content:space-between; gap:8px; align-items:baseline;}
   .u-item .rp{font-weight:700;} .u-item .rp i{font-style:normal; color:var(--sub); font-weight:500;}
@@ -91,6 +106,7 @@
 
 <div class="section">
   <div class="chips" id="chipsZona"></div>
+  <div id="progress"></div>
   <div class="sum" id="sum"></div>
   <div id="list"><div class="loading">Memuat update&hellip;</div></div>
 </div>
@@ -153,6 +169,7 @@
   var SEG_COLORS = { '1':'#0284c7', '2':'#db2777', '3':'#ca8a04', '4':'#7c3aed', '5':'#ea580c', '6':'#0d9488' };
   var ZONA_COLORS = { '1': '#2563eb', '2': '#d97706', '3': '#16a34a' };
   var all = [];
+  var SEGDATA = {}; // 'zonaKey|segNum' -> {zona, segmen, items:[{label,unit,plan,aktual}]} (data terbaru dari sheet)
   var PLAN = {}; // 'zonaKey|segNum|LABEL' -> plan (data terbaru dari sheet)
   var F = { zona: 'all' };
   var shown = 20;
@@ -244,20 +261,50 @@
     return pts[0];
   }
 
-  // % rata-rata item terbaru per Zona+Segmen (dari update yang masuk, terbaru dulu)
+  function itPct(it){ var p = Number(it.plan); return p > 0 ? Math.min(100, Number(it.aktual || 0) / p * 100) : null; }
+  function avgPct(items){
+    var s = 0, n = 0;
+    (items || []).forEach(function(it){ var v = itPct(it); if (v !== null){ s += v; n++; } });
+    return n ? Math.round(s / n) : null;
+  }
+  // % rata-rata item per Zona+Segmen (dari sheet, bobot sama rata)
   function segPct(zk, num){
-    var seen = {}, sum = 0, n = 0;
-    for (var i = 0; i < all.length; i++){
-      var u = all[i];
-      if (zonaKey(u.zona) !== zk || String(u.segmen).replace(/\D+/g, '') !== num) continue;
-      (u.items || []).forEach(function(it){
-        if (seen[it.label]) return;
-        seen[it.label] = 1;
-        var plan = planOf(u, it);
-        if (plan > 0){ sum += Math.min(100, Number(it.after) / plan * 100); n++; }
-      });
+    var d = SEGDATA[zk + '|' + num];
+    return d ? avgPct(d.items) : null;
+  }
+  // Panjang jalur yang sudah "ditarik" = % GALIAN (cadangan: HDPE/SUBDUCT, KABEL, rata-rata)
+  function segRealFrac(zk, num){
+    var d = SEGDATA[zk + '|' + num];
+    if (!d) return { f: 0, basis: '' };
+    var order = ['GALIAN', 'HDPE/SUBDUCT', 'KABEL'];
+    for (var i = 0; i < order.length; i++){
+      var it = d.items.filter(function(x){ return String(x.label).toUpperCase() === order[i]; })[0];
+      var v = it ? itPct(it) : null;
+      if (v !== null) return { f: v / 100, basis: order[i] };
     }
-    return n ? Math.round(sum / n) : null;
+    var a = avgPct(d.items);
+    return { f: a === null ? 0 : a / 100, basis: 'rata-rata' };
+  }
+  // potongan jalur dari titik awal sepanjang frac (0..1)
+  function subPath(pts, frac){
+    if (frac <= 0) return [];
+    if (frac >= 1) return pts.slice();
+    var tot = segLenM(pts), target = tot * frac, acc = 0, out = [pts[0]];
+    for (var i = 1; i < pts.length; i++){
+      var d = L.latLng(pts[i-1]).distanceTo(L.latLng(pts[i]));
+      if (acc + d >= target && d > 0){
+        var t = (target - acc) / d;
+        out.push([pts[i-1][0] + (pts[i][0] - pts[i-1][0]) * t, pts[i-1][1] + (pts[i][1] - pts[i-1][1]) * t]);
+        return out;
+      }
+      out.push(pts[i]); acc += d;
+    }
+    return out;
+  }
+  function itemsPopup(d){
+    return (d && d.items || []).filter(function(it){ return Number(it.plan) > 0; }).map(function(it){
+      return '<div class="pop-s" style="color:#0f172a">' + esc(it.label) + ': <b>' + fmtNum(it.aktual || 0) + '</b> / ' + fmtNum(it.plan) + ' ' + esc(it.unit || '') + ' (' + Math.round(itPct(it)) + '%)</div>';
+    }).join('');
   }
 
   function drawSegments(bounds){
@@ -271,11 +318,22 @@
         var pc = segPct(zk, num);
         var info = (SEG_INFO[zk] && SEG_INFO[zk][num]) || '';
         var km = (segLenM(pts) / 1000).toFixed(2).replace('.', ',');
+        var rf = segRealFrac(zk, num);
         var pop = '<div class="pop-t">Zona ' + zk + ' &middot; Segmen ' + num + '</div>' +
           (info ? '<div class="pop-s">' + esc(info) + '</div>' : '') +
-          '<div class="pop-s">\u00B1' + km + ' km' + (pc !== null ? ' &middot; progres ' + pc + '%' : '') + '</div>';
+          '<div class="pop-s">\u00B1' + km + ' km' + (pc !== null ? ' &middot; progres ' + pc + '%' : '') + '</div>' +
+          (rf.basis ? '<div class="pop-s" style="color:#15803d;font-weight:700;margin-top:4px">Sudah ditarik \u00B1' + Math.round(rf.f * segLenM(pts)).toLocaleString('id-ID') + ' m (' + Math.round(rf.f * 100) + '% \u00B7 ' + esc(rf.basis) + ')</div>' : '') +
+          itemsPopup(SEGDATA[zk + '|' + num]);
         var line = L.polyline(pts, { color: col, weight: kiri ? 7 : 4, opacity: .85, dashArray: kiri ? null : '9 7', lineCap: 'round' })
           .bindPopup(pop).addTo(segLayer);
+        // garis REAL: bagian jalur plan yang sudah dikerjakan (dari titik awal)
+        var rp = subPath(pts, rf.f);
+        if (rp.length > 1){
+          L.polyline(rp, { color: '#fff', weight: kiri ? 11 : 8, opacity: .95, lineCap: 'round', interactive: false }).addTo(segLayer);
+          L.polyline(rp, { color: '#16a34a', weight: kiri ? 7 : 4, opacity: 1, lineCap: 'round', interactive: false }).addTo(segLayer);
+          L.circleMarker(rp[rp.length - 1], { radius: 7, color: '#fff', weight: 3, fillColor: '#16a34a', fillOpacity: 1 })
+            .bindPopup('<div class="pop-t">Real Segmen ' + num + '</div><div class="pop-s" style="color:#15803d;font-weight:700">Sampai sini: ' + Math.round(rf.f * 100) + '% (' + esc(rf.basis) + ')</div>').addTo(segLayer);
+        }
         var mid = midPoint(pts);
         L.marker(mid, { icon: L.divIcon({ className: '', iconSize: [22, 22], iconAnchor: [11, 11],
           html: '<div style="width:22px;height:22px;border-radius:50%;background:' + col + ';color:#fff;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.5)">' + num + '</div>' }),
@@ -315,6 +373,50 @@
     if (bounds.length === 1) map.setView(bounds[0], 16);
     else if (bounds.length > 1) map.fitBounds(bounds, { padding: [30, 30], maxZoom: 17 });
     setTimeout(function(){ map.invalidateSize(); }, 50);
+  }
+
+  // ---------- progress real/plan per Zona -> Segmen -> item ----------
+  function renderProgress(){
+    var box = document.getElementById('progress');
+    var zs = {};
+    Object.keys(SEGDATA).forEach(function(k){
+      var zk = k.split('|')[0];
+      if (F.zona !== 'all' && F.zona !== zk) return;
+      (zs[zk] = zs[zk] || []).push(k);
+    });
+    var zkeys = Object.keys(zs).sort();
+    if (!zkeys.length){ box.innerHTML = ''; return; }
+    var html = '<div class="prog-h"><b>Progress Lapangan</b><span>Real / Plan</span></div>';
+    zkeys.forEach(function(zk){
+      var keys = zs[zk].sort(function(a, b){ return Number(a.split('|')[1]) - Number(b.split('|')[1]); });
+      var tot = {};
+      keys.forEach(function(k){ SEGDATA[k].items.forEach(function(it){
+        var l = String(it.label).toUpperCase(); tot[l] = tot[l] || { a: 0, p: 0 };
+        tot[l].a += Number(it.aktual || 0); tot[l].p += Number(it.plan || 0);
+      }); });
+      var s = 0, n = 0; Object.keys(tot).forEach(function(l){ if (tot[l].p > 0){ s += Math.min(100, tot[l].a / tot[l].p * 100); n++; } });
+      var zp = n ? Math.round(s / n) : 0;
+      html += '<div class="pz"><div class="pz-top"><b>' + esc(SEGDATA[keys[0]].zona) + '</b><span class="big">' + zp + '%</span></div>' +
+        '<div class="bar"><span style="width:' + zp + '%"></span></div>';
+      keys.forEach(function(k){
+        var num = k.split('|')[1], d = SEGDATA[k];
+        var its = d.items.filter(function(it){ return Number(it.plan) > 0; });
+        if (!its.length) return;
+        var pc = avgPct(its) || 0, col = SEG_COLORS[num] || '#8b95ab';
+        var g = its.filter(function(x){ return String(x.label).toUpperCase() === 'GALIAN'; })[0];
+        var sub = g ? 'GALIAN ' + fmtNum(g.aktual || 0) + ' / ' + fmtNum(g.plan) + ' ' + esc(g.unit || '') : its.length + ' item';
+        html += '<details class="ps"><summary><div class="ps-row"><span class="ps-n" style="background:' + col + '">' + esc(num) + '</span>' +
+          '<span class="ps-t">' + esc(d.segmen || 'Segmen ' + num) + '</span><span class="ps-p">' + pc + '%</span></div>' +
+          '<div class="bar" style="margin-left:28px"><span style="width:' + pc + '%"></span></div><div class="ps-s">' + sub + '</div></summary>' +
+          '<div class="ps-body">' + its.map(function(it){
+            var v = Math.round(itPct(it));
+            return '<div class="pi"><div class="row"><span>' + esc(it.label) + '</span><span class="rp">' + fmtNum(it.aktual || 0) + ' <i>/ ' + fmtNum(it.plan) + '</i> ' + esc(it.unit || '') + ' &middot; <span class="pc">' + v + '%</span></span></div>' +
+              '<div class="bar"><span style="width:' + v + '%"></span></div></div>';
+          }).join('') + '</div></details>';
+      });
+      html += '</div>';
+    });
+    box.innerHTML = html;
   }
 
   // ---------- summary + list ----------
@@ -395,6 +497,7 @@
   function renderAll(){
     renderChips();
     var list = filtered();
+    renderProgress();
     renderSummary(list);
     renderMap(list);
     renderList(list);
@@ -402,9 +505,10 @@
 
   function loadPlans(){
     return apiGet(API_URL + '?action=brtStructure').then(function(d){
-      PLAN = {};
+      PLAN = {}; SEGDATA = {};
       (d.rows || []).forEach(function(r){
         var zk = zonaKey(r.namaLop), sn = String(r.segmen).replace(/\D+/g, '');
+        SEGDATA[zk + '|' + sn] = { zona: r.namaLop, segmen: r.segmen, items: r.items || [] };
         (r.items || []).forEach(function(it){ if (Number(it.plan) > 0) PLAN[zk + '|' + sn + '|' + String(it.label).toUpperCase()] = Number(it.plan); });
       });
     }).catch(function(){});
