@@ -46,6 +46,18 @@
   .u-time{margin-left:auto; font-size:11px; color:var(--sub); white-space:nowrap;}
   .u-user{font-size:11px; color:var(--sub); margin:3px 0 0 18px;}
   .u-items{margin:9px 0 0; display:flex; flex-direction:column; gap:5px;}
+  .u-item{display:block !important;}
+  .u-item .row{display:flex; justify-content:space-between; gap:8px; align-items:baseline;}
+  .u-item .rp{font-weight:700;} .u-item .rp i{font-style:normal; color:var(--sub); font-weight:500;}
+  .u-item .pc{color:var(--accent2); font-weight:800;}
+  .bar{height:5px; border-radius:3px; background:var(--card-border); margin-top:6px; overflow:hidden;}
+  .bar span{display:block; height:100%; background:var(--accent2); border-radius:3px;}
+  .u-item .row2{font-size:10.5px; color:var(--sub); margin-top:4px;}
+  .legend{display:flex; gap:6px; overflow-x:auto; padding:8px 14px; background:var(--bg2); border-bottom:1px solid var(--card-border);}
+  .lg{flex:0 0 auto; display:flex; align-items:center; gap:6px; padding:5px 10px; border-radius:999px; border:1px solid var(--card-border); background:var(--card); color:var(--text); font-size:11.5px; font-weight:700; cursor:pointer; font-family:inherit;}
+  .lg i{width:14px; height:4px; border-radius:2px; display:block;}
+  .lg small{color:var(--sub); font-weight:600;}
+  .lg.off{opacity:.4;}
   .u-item{font-size:12.5px; background:var(--bg2); border:1px solid var(--card-border); border-radius:9px; padding:6px 9px; display:flex; justify-content:space-between; gap:8px;}
   .u-item .d{color:var(--green); font-weight:800;} .u-item .d.neg{color:var(--red);}
   .u-cat{margin-top:9px; font-size:12.5px; color:var(--text); background:var(--bg2); border-left:3px solid var(--accent); border-radius:6px; padding:7px 10px; white-space:pre-wrap;}
@@ -74,6 +86,7 @@
 </header>
 
 <div class="mapwrap"><div id="map"></div><div class="nomap" id="nomap" style="display:none">Belum ada update dengan lokasi GPS</div></div>
+<div class="legend" id="legend"></div>
 
 <div class="section">
   <div class="chips" id="chipsZona"></div>
@@ -124,6 +137,20 @@
   var tg = window.Telegram ? window.Telegram.WebApp : null;
   if (tg) { tg.ready(); tg.expand(); }
 
+  // ---- Jalur segmen dari KML (Zona 3). Zona 1 & 2 menyusul: tambahkan di SEG_GEO['1'] / ['2'] ----
+  var SEG_GEO = {"3":{"1":[[3.591299,98.627471],[3.589948,98.658431],[3.590536,98.661461]],"2":[[3.592011,98.627047],[3.592105,98.624205],[3.598178,98.609032],[3.596864,98.609264],[3.59525,98.609338],[3.591777,98.608884],[3.588766,98.611413]],"3":[[3.590593,98.661651],[3.592727,98.66768]],"4":[[3.590917,98.661385],[3.590335,98.659314],[3.590203,98.65849],[3.590198,98.657771],[3.590336,98.65413],[3.590482,98.650282],[3.590526,98.64903],[3.590643,98.647719],[3.590865,98.645368],[3.590928,98.644255],[3.590888,98.643797],[3.591022,98.640613],[3.591239,98.636371],[3.591353,98.634131],[3.59143,98.631318],[3.591554,98.629919],[3.591665,98.629526],[3.591831,98.627443]],"5":[[3.591316,98.626846],[3.591447,98.625031],[3.591738,98.624078],[3.596744,98.611647],[3.597742,98.608891],[3.595909,98.609077],[3.594191,98.608884],[3.591849,98.608622],[3.59161,98.608674],[3.591375,98.60885],[3.588977,98.61074],[3.588371,98.609956]],"6":[[3.590976,98.661609],[3.593063,98.667465],[3.593247,98.667441]]}};
+  var SEG_INFO = {
+    '3': {
+      '1': 'Under Pass Jl. Asrama \u2192 Simpang Ismud',
+      '2': 'STO CTD \u2192 Terminal Pinang Baris',
+      '3': 'Simpang Ismud \u2192 Bundaran Gatsu',
+      '4': 'Simpang Ismud \u2192 Under Pass Jl. Asrama',
+      '5': 'STO CTD \u2192 Terminal Pinang Baris',
+      '6': 'Simpang Ismud \u2192 Simpang SKIP'
+    }
+  };
+  var ROUTE_GEO = {'3': [[3.58923,98.61012],[3.58952,98.61052],[3.59076,98.60944],[3.59181,98.60867],[3.59448,98.60891],[3.59619,98.60905],[3.59782,98.60883],[3.59816,98.60909],[3.59759,98.61026],[3.5974,98.61072],[3.59717,98.61123],[3.59704,98.61156],[3.59679,98.61209],[3.59668,98.61241],[3.59656,98.61274],[3.59628,98.61335],[3.59598,98.61414],[3.59569,98.61483],[3.59543,98.61551],[3.59527,98.61586],[3.59496,98.61665],[3.59476,98.61712],[3.59462,98.61747],[3.59429,98.6184],[3.59409,98.61884],[3.59383,98.6195],[3.59361,98.62006],[3.59327,98.62093],[3.59294,98.62175],[3.59278,98.62217],[3.59241,98.62298],[3.59213,98.62374],[3.59174,98.62488],[3.59171,98.62544],[3.59168,98.6261],[3.59169,98.62679],[3.59164,98.62751],[3.5916,98.62804],[3.59161,98.6286],[3.59158,98.6291],[3.59153,98.62971],[3.59149,98.63039],[3.59147,98.63122],[3.59139,98.63207],[3.59139,98.63301],[3.59137,98.63351],[3.59134,98.63419],[3.5913,98.63486],[3.59124,98.63563],[3.59124,98.63618],[3.59123,98.63639],[3.59121,98.637],[3.59117,98.63749],[3.59113,98.63809],[3.59111,98.63892],[3.5911,98.63948],[3.59107,98.63981],[3.59104,98.64058],[3.59101,98.64113],[3.59096,98.64219],[3.59093,98.64277],[3.59086,98.6438],[3.59082,98.64443],[3.59078,98.64656],[3.59067,98.64779],[3.59054,98.64983],[3.59046,98.65167],[3.59042,98.65321],[3.59033,98.65447],[3.59023,98.6561],[3.59018,98.65829],[3.59019,98.6587],[3.59039,98.65968],[3.59065,98.6606],[3.59087,98.66143],[3.59148,98.66332],[3.59195,98.66455],[3.5923,98.6653],[3.59267,98.66649],[3.59309,98.66758],[3.59328,98.66854]]};
+  var SEG_COLORS = { '1':'#38bdf8', '2':'#f472b6', '3':'#facc15', '4':'#a78bfa', '5':'#fb923c', '6':'#2dd4bf' };
   var ZONA_COLORS = { '1': '#3b6ef6', '2': '#f59e0b', '3': '#22c55e' };
   var all = [];
   var F = { zona: 'all', period: '7' };
@@ -200,21 +227,96 @@
     return h;
   }
 
+  var segLayer = null;
+
+  function segLenM(pts){
+    var s = 0;
+    for (var i = 1; i < pts.length; i++) s += L.latLng(pts[i-1]).distanceTo(L.latLng(pts[i]));
+    return s;
+  }
+  function midPoint(pts){
+    var tot = segLenM(pts), half = tot / 2, acc = 0;
+    for (var i = 1; i < pts.length; i++){
+      var d = L.latLng(pts[i-1]).distanceTo(L.latLng(pts[i]));
+      if (acc + d >= half && d > 0){
+        var t = (half - acc) / d;
+        return [pts[i-1][0] + (pts[i][0] - pts[i-1][0]) * t, pts[i-1][1] + (pts[i][1] - pts[i-1][1]) * t];
+      }
+      acc += d;
+    }
+    return pts[0];
+  }
+
+  // % rata-rata item terbaru per Zona+Segmen (dari update yang masuk, terbaru dulu)
+  function segPct(zk, num){
+    var seen = {}, sum = 0, n = 0;
+    for (var i = 0; i < all.length; i++){
+      var u = all[i];
+      if (zonaKey(u.zona) !== zk || String(u.segmen).replace(/\D+/g, '') !== num) continue;
+      (u.items || []).forEach(function(it){
+        if (seen[it.label]) return;
+        seen[it.label] = 1;
+        var plan = Number(it.plan);
+        if (plan > 0){ sum += Math.min(100, Number(it.after) / plan * 100); n++; }
+      });
+    }
+    return n ? Math.round(sum / n) : null;
+  }
+
+  function drawSegments(bounds){
+    var lg = document.getElementById('legend'); lg.innerHTML = '';
+    Object.keys(SEG_GEO).sort().forEach(function(zk){
+      if (F.zona !== 'all' && F.zona !== zk) return;
+      if (ROUTE_GEO[zk]) L.polyline(ROUTE_GEO[zk], { color: '#94a3b8', weight: 2, opacity: .35, interactive: false }).addTo(segLayer);
+      Object.keys(SEG_GEO[zk]).sort().forEach(function(num){
+        var pts = SEG_GEO[zk][num], col = SEG_COLORS[num] || '#fff';
+        var kiri = Number(num) <= 3;
+        var pc = segPct(zk, num);
+        var info = (SEG_INFO[zk] && SEG_INFO[zk][num]) || '';
+        var km = (segLenM(pts) / 1000).toFixed(2).replace('.', ',');
+        var pop = '<div class="pop-t">Zona ' + zk + ' &middot; Segmen ' + num + '</div>' +
+          (info ? '<div class="pop-s">' + esc(info) + '</div>' : '') +
+          '<div class="pop-s">\u00B1' + km + ' km' + (pc !== null ? ' &middot; progres ' + pc + '%' : '') + '</div>';
+        var line = L.polyline(pts, { color: col, weight: kiri ? 7 : 4, opacity: .85, dashArray: kiri ? null : '9 7', lineCap: 'round' })
+          .bindPopup(pop).addTo(segLayer);
+        var mid = midPoint(pts);
+        L.marker(mid, { icon: L.divIcon({ className: '', iconSize: [22, 22], iconAnchor: [11, 11],
+          html: '<div style="width:22px;height:22px;border-radius:50%;background:' + col + ';color:#0b1120;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;border:2px solid #0b1120">' + num + '</div>' }),
+          interactive: false }).addTo(segLayer);
+        pts.forEach(function(q){ bounds.push(q); });
+        var b = document.createElement('button');
+        b.className = 'lg';
+        b.innerHTML = '<i style="background:' + col + '"></i>' + (F.zona === 'all' ? 'Z' + zk + '\u00B7' : '') + 'S' + num +
+          (pc !== null ? ' <small>' + pc + '%</small>' : '');
+        b.addEventListener('click', function(){
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          map.fitBounds(line.getBounds(), { padding: [40, 40], maxZoom: 17 });
+          line.openPopup(mid);
+        });
+        lg.appendChild(b);
+      });
+    });
+    lg.style.display = lg.children.length ? 'flex' : 'none';
+  }
+
   function renderMap(list){
     initMap();
     var geo = list.filter(function(u){ return u._hasGeo; });
-    document.getElementById('nomap').style.display = geo.length ? 'none' : 'flex';
     if (!map) return;
-    layer.clearLayers(); pins = {};
-    var pts = [];
+    if (!segLayer) segLayer = L.layerGroup().addTo(map);
+    segLayer.clearLayers(); layer.clearLayers(); pins = {};
+    layer.remove(); layer.addTo(map); // pin selalu di atas jalur
+    var bounds = [];
+    drawSegments(bounds);
     geo.forEach(function(u){
       var c = zonaColor(u.zona);
       var m = L.circleMarker([u.lat, u.lng], { radius: 9, color: '#fff', weight: 2, fillColor: c, fillOpacity: .95 })
         .bindPopup(popupHtml(u)).addTo(layer);
-      pins[u._i] = m; pts.push([u.lat, u.lng]);
+      pins[u._i] = m; bounds.push([u.lat, u.lng]);
     });
-    if (pts.length === 1) map.setView(pts[0], 16);
-    else if (pts.length > 1) map.fitBounds(pts, { padding: [30, 30], maxZoom: 17 });
+    document.getElementById('nomap').style.display = bounds.length ? 'none' : 'flex';
+    if (bounds.length === 1) map.setView(bounds[0], 16);
+    else if (bounds.length > 1) map.fitBounds(bounds, { padding: [30, 30], maxZoom: 17 });
     setTimeout(function(){ map.invalidateSize(); }, 50);
   }
 
@@ -231,10 +333,14 @@
   }
 
   function itemLine(it){
-    var d = Number(it.after) - Number(it.before || 0);
-    var unit = it.unit ? ' ' + it.unit : '';
-    var dtxt = d === 0 ? '±0' : (d > 0 ? '+' : '−') + fmtNum(Math.abs(d));
-    return '<div class="u-item"><span>' + esc(it.label) + '</span><span><span class="d' + (d < 0 ? ' neg' : '') + '">' + dtxt + esc(unit) + '</span> &rarr; ' + fmtNum(it.after) + '</span></div>';
+    var after = Number(it.after), plan = Number(it.plan);
+    var unit = it.unit ? ' ' + esc(it.unit) : '';
+    var hasPlan = plan > 0;
+    var pct = hasPlan ? Math.round(after / plan * 100) : null;
+    return '<div class="u-item"><div class="row"><span>' + esc(it.label) + '</span>' +
+      '<span class="rp">' + fmtNum(after) + (hasPlan ? ' <i>/ ' + fmtNum(plan) + '</i>' : '') + unit +
+      (hasPlan ? ' &middot; <span class="pc">' + pct + '%</span>' : '') + '</span></div>' +
+      (hasPlan ? '<div class="bar"><span style="width:' + Math.max(0, Math.min(100, pct)) + '%"></span></div>' : '') + '</div>';
   }
 
   function cardHtml(u){
