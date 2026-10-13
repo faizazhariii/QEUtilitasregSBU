@@ -200,9 +200,18 @@
   function initMap(){
     if (map || !window.L) return;
     map = L.map('map', { zoomControl: true, attributionControl: true }).setView([3.5952, 98.6722], 12);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-      maxZoom: 19, subdomains: 'abcd', attribution: '&copy; OpenStreetMap &copy; CARTO'
+    // Peta biasa (OpenStreetMap); kalau tile gagal dimuat otomatis pindah ke Esri Street
+    var osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19, attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
+    var errs = 0, swapped = false;
+    osm.on('tileerror', function(){
+      if (swapped || ++errs < 4) return;
+      swapped = true; map.removeLayer(osm);
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 19, attribution: 'Tiles &copy; Esri'
+      }).addTo(map);
+    });
     layer = L.layerGroup().addTo(map);
   }
 
