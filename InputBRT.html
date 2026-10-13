@@ -162,7 +162,7 @@
 
   var allZonas = [];
   var allRows = [];
-  var state = { zona: null, segmenKey: null, sisi: null };
+  var state = { zona: null, segmen: null };
 
   function escapeHtml(str){
     return String(str == null ? '' : str)
@@ -177,15 +177,9 @@
     setTimeout(function(){ t.style.display = 'none'; }, 3000);
   }
 
-  function groupZona(namaLop){
-    var zonaRows = allRows.filter(function(r){ return r.namaLop === namaLop; });
-    var segMap = {}; var segList = [];
-    zonaRows.forEach(function(r){
-      var key = r.segmen || '(tanpa segmen)';
-      if (!segMap[key]) { segMap[key] = { label: r.segmen, sisi: {} }; segList.push(key); }
-      segMap[key].sisi[r.sisi] = r;
-    });
-    return { segMap: segMap, segList: segList };
+  function segmenOfZona(namaLop){
+    // satu entri per Segmen (sheet baru: tanpa Sisi Kiri/Kanan)
+    return allRows.filter(function(r){ return r.namaLop === namaLop; });
   }
 
   function renderZonaList(){
@@ -194,14 +188,15 @@
     app.innerHTML = '<div class="card">' +
       '<div class="step-label">Pilih Zona</div>' +
       allZonas.map(function(z, idx){
+        var n = segmenOfZona(z.namaLop).length;
         return '<div class="zona-item" data-idx="' + idx + '">' + escapeHtml(z.namaLop) +
-          '<div class="loc">' + escapeHtml(z.district) + ' &middot; STO ' + escapeHtml(z.sto) + '</div></div>';
+          '<div class="loc">' + (n ? n + ' segmen' : 'Belum ada Plan') + '</div></div>';
       }).join('') +
     '</div>';
     Array.prototype.forEach.call(app.querySelectorAll('.zona-item'), function(el){
       el.addEventListener('click', function(){
         state.zona = allZonas[parseInt(el.getAttribute('data-idx'), 10)];
-        state.segmenKey = null; state.sisi = null;
+        state.segmen = null;
         renderSegmenList();
       });
     });
@@ -209,12 +204,12 @@
 
   function renderSegmenList(){
     var app = document.getElementById('app');
-    var grouped = groupZona(state.zona.namaLop);
+    var segs = segmenOfZona(state.zona.namaLop);
 
-    if (grouped.segList.length === 0) {
+    if (segs.length === 0) {
       app.innerHTML =
-        '<div class="breadcrumb"><b id="bcZona">' + escapeHtml(state.zona.namaLop) + '</b></div>' +
-        '<div class="card"><div class="empty">Segmen &amp; Sisi belum diisi di sheet untuk Zona ini.</div></div>';
+        '<div class="breadcrumb"><b id="bcZona">&larr; Ganti Zona</b> &middot; ' + escapeHtml(state.zona.namaLop) + '</div>' +
+        '<div class="card"><div class="empty">Belum ada Segmen dengan Plan terisi untuk Zona ini.</div></div>';
       document.getElementById('bcZona').addEventListener('click', renderZonaList);
       return;
     }
@@ -223,13 +218,11 @@
       '<div class="breadcrumb"><b id="bcZona">Ganti Zona</b> &middot; ' + escapeHtml(state.zona.namaLop) + '</div>' +
       '<div class="card">' +
         '<div class="step-label">Pilih Segmen</div>' +
-        grouped.segList.map(function(key, idx){
-          var seg = grouped.segMap[key];
-          var kiriCount = seg.sisi.KIRI ? seg.sisi.KIRI.items.length : 0;
-          var kananCount = seg.sisi.KANAN ? seg.sisi.KANAN.items.length : 0;
+        segs.map(function(seg, idx){
+          var filled = seg.items.filter(function(it){ return Number(it.aktual) > 0; }).length;
           return '<div class="segmen-item" data-idx="' + idx + '">' +
-            '<div class="seg-title">' + escapeHtml(seg.label || 'Segmen') + '</div>' +
-            '<div class="seg-sub">Kiri: ' + kiriCount + ' item terisi &middot; Kanan: ' + kananCount + ' item terisi</div>' +
+            '<div class="seg-title">' + escapeHtml(seg.segmen || 'Segmen') + '</div>' +
+            '<div class="seg-sub">' + seg.items.length + ' item &middot; ' + filled + ' sudah ada progres</div>' +
           '</div>';
         }).join('') +
       '</div>';
@@ -237,72 +230,34 @@
     document.getElementById('bcZona').addEventListener('click', renderZonaList);
     Array.prototype.forEach.call(app.querySelectorAll('.segmen-item'), function(el){
       el.addEventListener('click', function(){
-        state.segmenKey = grouped.segList[parseInt(el.getAttribute('data-idx'), 10)];
-        state.sisi = null;
-        renderSisiChoice(grouped);
+        state.segmen = segs[parseInt(el.getAttribute('data-idx'), 10)];
+        renderItemForm(state.segmen);
       });
     });
   }
 
-  function renderSisiChoice(grouped){
-    var app = document.getElementById('app');
-    var seg = grouped.segMap[state.segmenKey];
-    var kiriCount = seg.sisi.KIRI ? seg.sisi.KIRI.items.length : 0;
-    var kananCount = seg.sisi.KANAN ? seg.sisi.KANAN.items.length : 0;
-
-    app.innerHTML =
-      '<div class="breadcrumb"><b id="bcZona2">' + escapeHtml(state.zona.namaLop) + '</b> &middot; <b id="bcSeg">Ganti Segmen</b> &middot; ' + escapeHtml(seg.label || 'Segmen') + '</div>' +
-      '<div class="card">' +
-        '<div class="step-label">Pilih Sisi</div>' +
-        '<div class="sisi-choice">' +
-          '<div class="sisi-btn kiri" data-sisi="KIRI">Sisi Kiri<span class="sisi-count">' + kiriCount + ' item</span></div>' +
-          '<div class="sisi-btn kanan" data-sisi="KANAN">Sisi Kanan<span class="sisi-count">' + kananCount + ' item</span></div>' +
-        '</div>' +
-      '</div>';
-
-    document.getElementById('bcZona2').addEventListener('click', renderZonaList);
-    document.getElementById('bcSeg').addEventListener('click', renderSegmenList);
-    Array.prototype.forEach.call(app.querySelectorAll('.sisi-btn'), function(el){
-      el.addEventListener('click', function(){
-        var sisiKey = el.getAttribute('data-sisi');
-        var sisiData = seg.sisi[sisiKey];
-        if (!sisiData) { showToast('Sisi ini belum ada baris di sheet.', 'error'); return; }
-        state.sisi = sisiKey;
-        renderItemForm(sisiData, seg);
-      });
-    });
-  }
-
-  function renderItemForm(sisiData, seg){
+  function renderItemForm(seg){
     var app = document.getElementById('app');
 
-    if (sisiData.items.length === 0) {
-      app.innerHTML =
-        '<div class="breadcrumb"><b id="bcBack">&larr; Kembali</b></div>' +
-        '<div class="card"><div class="empty">Belum ada item dengan Plan terisi di Sisi ini.</div></div>';
-      document.getElementById('bcBack').addEventListener('click', function(){ renderSisiChoice(groupZona(state.zona.namaLop)); });
-      return;
-    }
-
     app.innerHTML =
-      '<div class="breadcrumb"><b id="bcBack">&larr; Kembali</b> &middot; ' + escapeHtml(state.zona.namaLop) + ' &middot; ' + escapeHtml(seg.label || 'Segmen') + ' &middot; Sisi ' + (state.sisi === 'KIRI' ? 'Kiri' : 'Kanan') + '</div>' +
+      '<div class="breadcrumb"><b id="bcBack">&larr; Kembali</b> &middot; ' + escapeHtml(state.zona.namaLop) + ' &middot; ' + escapeHtml(seg.segmen || 'Segmen') + '</div>' +
       '<div class="card" id="formCard">' +
         '<div class="step-label">Update Aktual per Item</div>' +
         '<div id="itemsList"></div>' +
         '<button class="submit" id="submitBtn">Simpan Update</button>' +
       '</div>';
 
-    document.getElementById('bcBack').addEventListener('click', function(){ renderSisiChoice(groupZona(state.zona.namaLop)); });
+    document.getElementById('bcBack').addEventListener('click', renderSegmenList);
 
     var itemsList = document.getElementById('itemsList');
-    itemsList.innerHTML = sisiData.items.map(function(it, idx){
+    itemsList.innerHTML = seg.items.map(function(it, idx){
       return '<div class="item-card">' +
-        '<div class="item-top"><div class="item-name">' + escapeHtml(it.label) + '</div></div>' +
+        '<div class="item-top"><div class="item-name">' + escapeHtml(it.label) + (it.unit ? ' <span style="color:var(--sub);font-weight:500;font-size:11px;">(' + escapeHtml(it.unit) + ')</span>' : '') + '</div></div>' +
         '<div class="item-mid">' +
           '<div class="item-col"><div class="col-label">Aktual</div>' +
             '<input type="number" inputmode="decimal" data-idx="' + idx + '" class="aktual-input" value="' + escapeHtml(it.aktual) + '" /></div>' +
           '<div class="item-col"><div class="col-label">Plan</div>' +
-            '<div class="plan-value">' + escapeHtml(it.plan) + '</div></div>' +
+            '<div class="plan-value">' + escapeHtml(Number(it.plan).toLocaleString('id-ID')) + '</div></div>' +
         '</div>' +
       '</div>';
     }).join('');
@@ -311,10 +266,10 @@
       var updates = [];
       Array.prototype.forEach.call(itemsList.querySelectorAll('.aktual-input'), function(input){
         var idx = parseInt(input.getAttribute('data-idx'), 10);
-        var original = sisiData.items[idx];
+        var original = seg.items[idx];
         var newVal = input.value;
         if (newVal !== '' && String(newVal) !== String(original.aktual)) {
-          updates.push({ label: original.label, aktual: newVal });
+          updates.push({ label: original.label, sheet: original.sheet, row: original.row, aktual: newVal });
         }
       });
 
@@ -329,17 +284,19 @@
 
       fetch(API_URL, {
         method: 'POST',
-        body: JSON.stringify({ action: 'updateAktual', row: sisiData.rowIndex, updates: updates })
+        body: JSON.stringify({ action: 'updateAktual', updates: updates })
       })
-        .then(function(res){ return res.json(); })
-        .then(function(data){
+        .then(function(res){ return res.text(); })
+        .then(function(t){
+          var data;
+          try { data = JSON.parse(t); } catch (e) { throw new Error('Server belum merespons dengan benar, coba lagi'); }
           btn.disabled = false;
           btn.textContent = 'Simpan Update';
           if (!data.ok) throw new Error(data.error || 'Gagal menyimpan');
           showToast('Berhasil disimpan!', 'success');
           updates.forEach(function(u){
-            var it = sisiData.items.find(function(d){ return d.label === u.label; });
-            if (it) it.aktual = u.aktual;
+            var it = seg.items.find(function(d){ return d.sheet === u.sheet && d.row === u.row; });
+            if (it) it.aktual = Number(u.aktual);
           });
         })
         .catch(function(err){
