@@ -105,6 +105,7 @@
     color:var(--accent2); font-size:10px; font-weight:800; padding:6px 9px; border-right:none;
     text-transform:uppercase; letter-spacing:.3px;
   }
+  .segmen-row .segmen-fill{background:linear-gradient(90deg, var(--accent-soft), transparent); padding:0;}
   .sisi-header-row .sisi-header-td{
     position:sticky; left:0; font-size:9px; font-weight:800; padding:4px 9px; border-right:none;
     text-transform:uppercase; letter-spacing:.4px;
@@ -250,15 +251,11 @@
   function zonaDateRange(zona){
     var minTs = null, maxTs = null;
     zona.segmenList.forEach(function(seg){
-      ['KIRI', 'KANAN'].forEach(function(k){
-        var sisiData = seg.sisi[k];
-        if (!sisiData) return;
-        sisiData.items.forEach(function(it){
-          var s = new Date(it.start + 'T00:00:00').getTime();
-          var e = new Date(it.end + 'T00:00:00').getTime();
-          if (minTs === null || s < minTs) minTs = s;
-          if (maxTs === null || e > maxTs) maxTs = e;
-        });
+      seg.items.forEach(function(it){
+        var s = new Date(it.start + 'T00:00:00').getTime();
+        var e = new Date(it.end + 'T00:00:00').getTime();
+        if (minTs === null || s < minTs) minTs = s;
+        if (maxTs === null || e > maxTs) maxTs = e;
       });
     });
     if (minTs === null) return null;
@@ -309,7 +306,7 @@
       return '<th colspan="' + g.count + '" class="month-th">' + g.label + '</th>';
     }).join('') + '</tr>';
 
-    var dayRow = '<tr><th class="corner">Segmen / Sisi / Item</th>' + dates.map(function(d){
+    var dayRow = '<tr><th class="corner">Segmen / Item</th>' + dates.map(function(d){
       var isWeekend = d.getDay() === 0 || d.getDay() === 6;
       var today = isToday(d);
       return '<th class="day-th' + (isWeekend ? ' weekend' : '') + (today ? ' today-col' : '') + '">' + d.getDate() + '</th>';
@@ -317,45 +314,29 @@
 
     var colCount = dates.length;
     var bodyRows = zona.segmenList.map(function(seg){
-      var segRow = '<tr class="segmen-row"><td class="segmen-td" colspan="' + (colCount + 1) + '">' + escapeHtml(seg.label || 'Segmen belum diberi nama') + '</td></tr>';
+      var segRow = '<tr class="segmen-row"><td class="segmen-td">' + escapeHtml(seg.label || 'Segmen belum diberi nama') + '</td><td class="segmen-fill" colspan="' + colCount + '"></td></tr>';
 
-      var sisiRows = ['KIRI', 'KANAN'].map(function(sisiKey){
-        var sisiData = seg.sisi[sisiKey];
-        var sisiClass = sisiKey === 'KIRI' ? 'sisi-kiri' : 'sisi-kanan';
-        var sisiLabelText = sisiKey === 'KIRI' ? 'Sisi Kiri' : 'Sisi Kanan';
-
-        var subHeaderRow = '<tr class="sisi-header-row ' + sisiClass + '"><td class="sisi-header-td" colspan="' + (colCount + 1) + '">' + sisiLabelText + '</td></tr>';
-
-        if (!sisiData) {
-          return subHeaderRow + '<tr class="' + sisiClass + '-bg"><td class="item-td sisi-empty">Belum ada data</td>' +
-            dates.map(function(d){ return '<td class="day-td' + (isToday(d) ? ' today-col' : '') + '"></td>'; }).join('') + '</tr>';
-        }
-
-        var itemRows = sisiData.items.map(function(it){
-          var s = new Date(it.start + 'T00:00:00').getTime();
-          var e = new Date(it.end + 'T00:00:00').getTime();
-          var color = ITEM_COLORS[it.label] || '#6d9bff';
-          var cells = dates.map(function(d){
-            var dt = d.getTime();
-            var active = dt >= s && dt <= e;
-            var isWeekend = d.getDay() === 0 || d.getDay() === 6;
-            var today = isToday(d);
-            var style = active ? ('background:' + color + ';') : '';
-            return '<td class="day-td' + (isWeekend ? ' weekend-col' : '') + (today ? ' today-col' : '') + '" style="' + style + '" title="' + escapeHtml(it.label) + '"></td>';
-          }).join('');
-          var qtyLine = (it.plan !== null && it.plan !== undefined)
-            ? '<div class="item-qty">Aktual <b>' + escapeHtml(it.aktual !== null && it.aktual !== undefined ? it.aktual : 0) + '</b> / Plan <b>' + escapeHtml(it.plan) + '</b></div>'
-            : '';
-          return '<tr class="' + sisiClass + '-bg"><td class="item-td">' + escapeHtml(it.label) +
-            '<div class="item-dates">' + escapeHtml(it.startDisplay) + ' - ' + escapeHtml(it.endDisplay) + '</div>' +
-            qtyLine + '</td>' +
-            cells + '</tr>';
+      var itemRows = seg.items.map(function(it){
+        var s = new Date(it.start + 'T00:00:00').getTime();
+        var e = new Date(it.end + 'T00:00:00').getTime();
+        var color = ITEM_COLORS[it.label] || '#6d9bff';
+        var cells = dates.map(function(d){
+          var dt = d.getTime();
+          var active = dt >= s && dt <= e;
+          var isWeekend = d.getDay() === 0 || d.getDay() === 6;
+          var today = isToday(d);
+          var style = active ? ('background:' + color + ';') : '';
+          return '<td class="day-td' + (isWeekend ? ' weekend-col' : '') + (today ? ' today-col' : '') + '" style="' + style + '" title="' + escapeHtml(it.label) + '"></td>';
         }).join('');
-
-        return subHeaderRow + itemRows;
+        var qtyLine = (it.plan !== null && it.plan !== undefined)
+          ? '<div class="item-qty">Aktual <b>' + escapeHtml(it.aktual !== null && it.aktual !== undefined ? it.aktual : 0) + '</b> / Plan <b>' + escapeHtml(it.plan) + '</b></div>'
+          : '';
+        return '<tr><td class="item-td">' + escapeHtml(it.label) +
+          '<div class="item-dates">' + escapeHtml(it.startDisplay) + ' - ' + escapeHtml(it.endDisplay) + '</div>' +
+          qtyLine + '</td>' + cells + '</tr>';
       }).join('');
 
-      return segRow + sisiRows;
+      return segRow + itemRows;
     }).join('');
 
     return '<div class="gantt-scroll"><table class="day-grid"><thead>' + monthRow + dayRow + '</thead><tbody>' + bodyRows + '</tbody></table></div>';
@@ -376,11 +357,11 @@
       var zona = zonaMap[r.namaLop];
       var segKey = r.segmen || '(tanpa segmen)';
       if (!zona.segmenMap[segKey]) {
-        var segObj = { label: r.segmen, sisi: {} };
+        var segObj = { label: r.segmen, items: [] };
         zona.segmenMap[segKey] = segObj;
         zona.segmenList.push(segObj);
       }
-      zona.segmenMap[segKey].sisi[r.sisi] = r;
+      zona.segmenMap[segKey].items = zona.segmenMap[segKey].items.concat(r.items);
     });
 
     return zonaOrder.map(function(name){ return zonaMap[name]; });
@@ -416,7 +397,7 @@
       return '<div class="panel">' +
         '<div class="panel-head" data-idx="' + idx + '">' +
           '<div><div class="panel-title">' + escapeHtml(zona.namaLop) + '</div>' +
-          '<div class="panel-loc">' + escapeHtml(zona.district) + ' &middot; STO ' + escapeHtml(zona.sto) + ' &middot; ' + segCount + ' segmen</div></div>' +
+          '<div class="panel-loc">' + segCount + ' segmen</div></div>' +
           '<div class="panel-toggle" id="toggle-' + idx + '">&#9660;</div>' +
         '</div>' +
         '<div class="panel-body" id="body-' + idx + '">' + body + '</div>' +
@@ -427,7 +408,7 @@
       return '<div class="panel">' +
         '<div class="panel-head collapsed">' +
           '<div><div class="panel-title">' + escapeHtml(z.namaLop) + '</div>' +
-          '<div class="panel-loc">' + escapeHtml(z.district) + ' &middot; STO ' + escapeHtml(z.sto) + '</div></div>' +
+          '<div class="panel-loc">' + 'Belum ada jadwal' + '</div></div>' +
         '</div>' +
         '<div class="empty-zona">&#128203; Belum ada progress / segmen &amp; timeplan belum diisi</div>' +
       '</div>';
@@ -470,7 +451,7 @@
   }
   function scNum(v){ var n = parseFloat(v); return isNaN(n) ? 0 : n; }
   
-  // Progres linear satu Sisi: 0 sebelum START, 1 setelah END, di antaranya (hari - START) / (END - START)
+  // Progres linear satu Segmen: 0 sebelum START, 1 setelah END, di antaranya (hari - START) / (END - START)
   function scFrac(d, s, e){
     if (e <= s) return d >= e ? 1 : 0;
     if (d <= s) return 0;
@@ -497,7 +478,7 @@
         var s = scIsoDay(it.start), e = scIsoDay(it.end);
         o.total += vol;
         o.aktual += scNum(it.aktual);
-        o.wins.push({ seg: scSegShort(r.segmen), sisi: r.sisi, vol: vol, s: s, e: e });
+        o.wins.push({ seg: scSegShort(r.segmen), vol: vol, s: s, e: e });
         if (s < o.first) o.first = s;
         if (e > o.last) o.last = e;
       });
@@ -686,9 +667,9 @@
     var wins = o.wins.slice().sort(function(a, b){ return a.s - b.s; }).map(function(w){
       var st = today >= w.e ? 'selesai' : today >= w.s ? 'aktif' : 'belum';
       var rate = w.vol / Math.max(1, w.e - w.s);
-      return '<div class="sc-win' + (st === 'aktif' ? ' on' : '') + '"><span>' + escapeHtml(w.seg) + ' ' + (w.sisi === 'KIRI' ? 'Kiri' : 'Kanan') + ' &middot; ' + scDayLabel(w.s) + '&ndash;' + scDayLabel(w.e) + '</span><span>' + scFmt(rate, un, 1) + '/hari' + (st === 'aktif' ? ' &#9679; aktif' : st === 'selesai' ? ' &#10003;' : '') + '</span></div>';
+      return '<div class="sc-win' + (st === 'aktif' ? ' on' : '') + '"><span>' + escapeHtml(w.seg) + ' &middot; ' + scDayLabel(w.s) + '&ndash;' + scDayLabel(w.e) + '</span><span>' + scFmt(rate, un, 1) + '/hari' + (st === 'aktif' ? ' &#9679; aktif' : st === 'selesai' ? ' &#10003;' : '') + '</span></div>';
     }).join('');
-    return '<div class="sc-dr">' + head + grid + cum + '<details><summary>Target per Segmen &amp; Sisi</summary>' + wins + '</details></div>';
+    return '<div class="sc-dr">' + head + grid + cum + '<details><summary>Target per Segmen</summary>' + wins + '</details></div>';
   }
   
   function scRincian(list, mode, today){
@@ -760,19 +741,19 @@
       '<div class="sc-note">' + (series.length > 1 ? 'Garis Aktual dari snapshot harian + nilai terbaru.' : 'Garis Aktual mulai terbentuk sejak snapshot harian tercatat; saat ini baru 1 titik.') + '</div></div>';
   
     var daily = '<div class="sc-card"><div class="sc-t">Target harian vs Aktual</div>' + sel.map(function(o){ return scDailyRow(o, today); }).join('') +
-      '<div class="sc-note">Semua angka akumulasi satu Zona, sama seperti kurva S. Target/hari ini = jumlah target Sisi yang sedang aktif (volume &divide; hari jadwal). Aktual/hari = Aktual Zona &divide; hari sejak item mulai. Perlu/hari = sisa volume &divide; sisa hari sampai END terakhir.</div></div>';
+      '<div class="sc-note">Semua angka akumulasi satu Zona, sama seperti kurva S. Target/hari ini = jumlah target Segmen yang sedang aktif (volume &divide; hari jadwal). Aktual/hari = Aktual Zona &divide; hari sejak item mulai. Perlu/hari = sisa volume &divide; sisa hari sampai END terakhir.</div></div>';
   
     var rinc = '<div class="sc-card"><div class="sc-t">Rincian' + (isPct ? ' per item (hari ini)' : '') + '</div>' + scRincian(list, mode, today) + '</div>';
   
     var guide = '<details class="sc-guide" open><summary>&#8505;&#65039; Cara membaca &amp; menghitung</summary><ul>' +
-      '<li><b><span class="sw" style="background:' + scColor.plan + '"></span>Garis Plan</b>: target kumulatif dari timeplan. Per item per Sisi: <b>volume Plan &divide; hari jadwal &times; hari berjalan</b> (hari jadwal = END &minus; START). Sebelum START = 0, setelah END = penuh. Lalu dijumlah semua Segmen &amp; Sisi dalam Zona.</li>' +
+      '<li><b><span class="sw" style="background:' + scColor.plan + '"></span>Garis Plan</b>: target kumulatif dari timeplan. Per item per Segmen: <b>volume Plan &divide; hari jadwal &times; hari berjalan</b> (hari jadwal = END &minus; START). Sebelum START = 0, setelah END = penuh. Lalu dijumlah semua Segmen dalam Zona.</li>' +
       '<li><b><span class="sw" style="background:' + scColor.akt + '"></span>Titik/garis Aktual</b>: realisasi dari kolom AKTUAL PEKERJAAN yang diinput di InputBRT. Garis terbentuk dari snapshot harian (akhir hari).</li>' +
       '<li><b>Garis merah putus-putus</b>: posisi hari ini. Aktual di atas garis Plan = lebih cepat, di bawah = terlambat.</li>' +
       '<li><b>Tab per item</b>: satuan asli (m / pcs), tidak digabung karena satuannya berbeda.</li>' +
       '<li><b>Gabungan (%)</b>: tiap item dinormalisasi ke persen (Aktual &divide; Plan), lalu dirata-rata dengan bobot sama rata.</li>' +
-      '<li><b>Target harian</b>: skala Zona, sama dengan kurva S. Target hari ini = jumlah target per hari semua Sisi yang sedang aktif. &#10004; tercapai bila Aktual/hari &ge; Target/hari. <b>Perlu/hari ke depan</b> = sisa volume &divide; sisa hari agar selesai tepat waktu.</li>' +
+      '<li><b>Target harian</b>: skala Zona, sama dengan kurva S. Target hari ini = jumlah target per hari semua Segmen yang sedang aktif. &#10004; tercapai bila Aktual/hari &ge; Target/hari. <b>Perlu/hari ke depan</b> = sisa volume &divide; sisa hari agar selesai tepat waktu.</li>' +
       '<li><b>Selisih</b> = Aktual &minus; Plan hari ini. Plus berarti di depan jadwal.</li>' +
-      '<li>Hari libur belum diperhitungkan. KABEL &amp; ODP berundak karena jadwalnya hanya beberapa hari per Sisi. Item tanpa tanggal atau volume Plan di sheet belum dihitung.</li></ul></details>';
+      '<li>Hari libur belum diperhitungkan. KABEL &amp; ODP berundak karena jadwalnya hanya beberapa hari per Segmen. Item tanpa tanggal atau volume Plan di sheet belum dihitung.</li></ul></details>';
   
     el.innerHTML = zChips + iChips + kpi + chart + daily + rinc + guide;
     scBind(el);
