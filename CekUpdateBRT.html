@@ -68,6 +68,14 @@
   .ps-body{padding:2px 11px 10px;}
   .pi{margin-top:8px;} .pi .row{display:flex; justify-content:space-between; gap:8px; font-size:12px;}
   .pi .rp{font-weight:700;} .pi .rp i{font-style:normal; color:var(--sub); font-weight:500;} .pi .pc{color:var(--accent2); font-weight:800;}
+  details.pz > summary{list-style:none; cursor:pointer;}
+  details.pz > summary::-webkit-details-marker{display:none;}
+  .chev{display:inline-block; transition:transform .15s; color:var(--sub); margin-left:6px; font-size:12px;}
+  details[open] > summary .chev{transform:rotate(90deg);}
+  .badge{font-size:10.5px; color:var(--sub); font-weight:600;}
+  .ev-h{font-size:10.5px; font-weight:800; color:var(--sub); text-transform:uppercase; letter-spacing:.4px; margin:14px 0 8px;}
+  .ev-none{font-size:12px; color:var(--sub); padding:4px 0 2px;}
+  details.older > summary{cursor:pointer; color:var(--accent2); font-size:12px; font-weight:700; padding:6px 2px;}
   .u-item{display:block !important;}
   .u-item .row{display:flex; justify-content:space-between; gap:8px; align-items:baseline;}
   .u-item .rp{font-weight:700;} .u-item .rp i{font-style:normal; color:var(--sub); font-weight:500;}
@@ -112,8 +120,7 @@
 
 <div class="section">
   <div class="chips" id="chipsZona"></div>
-  <div id="progress"></div>
-  <div id="list"><div class="loading">Memuat update&hellip;</div></div>
+  <div id="progress"><div class="loading">Memuat data&hellip;</div></div>
 </div>
 
 <div id="lb"><span class="x" id="lbX">&times;</span><img id="lbImg" alt="foto" /></div>
@@ -218,14 +225,12 @@
 
   // ---------- chips ----------
   function renderChips(){
-    var zs = {}; all.forEach(function(u){ zs[zonaKey(u.zona)] = u.zona; });
+    var Z = ['1', '2', '3'];
     var zhtml = '<button class="chip' + (F.zona === 'all' ? ' on' : '') + '" data-z="all">Semua Zona</button>' +
-      Object.keys(zs).sort().map(function(k){
-        return '<button class="chip' + (F.zona === k ? ' on' : '') + '" data-z="' + k + '">' + esc(zonaShort(zs[k])) + '</button>';
-      }).join('');
+      Z.map(function(k){ return '<button class="chip' + (F.zona === k ? ' on' : '') + '" data-z="' + k + '">Zona ' + k + '</button>'; }).join('');
     var zc = document.getElementById('chipsZona'); zc.innerHTML = zhtml;
     Array.prototype.forEach.call(zc.querySelectorAll('.chip'), function(b){
-      b.addEventListener('click', function(){ F.zona = b.getAttribute('data-z'); shown = 20; renderAll(); });
+      b.addEventListener('click', function(){ F.zona = b.getAttribute('data-z'); renderAll(); });
     });
   }
 
@@ -403,51 +408,63 @@
     setTimeout(function(){ map.invalidateSize(); }, 50);
   }
 
-  // ---------- progress real/plan per Zona -> Segmen -> item ----------
+  // ---------- Progress + evidence: Zona (dropdown) -> Segmen (dropdown) -> item Real/Plan + update lapangan ----------
+  var OPEN = {};
+  function segNumOf(u){ return String(u.segmen).replace(/\D+/g, ''); }
+
   function renderProgress(){
     var box = document.getElementById('progress');
-    var zs = {};
-    Object.keys(SEGDATA).forEach(function(k){
-      var zk = k.split('|')[0];
-      if (F.zona !== 'all' && F.zona !== zk) return;
-      (zs[zk] = zs[zk] || []).push(k);
-    });
-    var zkeys = Object.keys(zs).sort();
-    if (!zkeys.length){ box.innerHTML = ''; return; }
-    var html = '<div class="prog-h"><b>Progress Lapangan</b><span>Real / Plan</span></div>';
-    zkeys.forEach(function(zk){
-      var keys = zs[zk].sort(function(a, b){ return Number(a.split('|')[1]) - Number(b.split('|')[1]); });
+    var Z = F.zona === 'all' ? ['1', '2', '3'] : [F.zona];
+    var html = '<div class="prog-h"><b>Progress Lapangan</b><span>Real / Plan \u00B7 Evidence</span></div>';
+    Z.forEach(function(zk){
+      var ups = all.filter(function(u){ return zonaKey(u.zona) === zk; });
+      var segKeys = {};
+      Object.keys(SEGDATA).forEach(function(k){ if (k.split('|')[0] === zk) segKeys[k.split('|')[1]] = 1; });
+      ups.forEach(function(u){ var n = segNumOf(u); if (n) segKeys[n] = 1; });
+      var nums = Object.keys(segKeys).sort(function(a, b){ return Number(a) - Number(b); });
+      var zname = nums.length && SEGDATA[zk + '|' + nums[0]] ? SEGDATA[zk + '|' + nums[0]].zona : (ups[0] ? ups[0].zona : 'ZONA ' + zk);
       var tot = {};
-      keys.forEach(function(k){ SEGDATA[k].items.forEach(function(it){
+      nums.forEach(function(n){ var d = SEGDATA[zk + '|' + n]; if (!d) return; d.items.forEach(function(it){
         var l = String(it.label).toUpperCase(); tot[l] = tot[l] || { a: 0, p: 0 };
         tot[l].a += Number(it.aktual || 0); tot[l].p += Number(it.plan || 0);
       }); });
-      var s = 0, n = 0; Object.keys(tot).forEach(function(l){ if (tot[l].p > 0){ s += Math.min(100, tot[l].a / tot[l].p * 100); n++; } });
-      var zp = n ? Math.round(s / n) : 0;
-      html += '<div class="pz"><div class="pz-top"><b>' + esc(SEGDATA[keys[0]].zona) + '</b><span class="big">' + zp + '%</span></div>' +
-        '<div class="bar"><span style="width:' + zp + '%"></span></div>';
-      keys.forEach(function(k){
-        var num = k.split('|')[1], d = SEGDATA[k];
-        var its = d.items.filter(function(it){ return Number(it.plan) > 0; });
-        if (!its.length) return;
-        var pc = avgPct(its) || 0, col = SEG_COLORS[num] || '#8b95ab';
+      var s = 0, n2 = 0; Object.keys(tot).forEach(function(l){ if (tot[l].p > 0){ s += Math.min(100, tot[l].a / tot[l].p * 100); n2++; } });
+      var hasPlan = n2 > 0, zp = n2 ? Math.round(s / n2) : 0;
+      var zid = 'z' + zk;
+      html += '<details class="pz" data-k="' + zid + '"' + (OPEN[zid] ? ' open' : '') + '><summary>' +
+        '<div class="pz-top"><b>' + esc(zname) + '<span class="chev">&#9656;</span></b>' +
+        '<span class="big">' + (hasPlan ? zp + '%' : '\u2013') + '</span></div>' +
+        (hasPlan ? '<div class="bar"><span style="width:' + zp + '%"></span></div>' : '') +
+        '<div class="badge" style="margin-top:6px">' + (nums.length ? nums.length + ' segmen' : 'Belum ada Plan / segmen (menyusul)') + ' &middot; ' + ups.length + ' update</div></summary>';
+      nums.forEach(function(num){
+        var d = SEGDATA[zk + '|' + num];
+        var its = d ? d.items.filter(function(it){ return Number(it.plan) > 0; }) : [];
+        var su = ups.filter(function(u){ return segNumOf(u) === num; });
+        var pc = its.length ? (avgPct(its) || 0) : null, col = SEG_COLORS[num] || '#8b95ab';
         var g = its.filter(function(x){ return String(x.label).toUpperCase() === 'GALIAN'; })[0];
-        var sub = g ? 'GALIAN ' + fmtNum(g.aktual || 0) + ' / ' + fmtNum(g.plan) + ' ' + esc(g.unit || '') : its.length + ' item';
-        html += '<details class="ps"><summary><div class="ps-row"><span class="ps-n" style="background:' + col + '">' + esc(num) + '</span>' +
-          '<span class="ps-t">' + esc(d.segmen || 'Segmen ' + num) + '</span><span class="ps-p">' + pc + '%</span></div>' +
-          '<div class="bar" style="margin-left:28px"><span style="width:' + pc + '%"></span></div><div class="ps-s">' + sub + '</div></summary>' +
-          '<div class="ps-body">' + its.map(function(it){
+        var sub = g ? 'GALIAN ' + fmtNum(g.aktual || 0) + ' / ' + fmtNum(g.plan) + ' ' + esc(g.unit || '') : (its.length ? its.length + ' item' : 'Belum ada Plan');
+        var sid = 's' + zk + '_' + num;
+        html += '<details class="ps" data-k="' + sid + '"' + (OPEN[sid] ? ' open' : '') + '><summary><div class="ps-row"><span class="ps-n" style="background:' + col + '">' + esc(num) + '</span>' +
+          '<span class="ps-t">' + esc(d ? (d.segmen || 'Segmen ' + num) : 'SEGMEN ' + num) + '<span class="chev">&#9656;</span></span><span class="ps-p">' + (pc !== null ? pc + '%' : '\u2013') + '</span></div>' +
+          (pc !== null ? '<div class="bar" style="margin-left:28px"><span style="width:' + pc + '%"></span></div>' : '') +
+          '<div class="ps-s">' + sub + ' &middot; ' + (su.length ? '\uD83D\uDCF7 ' + su.length + ' update' : 'belum ada update') + '</div></summary><div class="ps-body">' +
+          its.map(function(it){
             var v = Math.round(itPct(it));
             return '<div class="pi"><div class="row"><span>' + esc(it.label) + '</span><span class="rp">' + fmtNum(it.aktual || 0) + ' <i>/ ' + fmtNum(it.plan) + '</i> ' + esc(it.unit || '') + ' &middot; <span class="pc">' + v + '%</span></span></div>' +
               '<div class="bar"><span style="width:' + v + '%"></span></div></div>';
-          }).join('') + '</div></details>';
+          }).join('') +
+          '<div class="ev-h">Evidence &amp; update lapangan</div>' +
+          (su.length ? su.slice(0, 3).map(cardHtml).join('') +
+            (su.length > 3 ? '<details class="older"><summary>Update sebelumnya (' + (su.length - 3) + ')</summary>' + su.slice(3).map(cardHtml).join('') + '</details>' : '')
+            : '<div class="ev-none">Belum ada foto / catatan untuk segmen ini.</div>') +
+          '</div></details>';
       });
-      html += '</div>';
+      if (!nums.length) html += '<div class="ev-none" style="margin-top:8px">Data Plan dan jalur KML Zona ' + zk + ' menyusul.</div>';
+      html += '</details>';
     });
     box.innerHTML = html;
   }
 
-  // ---------- summary + list ----------
   function planOf(u, it){
     var p = Number(it.plan);
     if (p > 0) return p;
@@ -471,33 +488,13 @@
       return '<img loading="lazy" src="' + thumb(id, 400) + '" data-full="' + thumb(id, 1600) + '" alt="foto lapangan" />';
     }).join('') + '</div>' : '';
     var foot = u._hasGeo
-      ? '<span data-pin="' + u._i + '">📍 lihat di peta</span>' + (u.acc ? ' <span class="none">(±' + Math.round(u.acc) + ' m)</span>' : '')
+      ? '<span data-pin="' + u._i + '">\uD83D\uDCCD lihat di peta</span>' + (u.acc ? ' <span class="none">(\u00B1' + Math.round(u.acc) + ' m)</span>' : '')
       : '<span class="none">tanpa lokasi</span>';
     return '<div class="upd" id="upd' + u._i + '">' +
       '<div class="u-top"><span class="dot" style="background:' + zonaColor(u.zona) + '"></span>' +
-        '<div class="u-title">' + esc(zonaShort(u.zona)) + ' &middot; ' + esc(u.segmen) + '</div>' +
-        '<div class="u-time">' + esc(relTime(u._d)) + '</div></div>' +
-      (u.user ? '<div class="u-user">oleh ' + esc(u.user) + '</div>' : '') +
+        '<div class="u-title">' + esc(relTime(u._d)) + '</div>' +
+        (u.user ? '<div class="u-time">' + esc(u.user) + '</div>' : '') + '</div>' +
       items + cat + ph + '<div class="u-foot">' + foot + '</div></div>';
-  }
-
-  function renderList(list){
-    var box = document.getElementById('list');
-    if (!list.length) {
-      box.innerHTML = '<div class="empty">' + (all.length ? 'Tidak ada update pada filter ini.' : 'Belum ada update lapangan. Kirim lewat menu Input Progress.') + '</div>';
-      return;
-    }
-    var part = list.slice(0, shown);
-    box.innerHTML = part.map(cardHtml).join('') +
-      (list.length > shown ? '<button class="more" id="btnMore">Muat lebih banyak (' + (list.length - shown) + ')</button>' : '');
-    var more = document.getElementById('btnMore');
-    if (more) more.addEventListener('click', function(){ shown += 20; renderList(filtered()); });
-    Array.prototype.forEach.call(box.querySelectorAll('[data-pin]'), function(el){
-      el.addEventListener('click', function(){ focusPin(parseInt(el.getAttribute('data-pin'), 10)); });
-    });
-    Array.prototype.forEach.call(box.querySelectorAll('.u-photos img'), function(img){
-      img.addEventListener('click', function(){ openLb(img.getAttribute('data-full')); });
-    });
   }
 
   function focusPin(i){
@@ -516,7 +513,6 @@
     var list = filtered();
     renderProgress();
     renderMap(list);
-    renderList(list);
   }
 
   function loadPlans(){
@@ -538,14 +534,25 @@
         renderAll();
       })
       .catch(function(err){
-        document.getElementById('list').innerHTML = '<div class="empty">Gagal memuat: ' + esc(err.message) + '<br><br><button class="chip on" onclick="location.reload()">Coba lagi</button></div>';
+        document.getElementById('progress').innerHTML = '<div class="empty">Gagal memuat: ' + esc(err.message) + '<br><br><button class="chip on" onclick="location.reload()">Coba lagi</button></div>';
         initMap();
       });
   }
   document.getElementById('btnRefresh').addEventListener('click', function(){
-    document.getElementById('list').innerHTML = '<div class="loading">Memuat update&hellip;</div>';
+    document.getElementById('progress').innerHTML = '<div class="loading">Memuat data&hellip;</div>';
     load();
   });
+  var pbox = document.getElementById('progress');
+  pbox.addEventListener('click', function(ev){
+    var t = ev.target;
+    var pin = t.closest ? t.closest('[data-pin]') : null;
+    if (pin){ ev.preventDefault(); focusPin(parseInt(pin.getAttribute('data-pin'), 10)); return; }
+    if (t.tagName === 'IMG' && t.parentNode && t.parentNode.className === 'u-photos'){ openLb(t.getAttribute('data-full')); }
+  });
+  pbox.addEventListener('toggle', function(ev){
+    var k = ev.target.getAttribute && ev.target.getAttribute('data-k');
+    if (k) OPEN[k] = ev.target.open;
+  }, true);
   initMap();
   load();
 </script>
