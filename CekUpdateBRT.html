@@ -194,6 +194,7 @@
   var SEGDATA = {}; // 'zonaKey|segNum' -> {zona, segmen, items:[{label,unit,plan,aktual}]} (data terbaru dari sheet)
   var PLAN = {}; // 'zonaKey|segNum|LABEL' -> plan (data terbaru dari sheet)
   var F = { zona: 'all' };
+  try { var qz = new URLSearchParams(location.search).get('zona'); if (qz === '1' || qz === '2' || qz === '3') F.zona = qz; } catch (e) {}
   var shown = 20;
   var map = null, layer = null, pins = {};
 
