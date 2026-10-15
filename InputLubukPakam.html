@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>Input Progress Lubuk Pakam</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root{
+    --bg:#0b1120; --bg2:#0e1729;
+    --card:#141d33; --card-border:#232f4d;
+    --text:#e7ebf5; --sub:#8b95ab;
+    --accent:#3b6ef6; --accent2:#6d9bff; --accent-soft:#1b2a4d;
+    --green:#22c55e; --orange:#f59e0b; --red:#ef4444; --pink:#ec4899;
+    --shadow:0 4px 18px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:var(--bg); color:var(--text); padding-bottom:32px;
+  }
+  header{
+    background:var(--bg2); padding:16px; position:sticky; top:0; z-index:10;
+    border-bottom:1px solid var(--card-border); display:flex; align-items:center; gap:12px;
+  }
+  .back-btn{
+    width:34px; height:34px; border-radius:9px; background:var(--card); border:1px solid var(--card-border);
+    color:var(--accent2); display:flex; align-items:center; justify-content:center; font-size:16px;
+    text-decoration:none; flex-shrink:0;
+  }
+  header h1{margin:0; font-size:16px; font-weight:800;}
+  header p{margin:2px 0 0; font-size:11px; color:var(--sub);}
+
+  .section{padding:14px;}
+  .card{
+    background:var(--card); border-radius:14px; padding:15px; border:1px solid var(--card-border);
+    margin-bottom:12px; box-shadow:var(--shadow);
+  }
+  label{display:block; font-size:11px; font-weight:700; color:var(--accent2); margin-bottom:6px; text-transform:uppercase; letter-spacing:.4px;}
+
+  .step-label{font-size:10.5px; font-weight:800; color:var(--sub); text-transform:uppercase; letter-spacing:.4px; margin-bottom:8px;}
+
+  .zona-item{
+    padding:11px 12px; border-radius:10px; cursor:pointer; font-size:13.5px; font-weight:600; margin-bottom:6px;
+    background:var(--bg2); border:1px solid var(--card-border);
+  }
+  .zona-item .loc{font-size:10.5px; color:var(--sub); font-weight:500; margin-top:3px;}
+  .zona-item:active{border-color:var(--accent);}
+
+  .breadcrumb{font-size:11.5px; color:var(--sub); margin-bottom:12px;}
+  .breadcrumb b{color:var(--accent2); cursor:pointer;}
+
+  .segmen-item{
+    padding:12px; border-radius:10px; cursor:pointer; margin-bottom:8px;
+    background:var(--bg2); border:1px solid var(--card-border);
+  }
+  .segmen-item .seg-title{font-size:12.5px; font-weight:700;}
+  .segmen-item .seg-sub{font-size:10.5px; color:var(--sub); margin-top:3px;}
+  .segmen-item:active{border-color:var(--accent);}
+
+  .sisi-choice{display:flex; gap:10px; margin-bottom:4px;}
+  .sisi-btn{
+    flex:1; padding:14px; border-radius:12px; text-align:center; cursor:pointer; font-weight:800; font-size:13px;
+    border:1.5px solid var(--card-border); background:var(--bg2); color:var(--sub);
+  }
+  .sisi-btn.kiri{border-color:rgba(59,110,246,.4);}
+  .sisi-btn.kanan{border-color:rgba(236,72,153,.4);}
+  .sisi-btn .sisi-count{display:block; font-size:10px; font-weight:600; margin-top:3px; text-transform:none;}
+
+  .item-card{
+    background:var(--bg2); border:1px solid var(--card-border); border-radius:12px;
+    padding:11px 12px; margin-bottom:8px;
+  }
+  .item-top{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
+  .item-name{font-size:13px; font-weight:700;}
+  .item-mid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .item-col .col-label{
+    font-size:10px; font-weight:700; color:var(--sub); text-transform:uppercase;
+    letter-spacing:.4px; margin-bottom:5px; text-align:center;
+  }
+  .item-mid input[type=number]{width:100%; text-align:center; padding:9px 8px; border-radius:10px; border:1px solid var(--card-border); background:var(--bg); color:var(--text); font-size:14px; font-family:inherit;}
+  .item-mid input[type=number]:focus{outline:none; border-color:var(--accent);}
+  .plan-value{
+    width:100%; text-align:center; padding:9px 8px; border-radius:10px;
+    background:var(--card); border:1px solid var(--card-border); font-size:14px; font-weight:700;
+  }
+
+  button.submit{
+    width:100%; padding:14px; border:none; border-radius:12px;
+    background:linear-gradient(135deg, var(--accent) 0%, #274fc9 100%); color:#fff;
+    font-size:15px; font-weight:700; cursor:pointer; margin-top:6px;
+    box-shadow:0 4px 14px rgba(59,110,246,.35);
+  }
+  button.submit:disabled{opacity:.5; box-shadow:none;}
+
+  .toast{
+    position:fixed; left:16px; right:16px; bottom:16px; padding:12px 14px; border-radius:10px;
+    font-size:14px; text-align:center; color:#fff; display:none; z-index:50; box-shadow:var(--shadow);
+  }
+  .toast.success{background:var(--green);}
+  .toast.error{background:var(--red);}
+
+
+  .sub-title{font-size:10.5px; font-weight:800; color:var(--sub); text-transform:uppercase; letter-spacing:.4px; margin:16px 0 8px;}
+  .geo-row{display:flex; align-items:center; gap:10px; background:var(--bg2); border:1px solid var(--card-border); border-radius:10px; padding:9px 11px;}
+  .geo-txt{flex:1; font-size:12px; color:var(--sub); line-height:1.35;}
+  .geo-txt.ok{color:var(--green);} .geo-txt.bad{color:var(--orange);}
+  .mini-btn{background:var(--accent-soft); color:var(--accent2); border:1px solid var(--card-border); border-radius:9px; padding:8px 11px; font-size:12px; font-weight:700; font-family:inherit; cursor:pointer; white-space:nowrap;}
+  .photo-btns{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+  .photo-btns .mini-btn{padding:11px 8px; font-size:13px;}
+  .photo-btns .mini-btn:disabled{opacity:.45;}
+  .thumbs{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:10px;}
+  .thumb{position:relative; aspect-ratio:1/1; border-radius:9px; overflow:hidden; border:1px solid var(--card-border); background:var(--bg2);}
+  .thumb img{width:100%; height:100%; object-fit:cover; display:block;}
+  .thumb button{position:absolute; top:3px; right:3px; width:22px; height:22px; border-radius:50%; border:none; background:rgba(0,0,0,.65); color:#fff; font-size:12px; line-height:22px; padding:0; cursor:pointer;}
+  .hint{font-size:10.5px; color:var(--sub); margin-top:6px;}
+  textarea.catatan{width:100%; min-height:72px; resize:vertical; padding:10px; border-radius:10px; border:1px solid var(--card-border); background:var(--bg); color:var(--text); font-size:13.5px; font-family:inherit;}
+  textarea.catatan:focus{outline:none; border-color:var(--accent);}
+
+  .loading, .empty{font-size:13px; color:var(--sub); text-align:center; padding:16px;}
+</style>
+</head>
+<body>
+
+<header>
+  <a class="back-btn" href="HalamanDepan.html" aria-label="Kembali">&#8592;</a>
+  <div>
+    <h1>Input Progress Lubuk Pakam</h1>
+    <p>Lubuk Pakam &middot; ED REG Sumbagut</p>
+  </div>
+</header>
+
+<div class="section" id="app">
+  <div class="loading">Memuat data...</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  var API_URL = 'https://script.google.com/macros/s/AKfycbyIYDJ4Btr5MuTNsK8PcqICFm0woRzbK7gV91igtabsBiM_quoIvsOYJy1OvkszlSZYrQ/exec';
+
+  // ---- Pemanggil API yang tahan gangguan (Safari/HP): baca teks dulu, coba ulang, cadangkan hasil terakhir ----
+  function apiGet(url, tries){
+    tries = tries || 3;
+    var key = 'apicache:' + url;
+    function showStale(){
+      if (document.getElementById('staleBanner')) return;
+      var b = document.createElement('div');
+      b.id = 'staleBanner';
+      b.style.cssText = 'position:fixed;left:12px;right:12px;bottom:12px;z-index:99;background:#3a2a0b;color:#fbbf24;border:1px solid #7a5a12;border-radius:10px;padding:8px 12px;font-size:12px;text-align:center;';
+      b.textContent = '\u26A0 Server belum merespons \u2014 menampilkan data tersimpan terakhir';
+      document.body.appendChild(b);
+      setTimeout(function(){ if (b.parentNode) b.parentNode.removeChild(b); }, 6000);
+    }
+    function attempt(n){
+      return fetch(url).then(function(res){ return res.text(); }).then(function(t){
+        var d;
+        try { d = JSON.parse(t); }
+        catch (e) { throw new Error('Server belum merespons dengan benar, coba lagi sebentar'); }
+        try { localStorage.setItem(key, t); } catch (e) {}
+        return d;
+      }).catch(function(err){
+        if (n < tries) {
+          return new Promise(function(r){ setTimeout(r, 900 * n); }).then(function(){ return attempt(n + 1); });
+        }
+        var c = null;
+        try { c = localStorage.getItem(key); } catch (e) {}
+        if (c) {
+          try { var d2 = JSON.parse(c); showStale(); return d2; } catch (e) {}
+        }
+        throw err;
+      });
+    }
+    return attempt(1);
+  }
+
+  var tg = window.Telegram ? window.Telegram.WebApp : null;
+  if (tg) { tg.ready(); tg.expand(); }
+
+  var allZonas = [];
+  var allRows = [];
+  var state = { zona: null, segmen: null };
+
+  function escapeHtml(str){
+    return String(str == null ? '' : str)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function showToast(msg, type){
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast ' + type;
+    t.style.display = 'block';
+    setTimeout(function(){ t.style.display = 'none'; }, 3500);
+  }
+
+  function segmenOfZona(namaLop){
+    // satu entri per Segmen (sheet baru: tanpa Sisi Kiri/Kanan)
+    return allRows.filter(function(r){ return r.namaLop === namaLop; });
+  }
+
+  function renderZonaList(){
+    var app = document.getElementById('app');
+    if (allZonas.length === 0) { app.innerHTML = '<div class="empty">Belum ada Zona BRT di sheet.</div>'; return; }
+    app.innerHTML = '<div class="card">' +
+      '<div class="step-label">Pilih Zona</div>' +
+      allZonas.map(function(z, idx){
+        var n = segmenOfZona(z.namaLop).length;
+        return '<div class="zona-item" data-idx="' + idx + '">' + escapeHtml(z.namaLop) +
+          '<div class="loc">' + (n ? n + ' segmen' : 'Belum ada Plan') + '</div></div>';
+      }).join('') +
+    '</div>';
+    Array.prototype.forEach.call(app.querySelectorAll('.zona-item'), function(el){
+      el.addEventListener('click', function(){
+        state.zona = allZonas[parseInt(el.getAttribute('data-idx'), 10)];
+        state.segmen = null;
+        renderSegmenList();
+      });
+    });
+  }
+
+  function renderSegmenList(){
+    var app = document.getElementById('app');
+    var segs = segmenOfZona(state.zona.namaLop);
+
+    if (segs.length === 0) {
+      app.innerHTML =
+        '<div class="breadcrumb">' + escapeHtml(state.zona.namaLop) + '</div>' +
+        '<div class="card"><div class="empty">Belum ada Jalan dengan Plan terisi di tab LUBUK PAKAM.</div></div>';
+      return;
+    }
+
+    app.innerHTML =
+      '<div class="breadcrumb">' + escapeHtml(state.zona.namaLop) + '</div>' +
+      '<div class="card">' +
+        '<div class="step-label">Pilih Jalan</div>' +
+        segs.map(function(seg, idx){
+          var filled = seg.items.filter(function(it){ return Number(it.aktual) > 0; }).length;
+          return '<div class="segmen-item" data-idx="' + idx + '">' +
+            '<div class="seg-title">' + escapeHtml(seg.segmen || 'Jalan') + '</div>' +
+            '<div class="seg-sub">' + seg.items.length + ' item &middot; ' + filled + ' sudah ada progres</div>' +
+          '</div>';
+        }).join('') +
+      '</div>';
+
+    Array.prototype.forEach.call(app.querySelectorAll('.segmen-item'), function(el){
+      el.addEventListener('click', function(){
+        state.segmen = segs[parseInt(el.getAttribute('data-idx'), 10)];
+        renderItemForm(state.segmen);
+      });
+    });
+  }
+
+  // ---------- Lokasi (GPS) ----------
+  var geo = null;          // {lat,lng,acc}
+  var photos = [];         // [{mime,data,preview}]
+  var MAX_PHOTOS = 4;
+
+  function tgUserName(){
+    try {
+      var u = tg && tg.initDataUnsafe && tg.initDataUnsafe.user;
+      if (!u) return '';
+      return ((u.first_name || '') + ' ' + (u.last_name || '')).trim() || u.username || '';
+    } catch (e) { return ''; }
+  }
+
+  function setGeoUi(cls, txt){
+    var el = document.getElementById('geoTxt');
+    if (!el) return;
+    el.className = 'geo-txt ' + cls;
+    el.textContent = txt;
+  }
+
+  function getLocation(){
+    if (!navigator.geolocation) { setGeoUi('bad', 'Perangkat ini tidak mendukung lokasi.'); return; }
+    setGeoUi('', 'Mencari lokasi…');
+    navigator.geolocation.getCurrentPosition(function(pos){
+      geo = { lat: pos.coords.latitude, lng: pos.coords.longitude, acc: Math.round(pos.coords.accuracy || 0) };
+      setGeoUi('ok', '📍 Lokasi terambil (±' + geo.acc + ' m)');
+    }, function(){
+      geo = null;
+      setGeoUi('bad', 'Lokasi belum didapat — izinkan lokasi lalu tekan “Ambil Lokasi”. Tetap bisa disimpan tanpa lokasi.');
+    }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 });
+  }
+
+  // ---------- Foto: kompres di HP sebelum diunggah ----------
+  function compressImage(file){
+    return new Promise(function(resolve, reject){
+      var url = URL.createObjectURL(file);
+      var img = new Image();
+      img.onload = function(){
+        var max = 1280, w = img.naturalWidth, h = img.naturalHeight;
+        var k = Math.min(1, max / Math.max(w, h));
+        var cw = Math.max(1, Math.round(w * k)), ch = Math.max(1, Math.round(h * k));
+        var c = document.createElement('canvas');
+        c.width = cw; c.height = ch;
+        c.getContext('2d').drawImage(img, 0, 0, cw, ch);
+        URL.revokeObjectURL(url);
+        var dataUrl = c.toDataURL('image/jpeg', 0.7);
+        resolve({ mime: 'image/jpeg', data: dataUrl.split(',')[1], preview: dataUrl });
+      };
+      img.onerror = function(){ URL.revokeObjectURL(url); reject(new Error('Foto tidak bisa dibaca')); };
+      img.src = url;
+    });
+  }
+
+  function renderThumbs(){
+    var box = document.getElementById('thumbs');
+    if (!box) return;
+    box.innerHTML = photos.map(function(p, i){
+      return '<div class="thumb"><img src="' + p.preview + '" alt="foto ' + (i + 1) + '" />' +
+        '<button type="button" data-i="' + i + '" aria-label="Hapus foto">&#10005;</button></div>';
+    }).join('');
+    Array.prototype.forEach.call(box.querySelectorAll('button'), function(b){
+      b.addEventListener('click', function(){ photos.splice(parseInt(b.getAttribute('data-i'), 10), 1); renderThumbs(); });
+    });
+    var full = photos.length >= MAX_PHOTOS;
+    ['btnCam', 'btnGal'].forEach(function(id){ var el = document.getElementById(id); if (el) el.disabled = full; });
+    var h = document.getElementById('photoHint');
+    if (h) h.textContent = photos.length + ' / ' + MAX_PHOTOS + ' foto';
+  }
+
+  function addFiles(fileList){
+    var files = Array.prototype.slice.call(fileList || []).slice(0, MAX_PHOTOS - photos.length);
+    if (!files.length) return;
+    var h = document.getElementById('photoHint');
+    if (h) h.textContent = 'Memproses foto…';
+    files.reduce(function(chain, f){
+      return chain.then(function(){
+        return compressImage(f).then(function(p){ photos.push(p); }, function(){ showToast('Satu foto gagal dibaca', 'error'); });
+      });
+    }, Promise.resolve()).then(renderThumbs);
+  }
+
+  function renderItemForm(seg){
+    var app = document.getElementById('app');
+    photos = [];
+
+    app.innerHTML =
+      '<div class="breadcrumb"><b id="bcBack">&larr; Kembali</b> &middot; ' + escapeHtml(seg.segmen || 'Jalan') + '</div>' +
+      '<div class="card" id="formCard">' +
+        '<div class="step-label">Update Aktual per Item</div>' +
+        '<div id="itemsList"></div>' +
+
+        '<div class="sub-title">Lokasi</div>' +
+        '<div class="geo-row"><div class="geo-txt" id="geoTxt">Belum diambil</div>' +
+          '<button type="button" class="mini-btn" id="btnGeo">📍 Ambil Lokasi</button></div>' +
+
+        '<div class="sub-title">Foto Lapangan</div>' +
+        '<div class="photo-btns">' +
+          '<button type="button" class="mini-btn" id="btnCam">📷 Kamera</button>' +
+          '<button type="button" class="mini-btn" id="btnGal">🖼 Galeri</button>' +
+        '</div>' +
+        '<input type="file" id="fileCam" accept="image/*" capture="environment" style="display:none" />' +
+        '<input type="file" id="fileGal" accept="image/*" multiple style="display:none" />' +
+        '<div class="thumbs" id="thumbs"></div>' +
+        '<div class="hint" id="photoHint">0 / ' + MAX_PHOTOS + ' foto</div>' +
+
+        '<div class="sub-title">Catatan (opsional)</div>' +
+        '<textarea class="catatan" id="catatan" maxlength="500" placeholder="Mis. galian lancar, kendala izin warga, dll"></textarea>' +
+
+        '<button class="submit" id="submitBtn">Simpan Update</button>' +
+      '</div>';
+
+    document.getElementById('bcBack').addEventListener('click', renderSegmenList);
+
+    var itemsList = document.getElementById('itemsList');
+    itemsList.innerHTML = seg.items.map(function(it, idx){
+      return '<div class="item-card">' +
+        '<div class="item-top"><div class="item-name">' + escapeHtml(it.label) + (it.unit ? ' <span style="color:var(--sub);font-weight:500;font-size:11px;">(' + escapeHtml(it.unit) + ')</span>' : '') + '</div></div>' +
+        '<div style="font-size:10px;color:var(--sub);margin:-2px 0 6px;">' + escapeHtml(it.des || '') + ' &middot; sisa ' + escapeHtml(Math.max(0, Number(it.plan) - Number(it.aktual || 0)).toLocaleString('id-ID')) + '</div>' +
+        '<div class="item-mid">' +
+          '<div class="item-col"><div class="col-label">Aktual</div>' +
+            '<input type="number" inputmode="decimal" data-idx="' + idx + '" class="aktual-input" value="' + escapeHtml(it.aktual) + '" /></div>' +
+          '<div class="item-col"><div class="col-label">Plan</div>' +
+            '<div class="plan-value">' + escapeHtml(Number(it.plan).toLocaleString('id-ID')) + '</div></div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+
+    document.getElementById('btnGeo').addEventListener('click', getLocation);
+    document.getElementById('btnCam').addEventListener('click', function(){ document.getElementById('fileCam').click(); });
+    document.getElementById('btnGal').addEventListener('click', function(){ document.getElementById('fileGal').click(); });
+    ['fileCam', 'fileGal'].forEach(function(id){
+      var el = document.getElementById(id);
+      el.addEventListener('change', function(){ addFiles(el.files); el.value = ''; });
+    });
+    getLocation(); // otomatis coba saat form dibuka (tidak memblokir)
+
+    document.getElementById('submitBtn').addEventListener('click', function(){
+      var updates = [];
+      Array.prototype.forEach.call(itemsList.querySelectorAll('.aktual-input'), function(input){
+        var idx = parseInt(input.getAttribute('data-idx'), 10);
+        var original = seg.items[idx];
+        var newVal = input.value;
+        if (newVal !== '' && String(newVal) !== String(original.aktual)) {
+          updates.push({ label: original.label, sheet: original.sheet, row: original.row, jalan: seg.segmen, aktual: newVal });
+        }
+      });
+      var catatan = document.getElementById('catatan').value.trim();
+
+      if (updates.length === 0 && photos.length === 0 && !catatan) {
+        showToast('Isi angka Aktual, foto, atau catatan dulu.', 'error');
+        return;
+      }
+
+      var btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.textContent = photos.length ? 'Mengunggah ' + photos.length + ' foto…' : 'Menyimpan…';
+
+      var payload = {
+        action: 'updateLubukPakam', updates: updates,
+        jalan: seg.segmen || '',
+        catatan: catatan, user: tgUserName(),
+        lat: geo ? geo.lat : '', lng: geo ? geo.lng : '', acc: geo ? geo.acc : '',
+        photos: photos.map(function(p){ return { mime: p.mime, data: p.data }; })
+      };
+
+      fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) })
+        .then(function(res){ return res.text(); })
+        .then(function(t){
+          var data;
+          try { data = JSON.parse(t); } catch (e) { throw new Error('Server belum merespons dengan benar, coba lagi'); }
+          btn.disabled = false;
+          btn.textContent = 'Simpan Update';
+          if (!data.ok) throw new Error(data.error || 'Gagal menyimpan');
+          updates.forEach(function(u){
+            var it = seg.items.find(function(d){ return d.sheet === u.sheet && d.row === u.row; });
+            if (it) it.aktual = Number(u.aktual);
+          });
+          if (data.photoError) {
+            showToast('Angka tersimpan, tapi foto gagal: ' + data.photoError, 'error');
+          } else {
+            showToast('Berhasil disimpan' + (data.photos ? ' (' + data.photos + ' foto)' : '') + '!', 'success');
+            photos = []; renderThumbs();
+            document.getElementById('catatan').value = '';
+          }
+        })
+        .catch(function(err){
+          btn.disabled = false;
+          btn.textContent = 'Simpan Update';
+          showToast('Gagal: ' + err.message, 'error');
+        });
+    });
+  }
+
+  apiGet(API_URL + '?action=lpStructure')
+    .then(function(data){
+      if (!data.ok) throw new Error(data.error || 'Gagal memuat data');
+      allZonas = data.zonas || [];
+      allRows = data.rows || [];
+      state.zona = allZonas[0] || { namaLop: 'LUBUK PAKAM' };
+      renderSegmenList();
+    })
+    .catch(function(err){
+      document.getElementById('app').innerHTML = '<div class="empty">Gagal memuat data: ' + escapeHtml(err.message) + '<br><br><button onclick="location.reload()" style="background:#6d9bff;color:#04122b;border:none;border-radius:8px;padding:8px 16px;font-weight:700;font-size:13px;">Coba lagi</button></div>';
+    });
+</script>
+
+</body>
+</html>
