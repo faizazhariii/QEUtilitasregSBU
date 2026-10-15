@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>Cek Update Progress Lubuk Pakam</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<style>
+  :root{
+    --bg:#0b1120; --bg2:#0e1729; --card:#141d33; --card-border:#232f4d;
+    --text:#e7ebf5; --sub:#8b95ab; --accent:#3b6ef6; --accent2:#6d9bff; --accent-soft:#1b2a4d;
+    --green:#22c55e; --orange:#f59e0b; --red:#ef4444;
+    --shadow:0 4px 18px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--text); padding-bottom:32px;}
+  header{background:var(--bg2); padding:16px; position:sticky; top:0; z-index:1000; border-bottom:1px solid var(--card-border); display:flex; align-items:center; gap:12px;}
+  .back-btn{width:34px; height:34px; border-radius:9px; background:var(--card); border:1px solid var(--card-border); color:var(--accent2); display:flex; align-items:center; justify-content:center; font-size:16px; text-decoration:none; flex-shrink:0;}
+  header h1{margin:0; font-size:16px; font-weight:800;}
+  header p{margin:2px 0 0; font-size:11px; color:var(--sub);}
+  .refresh{margin-left:auto; background:var(--card); border:1px solid var(--card-border); color:var(--accent2); border-radius:9px; width:34px; height:34px; font-size:15px; cursor:pointer;}
+
+  #map{height:270px; width:100%; background:#e8e6e1; border-bottom:1px solid var(--card-border);}
+  .leaflet-container{font-family:inherit;}
+  .leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#fff; color:#0f172a;}
+  .leaflet-popup-content{margin:10px 12px; font-size:12px; line-height:1.4;}
+  .pop-t{font-weight:800; font-size:12.5px;} .pop-s{color:#475569; font-size:11px; margin-top:2px;}
+  .pop-img{display:block; margin-top:7px; width:150px; height:100px; object-fit:cover; border-radius:8px; border:1px solid var(--card-border);}
+  .flow{animation:flow 1.1s linear infinite;}
+  @keyframes flow{to{stroke-dashoffset:-16;}}
+  .rtip{background:#064e3b; color:#fff; border:1px solid #fff; border-radius:8px; font-weight:800; font-size:11px; padding:2px 6px; box-shadow:0 1px 4px rgba(0,0,0,.4);}
+  .rtip:before{display:none;}
+  .maplegend{background:rgba(255,255,255,.94); color:#0f172a; border-radius:8px; padding:6px 9px; font-size:11px; font-weight:700; box-shadow:0 1px 5px rgba(0,0,0,.35); line-height:1.7;}
+  .maplegend i{display:inline-block; vertical-align:middle; width:26px; margin-right:6px;}
+  .nomap{color:#475569 !important; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:var(--sub); font-size:12px; text-align:center; padding:20px; pointer-events:none; z-index:500;}
+  .mapwrap{position:relative;}
+
+  .section{padding:12px 14px;}
+  .chips{display:flex; gap:7px; overflow-x:auto; padding:2px 0 8px; -webkit-overflow-scrolling:touch;}
+  .chip{flex:0 0 auto; padding:7px 12px; border-radius:999px; border:1px solid var(--card-border); background:var(--card); color:var(--sub); font-size:12px; font-weight:700; cursor:pointer; font-family:inherit;}
+  .chip.on{background:var(--accent-soft); color:var(--accent2); border-color:var(--accent);}
+  .sum{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:4px 0 12px;}
+  .sum div{background:var(--card); border:1px solid var(--card-border); border-radius:12px; padding:9px 6px; text-align:center;}
+  .sum b{display:block; font-size:18px;} .sum span{font-size:10px; color:var(--sub); text-transform:uppercase; letter-spacing:.3px; font-weight:700;}
+
+  .upd{background:var(--card); border:1px solid var(--card-border); border-radius:14px; padding:13px; margin-bottom:10px; box-shadow:var(--shadow);}
+  .upd.focus{border-color:var(--accent2);}
+  .u-top{display:flex; align-items:center; gap:8px;}
+  .dot{width:10px; height:10px; border-radius:50%; flex-shrink:0;}
+  .u-title{font-size:13.5px; font-weight:800;}
+  .u-time{margin-left:auto; font-size:11px; color:var(--sub); white-space:nowrap;}
+  .u-user{font-size:11px; color:var(--sub); margin:3px 0 0 18px;}
+  .u-items{margin:9px 0 0; display:flex; flex-direction:column; gap:5px;}
+  .prog-h{display:flex; align-items:center; justify-content:space-between; margin:4px 0 8px;}
+  .prog-h b{font-size:13px;} .prog-h span{font-size:11px; color:var(--sub);}
+  .pz{background:var(--card); border:1px solid var(--card-border); border-radius:14px; padding:12px; margin-bottom:10px;}
+  .pz-top{display:flex; justify-content:space-between; align-items:baseline; gap:8px;}
+  .pz-top b{font-size:14px;} .pz-top .big{font-size:20px; font-weight:800; color:var(--accent2);}
+  details.ps{background:var(--bg2); border:1px solid var(--card-border); border-radius:11px; margin-top:8px; overflow:hidden;}
+  details.ps summary{list-style:none; cursor:pointer; padding:9px 11px;}
+  details.ps summary::-webkit-details-marker{display:none;}
+  .ps-row{display:flex; align-items:center; gap:8px;}
+  .ps-n{width:20px; height:20px; border-radius:50%; color:#fff; font-size:11px; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+  .ps-t{font-size:12.5px; font-weight:700; flex:1;} .ps-p{font-size:13px; font-weight:800; color:var(--accent2);}
+  .ps-s{font-size:10.5px; color:var(--sub); margin:5px 0 0 28px;}
+  .ps-body{padding:2px 11px 10px;}
+  .pi{margin-top:8px;} .pi .row{display:flex; justify-content:space-between; gap:8px; font-size:12px;}
+  .pi .rp{font-weight:700;} .pi .rp i{font-style:normal; color:var(--sub); font-weight:500;} .pi .pc{color:var(--accent2); font-weight:800;}
+  details.pz > summary{list-style:none; cursor:pointer;}
+  details.pz > summary::-webkit-details-marker{display:none;}
+  .chev{display:inline-block; transition:transform .15s; color:var(--sub); margin-left:6px; font-size:12px;}
+  details[open] > summary .chev{transform:rotate(90deg);}
+  .badge{font-size:10.5px; color:var(--sub); font-weight:600;}
+  .ev-h{font-size:10.5px; font-weight:800; color:var(--sub); text-transform:uppercase; letter-spacing:.4px; margin:14px 0 8px;}
+  .ev-none{font-size:12px; color:var(--sub); padding:4px 0 2px;}
+  details.older > summary{cursor:pointer; color:var(--accent2); font-size:12px; font-weight:700; padding:6px 2px;}
+  .u-item{display:block !important;}
+  .u-item .row{display:flex; justify-content:space-between; gap:8px; align-items:baseline;}
+  .u-item .rp{font-weight:700;} .u-item .rp i{font-style:normal; color:var(--sub); font-weight:500;}
+  .u-item .pc{color:var(--accent2); font-weight:800;}
+  .bar{height:5px; border-radius:3px; background:var(--card-border); margin-top:6px; overflow:hidden;}
+  .bar span{display:block; height:100%; background:var(--accent2); border-radius:3px;}
+  .u-item .row2{font-size:10.5px; color:var(--sub); margin-top:4px;}
+  .legend{display:flex; gap:6px; overflow-x:auto; padding:8px 14px; background:var(--bg2); border-bottom:1px solid var(--card-border);}
+  .lg{flex:0 0 auto; display:flex; align-items:center; gap:6px; padding:5px 10px; border-radius:999px; border:1px solid var(--card-border); background:var(--card); color:var(--text); font-size:11.5px; font-weight:700; cursor:pointer; font-family:inherit;}
+  .lg i{width:14px; height:4px; border-radius:2px; display:block;}
+  .lg small{color:var(--sub); font-weight:600;}
+  .lg.off{opacity:.4;}
+  .u-item{font-size:12.5px; background:var(--bg2); border:1px solid var(--card-border); border-radius:9px; padding:6px 9px; display:flex; justify-content:space-between; gap:8px;}
+  .u-item .d{color:var(--green); font-weight:800;} .u-item .d.neg{color:var(--red);}
+  .u-cat{margin-top:9px; font-size:12.5px; color:var(--text); background:var(--bg2); border-left:3px solid var(--accent); border-radius:6px; padding:7px 10px; white-space:pre-wrap;}
+  .u-photos{display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-top:10px;}
+  .u-photos img{width:100%; aspect-ratio:1/1; object-fit:cover; border-radius:8px; border:1px solid var(--card-border); cursor:pointer; background:var(--bg2);}
+  .u-foot{margin-top:10px; font-size:11.5px;}
+  .u-foot a,.u-foot span{color:var(--accent2); font-weight:700; cursor:pointer; text-decoration:none;}
+  .u-foot .none{color:var(--sub); font-weight:500; cursor:default;}
+  .more{display:block; width:100%; padding:11px; border-radius:11px; border:1px solid var(--card-border); background:var(--card); color:var(--accent2); font-weight:700; font-size:13px; font-family:inherit; cursor:pointer;}
+  .loading,.empty{font-size:13px; color:var(--sub); text-align:center; padding:22px 10px;}
+
+  #lb{position:fixed; inset:0; background:rgba(0,0,0,.92); z-index:3000; display:none; align-items:center; justify-content:center;}
+  #lb img{max-width:96vw; max-height:90vh; border-radius:8px;}
+  #lb .x{position:absolute; top:14px; right:16px; color:#fff; font-size:28px; cursor:pointer; line-height:1;}
+</style>
+</head>
+<body>
+
+<header>
+  <a class="back-btn" href="HalamanDepan.html" aria-label="Kembali">&#8592;</a>
+  <div>
+    <h1>Cek Update Progress</h1>
+    <p>Lubuk Pakam &middot; Update aktual lapangan</p>
+  </div>
+  <button class="refresh" id="btnRefresh" aria-label="Muat ulang">&#8635;</button>
+</header>
+
+<div class="mapwrap"><div id="map"></div><div class="nomap" id="nomap" style="display:none">Belum ada update dengan lokasi GPS</div></div>
+
+<div class="section">
+  <div id="progress"><div class="loading">Memuat data&hellip;</div></div>
+</div>
+
+<div id="lb"><span class="x" id="lbX">&times;</span><img id="lbImg" alt="foto" /></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+  var API_URL = 'https://script.google.com/macros/s/AKfycbyIYDJ4Btr5MuTNsK8PcqICFm0woRzbK7gV91igtabsBiM_quoIvsOYJy1OvkszlSZYrQ/exec';
+
+  // ---- Pemanggil API yang tahan gangguan (Safari/HP): baca teks dulu, coba ulang, cadangkan hasil terakhir ----
+  function apiGet(url, tries){
+    tries = tries || 3;
+    var key = 'apicache:' + url;
+    function showStale(){
+      if (document.getElementById('staleBanner')) return;
+      var b = document.createElement('div');
+      b.id = 'staleBanner';
+      b.style.cssText = 'position:fixed;left:12px;right:12px;bottom:12px;z-index:4000;background:#3a2a0b;color:#fbbf24;border:1px solid #7a5a12;border-radius:10px;padding:8px 12px;font-size:12px;text-align:center;';
+      b.textContent = '⚠ Server belum merespons — menampilkan data tersimpan terakhir';
+      document.body.appendChild(b);
+      setTimeout(function(){ if (b.parentNode) b.parentNode.removeChild(b); }, 6000);
+    }
+    function attempt(n){
+      return fetch(url).then(function(res){ return res.text(); }).then(function(t){
+        var d;
+        try { d = JSON.parse(t); }
+        catch (e) { throw new Error('Server belum merespons dengan benar, coba lagi sebentar'); }
+        try { localStorage.setItem(key, t); } catch (e) {}
+        return d;
+      }).catch(function(err){
+        if (n < tries) {
+          return new Promise(function(r){ setTimeout(r, 900 * n); }).then(function(){ return attempt(n + 1); });
+        }
+        var c = null;
+        try { c = localStorage.getItem(key); } catch (e) {}
+        if (c) { try { var d2 = JSON.parse(c); showStale(); return d2; } catch (e) {} }
+        throw err;
+      });
+    }
+    return attempt(1);
+  }
+  var tg = window.Telegram ? window.Telegram.WebApp : null;
+  if (tg) { tg.ready(); tg.expand(); }
+
+  var JALAN_COLORS = ['#0284c7', '#db2777', '#ca8a04', '#7c3aed', '#ea580c', '#0d9488', '#4f46e5', '#be123c'];
+  var all = [];
+  var SEGDATA = {};   // kunci jalan (huruf besar) -> {segmen, items:[{label,unit,plan,aktual}]}
+  var SEGORDER = [];  // urutan jalan sesuai sheet
+  var PLAN = {};      // 'JALAN|LABEL' -> plan
+  var map = null, layer = null, pins = {};
+
+  function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function nkey(s){ return String(s || '').replace(/\s+/g, ' ').trim().toUpperCase(); }
+  function safeId(id){ return String(id).replace(/[^A-Za-z0-9_-]/g, ''); }
+  function thumb(id, sz){ return 'https://drive.google.com/thumbnail?id=' + safeId(id) + '&sz=w' + sz; }
+  function fmtNum(n){ return Number(n).toLocaleString('id-ID', { maximumFractionDigits: 2 }); }
+  function dayKey(d){ return d.toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' }); }
+  function jalanColor(k){ var i = SEGORDER.indexOf(k); return JALAN_COLORS[(i < 0 ? 0 : i) % JALAN_COLORS.length]; }
+
+  function relTime(d){
+    var diff = (Date.now() - d.getTime()) / 1000;
+    if (diff < 60) return 'baru saja';
+    if (diff < 3600) return Math.floor(diff / 60) + ' menit lalu';
+    if (diff < 86400 && dayKey(d) === dayKey(new Date())) return Math.floor(diff / 3600) + ' jam lalu';
+    var t = d.toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit' }).replace('.', ':');
+    var yest = dayKey(new Date(Date.now() - 86400000));
+    if (dayKey(d) === yest) return 'Kemarin ' + t;
+    return d.toLocaleDateString('id-ID', { timeZone: 'Asia/Jakarta', day: 'numeric', month: 'short' }) + ' ' + t;
+  }
+
+  function parse(u){ u._d = new Date(u.time); if (isNaN(u._d)) u._d = new Date(0); u._hasGeo = typeof u.lat === 'number' && typeof u.lng === 'number'; return u; }
+
+  // ---------- map: pin lokasi update lapangan ----------
+  function initMap(){
+    if (map || !window.L) return;
+    map = L.map('map', { zoomControl: true, attributionControl: true }).setView([3.5497, 98.8696], 13);
+    var osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19, attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+    var errs = 0, swapped = false;
+    osm.on('tileerror', function(){
+      if (swapped || ++errs < 4) return;
+      swapped = true; map.removeLayer(osm);
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 19, attribution: 'Tiles &copy; Esri'
+      }).addTo(map);
+    });
+    layer = L.layerGroup().addTo(map);
+  }
+
+  function popupHtml(u){
+    var h = '<div class="pop-t">' + esc(u.segmen) + '</div>' +
+      '<div class="pop-s">' + esc(relTime(u._d)) + (u.user ? ' &middot; ' + esc(u.user) : '') + '</div>';
+    if (u.summary) h += '<div class="pop-s" style="color:#0f172a;margin-top:5px">' + esc(u.summary) + '</div>';
+    if (u.photos && u.photos.length) h += '<img class="pop-img" src="' + thumb(u.photos[0], 300) + '" alt="foto" />';
+    return h;
+  }
+
+  function renderMap(list){
+    initMap();
+    if (!map) return;
+    layer.clearLayers(); pins = {};
+    var bounds = [];
+    list.filter(function(u){ return u._hasGeo; }).forEach(function(u){
+      var m = L.circleMarker([u.lat, u.lng], { radius: 9, color: '#fff', weight: 2, fillColor: jalanColor(nkey(u.segmen)), fillOpacity: .95 })
+        .bindPopup(popupHtml(u)).addTo(layer);
+      pins[u._i] = m; bounds.push([u.lat, u.lng]);
+    });
+    document.getElementById('nomap').style.display = bounds.length ? 'none' : 'flex';
+    if (bounds.length === 1) map.setView(bounds[0], 16);
+    else if (bounds.length > 1) map.fitBounds(bounds, { padding: [30, 30], maxZoom: 17 });
+    setTimeout(function(){ map.invalidateSize(); }, 50);
+  }
+
+  // ---------- Progress + evidence: Lokasi (dropdown) -> Jalan (dropdown) -> item Real/Plan + update lapangan ----------
+  var OPEN = {};
+  function itPct(it){ var p = Number(it.plan); return p > 0 ? Math.min(100, Number(it.aktual || 0) / p * 100) : null; }
+  function avgPct(items){
+    var s = 0, n = 0;
+    items.forEach(function(it){ var v = itPct(it); if (v !== null){ s += v; n++; } });
+    return n ? Math.round(s / n) : null;
+  }
+
+  function renderProgress(){
+    var box = document.getElementById('progress');
+    var keys = SEGORDER.slice();
+    all.forEach(function(u){ var k = nkey(u.segmen); if (k && keys.indexOf(k) < 0) keys.push(k); });
+
+    // % lokasi = rata-rata % per jenis item (total Real / total Plan semua jalan)
+    var tot = {};
+    keys.forEach(function(k){ var d = SEGDATA[k]; if (!d) return; d.items.forEach(function(it){
+      var l = nkey(it.label); tot[l] = tot[l] || { a: 0, p: 0 };
+      tot[l].a += Number(it.aktual || 0); tot[l].p += Number(it.plan || 0);
+    }); });
+    var s = 0, n2 = 0; Object.keys(tot).forEach(function(l){ if (tot[l].p > 0){ s += Math.min(100, tot[l].a / tot[l].p * 100); n2++; } });
+    var hasPlan = n2 > 0, zp = n2 ? Math.round(s / n2) : 0;
+
+    var html = '<div class="prog-h"><b>Progress Lapangan</b><span>Real / Plan · Evidence</span></div>';
+    html += '<details class="pz" data-k="lokasi"' + (OPEN.lokasi === false ? '' : ' open') + '><summary>' +
+      '<div class="pz-top"><b>LUBUK PAKAM<span class="chev">&#9656;</span></b><span class="big">' + (hasPlan ? zp + '%' : '–') + '</span></div>' +
+      (hasPlan ? '<div class="bar"><span style="width:' + zp + '%"></span></div>' : '') +
+      '<div class="badge" style="margin-top:6px">' + (keys.length ? keys.length + ' jalan' : 'Belum ada Plan') + ' &middot; ' + all.length + ' update</div></summary>';
+
+    keys.forEach(function(k, idx){
+      var d = SEGDATA[k];
+      var its = d ? d.items.filter(function(it){ return Number(it.plan) > 0; }) : [];
+      var su = all.filter(function(u){ return nkey(u.segmen) === k; });
+      var pc = its.length ? (avgPct(its) || 0) : null, col = jalanColor(k);
+      var g = its.filter(function(x){ return nkey(x.label) === 'GALIAN 0.4 M'; })[0];
+      var sub = g ? 'Galian ' + fmtNum(g.aktual || 0) + ' / ' + fmtNum(g.plan) + ' ' + esc(g.unit || '') : (its.length ? its.length + ' item' : 'Belum ada Plan');
+      var sid = 'j' + idx;
+      html += '<details class="ps" data-k="' + sid + '"' + (OPEN[sid] ? ' open' : '') + '><summary><div class="ps-row"><span class="ps-n" style="background:' + col + '">' + (idx + 1) + '</span>' +
+        '<span class="ps-t">' + esc(d ? d.segmen : k) + '<span class="chev">&#9656;</span></span><span class="ps-p">' + (pc !== null ? pc + '%' : '–') + '</span></div>' +
+        (pc !== null ? '<div class="bar" style="margin-left:28px"><span style="width:' + pc + '%"></span></div>' : '') +
+        '<div class="ps-s">' + sub + ' &middot; ' + (su.length ? '📷 ' + su.length + ' update' : 'belum ada update') + '</div></summary><div class="ps-body">' +
+        its.map(function(it){
+          var v = Math.round(itPct(it));
+          return '<div class="pi"><div class="row"><span>' + esc(it.label) + '</span><span class="rp">' + fmtNum(it.aktual || 0) + ' <i>/ ' + fmtNum(it.plan) + '</i> ' + esc(it.unit || '') + ' &middot; <span class="pc">' + v + '%</span></span></div>' +
+            '<div class="bar"><span style="width:' + v + '%"></span></div></div>';
+        }).join('') +
+        '<div class="ev-h">Evidence &amp; update lapangan</div>' +
+        (su.length ? su.slice(0, 3).map(cardHtml).join('') +
+          (su.length > 3 ? '<details class="older"><summary>Update sebelumnya (' + (su.length - 3) + ')</summary>' + su.slice(3).map(cardHtml).join('') + '</details>' : '')
+          : '<div class="ev-none">Belum ada foto / catatan untuk jalan ini.</div>') +
+        '</div></details>';
+    });
+    if (!keys.length) html += '<div class="ev-none" style="margin-top:8px">Belum ada data Plan di tab LUBUK PAKAM.</div>';
+    html += '</details>';
+    box.innerHTML = html;
+  }
+
+  function planOf(u, it){
+    var p = Number(it.plan);
+    if (p > 0) return p;
+    return PLAN[nkey(u.segmen) + '|' + nkey(it.label)] || 0;
+  }
+  function itemLine(it, u){
+    var after = Number(it.after), plan = planOf(u, it);
+    var unit = it.unit ? ' ' + esc(it.unit) : '';
+    var hasPlan = plan > 0;
+    var pct = hasPlan ? Math.round(after / plan * 100) : null;
+    return '<div class="u-item"><div class="row"><span>' + esc(it.label) + '</span>' +
+      '<span class="rp">' + fmtNum(after) + (hasPlan ? ' <i>/ ' + fmtNum(plan) + '</i>' : '') + unit +
+      (hasPlan ? ' &middot; <span class="pc">' + pct + '%</span>' : '') + '</span></div>' +
+      (hasPlan ? '<div class="bar"><span style="width:' + Math.max(0, Math.min(100, pct)) + '%"></span></div>' : '') + '</div>';
+  }
+
+  function cardHtml(u){
+    var items = (u.items || []).length ? '<div class="u-items">' + u.items.map(function(it){ return itemLine(it, u); }).join('') + '</div>' : '';
+    var cat = u.catatan ? '<div class="u-cat">' + esc(u.catatan) + '</div>' : '';
+    var ph = (u.photos || []).length ? '<div class="u-photos">' + u.photos.slice(0, 4).map(function(id){
+      return '<img loading="lazy" src="' + thumb(id, 400) + '" data-full="' + thumb(id, 1600) + '" alt="foto lapangan" />';
+    }).join('') + '</div>' : '';
+    var foot = u._hasGeo
+      ? '<span data-pin="' + u._i + '">📍 lihat di peta</span>' + (u.acc ? ' <span class="none">(±' + Math.round(u.acc) + ' m)</span>' : '')
+      : '<span class="none">tanpa lokasi</span>';
+    return '<div class="upd" id="upd' + u._i + '">' +
+      '<div class="u-top"><span class="dot" style="background:' + jalanColor(nkey(u.segmen)) + '"></span>' +
+        '<div class="u-title">' + esc(relTime(u._d)) + '</div>' +
+        (u.user ? '<div class="u-time">' + esc(u.user) + '</div>' : '') + '</div>' +
+      items + cat + ph + '<div class="u-foot">' + foot + '</div></div>';
+  }
+
+  function focusPin(i){
+    var m = pins[i];
+    if (!m || !map) return;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    map.setView(m.getLatLng(), Math.max(map.getZoom(), 17));
+    m.openPopup();
+  }
+
+  function openLb(src){ document.getElementById('lbImg').src = src; document.getElementById('lb').style.display = 'flex'; }
+  document.getElementById('lb').addEventListener('click', function(){ this.style.display = 'none'; document.getElementById('lbImg').src = ''; });
+
+  function renderAll(){
+    renderProgress();
+    renderMap(all);
+  }
+
+  function loadPlans(){
+    return apiGet(API_URL + '?action=lpStructure').then(function(d){
+      PLAN = {}; SEGDATA = {}; SEGORDER = [];
+      (d.rows || []).forEach(function(r){
+        var k = nkey(r.segmen);
+        SEGDATA[k] = { segmen: r.segmen, items: r.items || [] };
+        SEGORDER.push(k);
+        (r.items || []).forEach(function(it){ if (Number(it.plan) > 0) PLAN[k + '|' + nkey(it.label)] = Number(it.plan); });
+      });
+    }).catch(function(){});
+  }
+
+  function load(){
+    loadPlans().then(function(){ return apiGet(API_URL + '?action=lpUpdates&limit=200'); })
+      .then(function(data){
+        if (!data.ok) throw new Error(data.error || 'Gagal memuat data');
+        all = (data.updates || []).map(function(u, i){ u._i = i; return parse(u); });
+        renderAll();
+      })
+      .catch(function(err){
+        document.getElementById('progress').innerHTML = '<div class="empty">Gagal memuat: ' + esc(err.message) + '<br><br><button class="chip on" onclick="location.reload()">Coba lagi</button></div>';
+        initMap();
+      });
+  }
+  document.getElementById('btnRefresh').addEventListener('click', function(){
+    document.getElementById('progress').innerHTML = '<div class="loading">Memuat data&hellip;</div>';
+    load();
+  });
+  var pbox = document.getElementById('progress');
+  pbox.addEventListener('click', function(ev){
+    var t = ev.target;
+    var pin = t.closest ? t.closest('[data-pin]') : null;
+    if (pin){ ev.preventDefault(); focusPin(parseInt(pin.getAttribute('data-pin'), 10)); return; }
+    if (t.tagName === 'IMG' && t.parentNode && t.parentNode.className === 'u-photos'){ openLb(t.getAttribute('data-full')); }
+  });
+  pbox.addEventListener('toggle', function(ev){
+    var k = ev.target.getAttribute && ev.target.getAttribute('data-k');
+    if (k) OPEN[k] = ev.target.open;
+  }, true);
+  initMap();
+  load();
+</script>
+</body>
+</html>
