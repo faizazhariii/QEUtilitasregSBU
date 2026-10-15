@@ -75,6 +75,8 @@
     font-size:10.5px; font-weight:800; letter-spacing:.3px; padding:3px 11px; border-radius:99px;
   }
   .focus-box .module-card{border-color:rgba(109,155,255,.35);}
+  .focus-sub{font-size:11px; font-weight:800; color:var(--sub); text-transform:uppercase; letter-spacing:.5px; margin:12px 2px 6px;}
+  .focus-tag + .focus-sub{margin-top:6px;}
   .filter-scroll{display:flex; gap:8px; overflow-x:auto; padding:2px 0 4px; margin-bottom:4px;}
   .filter-scroll::-webkit-scrollbar{display:none;}
   .chip{
@@ -264,7 +266,8 @@
 
   <div class="focus-box">
     <div class="focus-tag">&#127919; Fokus Saat Ini</div>
-    <a class="module-card" href="Timeline-BRT.html?v=20261013b">
+    <div class="focus-sub">BRT Medan</div>
+    <a class="module-card" href="Timeline-BRT.html?v=20261015">
       <div class="module-icon">&#128198;</div>
       <div class="module-text">
         <div class="module-title">BRT Medan &middot; Kurva S &amp; Timeline</div>
@@ -272,7 +275,7 @@
       </div>
       <div class="module-arrow">&#8250;</div>
     </a>
-    <a class="module-card" href="InputBRT.html?v=20261013b">
+    <a class="module-card" href="InputBRT.html?v=20261015">
       <div class="module-icon" style="background:rgba(34,197,94,.15); color:var(--green);">&#9999;&#65039;</div>
       <div class="module-text">
         <div class="module-title">BRT Medan &middot; Input Progress</div>
@@ -280,11 +283,36 @@
       </div>
       <div class="module-arrow">&#8250;</div>
     </a>
-    <a class="module-card" href="CekUpdateBRT.html?v=20261013b">
+    <a class="module-card" href="CekUpdateBRT.html?v=20261015">
       <div class="module-icon" style="background:rgba(245,158,11,.15); color:var(--orange);">&#128205;</div>
       <div class="module-text">
         <div class="module-title">BRT Medan &middot; Cek Update Progress</div>
         <div class="module-desc">Update aktual lapangan terbaru: peta lokasi, foto, catatan</div>
+      </div>
+      <div class="module-arrow">&#8250;</div>
+    </a>
+    <div class="focus-sub">Lubuk Pakam</div>
+    <a class="module-card" href="Timeline-LubukPakam.html?v=20261015">
+      <div class="module-icon">&#128198;</div>
+      <div class="module-text">
+        <div class="module-title">Lubuk Pakam &middot; Kurva S &amp; Timeline</div>
+        <div class="module-desc">Jadwal per Jalan, kurva S Plan vs Aktual, target harian</div>
+      </div>
+      <div class="module-arrow">&#8250;</div>
+    </a>
+    <a class="module-card" href="InputLubukPakam.html?v=20261015">
+      <div class="module-icon" style="background:rgba(34,197,94,.15); color:var(--green);">&#9999;&#65039;</div>
+      <div class="module-text">
+        <div class="module-title">Lubuk Pakam &middot; Input Progress</div>
+        <div class="module-desc">Update Realisasi + foto &amp; lokasi per Jalan (otomatis masuk sheet)</div>
+      </div>
+      <div class="module-arrow">&#8250;</div>
+    </a>
+    <a class="module-card" href="CekUpdateLubukPakam.html?v=20261015">
+      <div class="module-icon" style="background:rgba(245,158,11,.15); color:var(--orange);">&#128205;</div>
+      <div class="module-text">
+        <div class="module-title">Lubuk Pakam &middot; Cek Update Progress</div>
+        <div class="module-desc">Update lapangan terbaru: peta lokasi, foto, catatan, progress per jalan</div>
       </div>
       <div class="module-arrow">&#8250;</div>
     </a>
