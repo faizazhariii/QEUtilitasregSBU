@@ -6,7 +6,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
 <title>Cek Update Progress Lubuk Pakam</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
 <style>
   :root{
     --bg:#0b1120; --bg2:#0e1729; --card:#141d33; --card-border:#232f4d;
@@ -115,15 +114,12 @@
   <button class="refresh" id="btnRefresh" aria-label="Muat ulang">&#8635;</button>
 </header>
 
-<div class="mapwrap"><div id="map"></div><div class="nomap" id="nomap" style="display:none">Belum ada update dengan lokasi GPS</div></div>
-
 <div class="section">
   <div id="progress"><div class="loading">Memuat data&hellip;</div></div>
 </div>
 
 <div id="lb"><span class="x" id="lbX">&times;</span><img id="lbImg" alt="foto" /></div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
   var API_URL = 'https://script.google.com/macros/s/AKfycbyIYDJ4Btr5MuTNsK8PcqICFm0woRzbK7gV91igtabsBiM_quoIvsOYJy1OvkszlSZYrQ/exec';
 
@@ -167,7 +163,6 @@
   var SEGDATA = {};   // kunci jalan (huruf besar) -> {segmen, items:[{label,unit,plan,aktual}]}
   var SEGORDER = [];  // urutan jalan sesuai sheet
   var PLAN = {};      // 'JALAN|LABEL' -> plan
-  var map = null, layer = null, pins = {};
 
   function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
   function nkey(s){ return String(s || '').replace(/\s+/g, ' ').trim().toUpperCase(); }
@@ -189,48 +184,6 @@
   }
 
   function parse(u){ u._d = new Date(u.time); if (isNaN(u._d)) u._d = new Date(0); u._hasGeo = typeof u.lat === 'number' && typeof u.lng === 'number'; return u; }
-
-  // ---------- map: pin lokasi update lapangan ----------
-  function initMap(){
-    if (map || !window.L) return;
-    map = L.map('map', { zoomControl: true, attributionControl: true }).setView([3.5497, 98.8696], 13);
-    var osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19, attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
-    var errs = 0, swapped = false;
-    osm.on('tileerror', function(){
-      if (swapped || ++errs < 4) return;
-      swapped = true; map.removeLayer(osm);
-      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
-        maxZoom: 19, attribution: 'Tiles &copy; Esri'
-      }).addTo(map);
-    });
-    layer = L.layerGroup().addTo(map);
-  }
-
-  function popupHtml(u){
-    var h = '<div class="pop-t">' + esc(u.segmen) + '</div>' +
-      '<div class="pop-s">' + esc(relTime(u._d)) + (u.user ? ' &middot; ' + esc(u.user) : '') + '</div>';
-    if (u.summary) h += '<div class="pop-s" style="color:#0f172a;margin-top:5px">' + esc(u.summary) + '</div>';
-    if (u.photos && u.photos.length) h += '<img class="pop-img" src="' + thumb(u.photos[0], 300) + '" alt="foto" />';
-    return h;
-  }
-
-  function renderMap(list){
-    initMap();
-    if (!map) return;
-    layer.clearLayers(); pins = {};
-    var bounds = [];
-    list.filter(function(u){ return u._hasGeo; }).forEach(function(u){
-      var m = L.circleMarker([u.lat, u.lng], { radius: 9, color: '#fff', weight: 2, fillColor: jalanColor(nkey(u.segmen)), fillOpacity: .95 })
-        .bindPopup(popupHtml(u)).addTo(layer);
-      pins[u._i] = m; bounds.push([u.lat, u.lng]);
-    });
-    document.getElementById('nomap').style.display = bounds.length ? 'none' : 'flex';
-    if (bounds.length === 1) map.setView(bounds[0], 16);
-    else if (bounds.length > 1) map.fitBounds(bounds, { padding: [30, 30], maxZoom: 17 });
-    setTimeout(function(){ map.invalidateSize(); }, 50);
-  }
 
   // ---------- Progress + evidence: Lokasi (dropdown) -> Jalan (dropdown) -> item Real/Plan + update lapangan ----------
   var OPEN = {};
@@ -311,9 +264,7 @@
     var ph = (u.photos || []).length ? '<div class="u-photos">' + u.photos.slice(0, 4).map(function(id){
       return '<img loading="lazy" src="' + thumb(id, 400) + '" data-full="' + thumb(id, 1600) + '" alt="foto lapangan" />';
     }).join('') + '</div>' : '';
-    var foot = u._hasGeo
-      ? '<span data-pin="' + u._i + '">📍 lihat di peta</span>' + (u.acc ? ' <span class="none">(±' + Math.round(u.acc) + ' m)</span>' : '')
-      : '<span class="none">tanpa lokasi</span>';
+    var foot = '';
     return '<div class="upd" id="upd' + u._i + '">' +
       '<div class="u-top"><span class="dot" style="background:' + jalanColor(nkey(u.segmen)) + '"></span>' +
         '<div class="u-title">' + esc(relTime(u._d)) + '</div>' +
@@ -321,20 +272,11 @@
       items + cat + ph + '<div class="u-foot">' + foot + '</div></div>';
   }
 
-  function focusPin(i){
-    var m = pins[i];
-    if (!m || !map) return;
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    map.setView(m.getLatLng(), Math.max(map.getZoom(), 17));
-    m.openPopup();
-  }
-
   function openLb(src){ document.getElementById('lbImg').src = src; document.getElementById('lb').style.display = 'flex'; }
   document.getElementById('lb').addEventListener('click', function(){ this.style.display = 'none'; document.getElementById('lbImg').src = ''; });
 
   function renderAll(){
     renderProgress();
-    renderMap(all);
   }
 
   function loadPlans(){
@@ -358,7 +300,6 @@
       })
       .catch(function(err){
         document.getElementById('progress').innerHTML = '<div class="empty">Gagal memuat: ' + esc(err.message) + '<br><br><button class="chip on" onclick="location.reload()">Coba lagi</button></div>';
-        initMap();
       });
   }
   document.getElementById('btnRefresh').addEventListener('click', function(){
@@ -368,15 +309,12 @@
   var pbox = document.getElementById('progress');
   pbox.addEventListener('click', function(ev){
     var t = ev.target;
-    var pin = t.closest ? t.closest('[data-pin]') : null;
-    if (pin){ ev.preventDefault(); focusPin(parseInt(pin.getAttribute('data-pin'), 10)); return; }
     if (t.tagName === 'IMG' && t.parentNode && t.parentNode.className === 'u-photos'){ openLb(t.getAttribute('data-full')); }
   });
   pbox.addEventListener('toggle', function(ev){
     var k = ev.target.getAttribute && ev.target.getAttribute('data-k');
     if (k) OPEN[k] = ev.target.open;
   }, true);
-  initMap();
   load();
 </script>
 </body>
