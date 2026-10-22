@@ -155,6 +155,20 @@
   .sc-guide summary{font-size:13px; font-weight:700; color:var(--text); margin:0;}
   .sc-guide ul{margin:8px 0 0; padding-left:18px; font-size:12px; color:var(--sub); line-height:1.6;} .sc-guide li b{color:var(--text);}
   .sc-guide .sw{display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:4px; vertical-align:middle;}
+
+  .st-row{display:grid; grid-template-columns:repeat(5,1fr); gap:6px; margin-bottom:10px;}
+  .st-chip{background:var(--card); border:1px solid var(--card-border); border-top:3px solid var(--c); border-radius:10px; padding:7px 2px; text-align:center; cursor:pointer;}
+  .st-chip b{display:block; font-size:17px; color:var(--c);} .st-chip span{font-size:9.5px; color:var(--sub);}
+  .st-chip.zero{opacity:.45;} .st-chip.on{background:#1b3a6b; border-color:var(--c);}
+  .st-card{background:var(--card); border:1px solid var(--card-border); border-radius:12px; padding:10px 12px; margin-bottom:10px; font-size:12.5px;}
+  .st-card.ok{color:var(--green); font-weight:600;}
+  .st-card summary{font-weight:700; cursor:pointer; font-size:13px;}
+  .pj-tb{margin-top:8px;} .pj-r{display:grid; grid-template-columns:1.6fr repeat(5,1fr); gap:4px; padding:7px 0; border-top:1px solid var(--card-border); text-align:center; font-size:12px; cursor:pointer; align-items:center;}
+  .pj-r.pj-h{cursor:default; border-top:0; font-size:10px; font-weight:700; padding-top:2px;} .pj-n{text-align:left; font-weight:700;} .pj-r .z{color:var(--sub); opacity:.5;}
+  .att{display:flex; gap:9px; padding:8px 0; border-top:1px solid var(--card-border);} .att:first-of-type{margin-top:6px;}
+  .att .dot{width:9px; height:9px; border-radius:50%; margin-top:5px; flex-shrink:0;} .att-s{font-size:11px; color:var(--sub); margin-top:2px; line-height:1.45;}
+  .st-filter{font-size:11.5px; color:var(--sub); margin:0 0 10px;} .st-filter a{color:var(--accent2); margin-left:6px; text-decoration:underline; cursor:pointer;}
+  .st-badge{display:inline-block; font-size:8.5px; font-weight:800; padding:1px 6px; border-radius:99px; margin-left:5px; vertical-align:middle; color:#04122b;}
   .hint-line{font-size:10.5px; color:var(--sub); margin-bottom:12px;}
 </style>
 </head>
@@ -183,6 +197,7 @@
       <span><i style="background:#ffffff"></i> CO</span>
     </div>
 
+    <div id="ctrl"></div>
     <div id="lopList"><div class="loading">Memuat...</div></div>
   </div>
 
@@ -338,7 +353,9 @@
         var qtyLine = (it.plan !== null && it.plan !== undefined)
           ? '<div class="item-qty">Aktual <b>' + escapeHtml(it.aktual !== null && it.aktual !== undefined ? it.aktual : 0) + '</b> / Plan <b>' + escapeHtml(it.plan) + '</b></div>'
           : '';
-        return '<tr><td class="item-td">' + escapeHtml(it.label) +
+        var stt = itemStatus(it);
+        var badge = stt.key === 'novol' ? '' : '<span class="st-badge" style="background:' + ST[stt.key].color + '">' + (stt.key === 'late' ? 'Terlambat ' + stt.days + 'h' : ST[stt.key].label) + '</span>';
+        return '<tr><td class="item-td">' + escapeHtml(it.label) + badge +
           '<div class="item-dates">' + escapeHtml(it.startDisplay) + ' - ' + escapeHtml(it.endDisplay) + '</div>' +
           qtyLine + '</td>' + cells + '</tr>';
       }).join('');
@@ -378,9 +395,15 @@
     var stoVal = '';
     var listEl = document.getElementById('lopList');
 
-    var filteredRows = allRows.filter(function(r){
-      return !stoVal || r.sto === stoVal;
+    renderCtrl();
+    var filteredRows = [];
+    allRows.forEach(function(r){
+      if (selJalan && r.segmen !== selJalan) return;
+      var its = (r.items || []).filter(function(it){ return !selStatus || itemStatus(it).key === selStatus; });
+      if (!its.length) return;
+      filteredRows.push({ namaLop: r.namaLop, district: r.district, sto: r.sto, segmen: r.segmen, sisi: r.sisi, items: its });
     });
+    if (!filteredRows.length) { listEl.innerHTML = '<div class="empty">Tidak ada item dengan filter ini.</div>'; return; }
 
     var zonasWithData = groupByZona(filteredRows);
     var zonasWithDataNames = {};
@@ -443,129 +466,117 @@
     });
   }
 
-  // ==== SCURVE-CORE ====
-  var SC_ITEMS = ['Kabel Duct 96 Core', 'Kabel Duct 24 Core', 'Kabel Duct 12 Core', 'Subduct 28/32', 'Subduct 40/33', 'Boring Manual HDPE', 'Pipa HDPE 40/33', 'Galian 0.4 m', 'Handhole HH2', 'HH Pit Portable HA', 'HH Pit Portable ODP', 'Drop Cable', 'ODP 8 Core', 'ODP 16 Core'];
-  var SC_UNIT = {'Kabel Duct 96 Core':'m','Kabel Duct 24 Core':'m','Kabel Duct 12 Core':'m','Subduct 28/32':'m','Subduct 40/33':'m','Boring Manual HDPE':'m','Pipa HDPE 40/33':'m','Galian 0.4 m':'m','Handhole HH2':'pcs','HH Pit Portable HA':'pcs','HH Pit Portable ODP':'pcs','Drop Cable':'m','ODP 8 Core':'pcs','ODP 16 Core':'pcs'};
-  var SC_DAY = 864e5;
-  
-  function scIsoDay(iso){
-    var p = String(iso).split('-');
-    return Date.UTC(+p[0], +p[1]-1, +p[2]) / SC_DAY;
+  // ==== STATUS + FILTER ====
+  var ST = {
+    late:   { label: 'Terlambat',   color: '#ef4444', order: 0 },
+    behind: { label: 'Tertinggal',  color: '#f59e0b', order: 1 },
+    ontime: { label: 'Tepat waktu', color: '#6d9bff', order: 2 },
+    done:   { label: 'Selesai',     color: '#22c55e', order: 3 },
+    notyet: { label: 'Belum mulai', color: '#8b95ab', order: 4 },
+    novol:  { label: 'Tanpa volume',color: '#5b6478', order: 5 }
+  };
+  var ST_ORDER = ['late', 'behind', 'ontime', 'done', 'notyet'];
+  var TOLERANSI = 0.10; // dianggap tertinggal bila capaian < target linear hari ini - 10 poin %
+  var selJalan = '';      // '' = semua jalan
+  var selStatus = '';     // '' = semua status
+
+  function dayNum(iso){ var p = String(iso).split('-'); return Date.UTC(+p[0], +p[1]-1, +p[2]) / 864e5; }
+  function todayNum(){ var n = new Date(); return Date.UTC(n.getFullYear(), n.getMonth(), n.getDate()) / 864e5; }
+  function fmtN(v){ var n = Math.round((parseFloat(v) || 0) * 10) / 10; return n.toLocaleString('id-ID'); }
+
+  function itemStatus(it){
+    var t = todayNum(), s = dayNum(it.start), e = dayNum(it.end);
+    var plan = (it.plan === null || it.plan === undefined) ? 0 : +it.plan;
+    var akt = +it.aktual || 0;
+    if (!(plan > 0)) return { key: 'novol', days: 0 };
+    if (akt >= plan) return { key: 'done', days: 0 };
+    if (t > e) return { key: 'late', days: t - e };
+    if (t < s) return { key: akt > 0 ? 'ontime' : 'notyet', days: s - t };
+    var exp = (t - s + 1) / (e - s + 1);
+    return { key: (akt / plan) < (exp - TOLERANSI) ? 'behind' : 'ontime', days: e - t, exp: exp };
   }
-  function scTodayDay(){
-    var n = new Date();
-    return Date.UTC(n.getFullYear(), n.getMonth(), n.getDate()) / SC_DAY;
+  function stText(it, st){
+    if (st.key === 'late') return 'Terlambat ' + st.days + ' hari';
+    if (st.key === 'behind') return 'Tertinggal (target ' + Math.round(st.exp * 100) + '%, aktual ' + Math.round((+it.aktual || 0) / it.plan * 100) + '%)';
+    if (st.key === 'ontime') return st.days === 0 ? 'Tepat waktu (jatuh tempo hari ini)' : 'Tepat waktu';
+    return ST[st.key].label;
   }
-  function scNum(v){ var n = parseFloat(v); return isNaN(n) ? 0 : n; }
-  
-  // Progres linear satu Segmen: 0 sebelum START, 1 setelah END, di antaranya (hari - START) / (END - START)
-  function scFrac(d, s, e){
-    if (e <= s) return d >= e ? 1 : 0;
-    if (d <= s) return 0;
-    if (d >= e) return 1;
-    return (d - s) / (e - s);
-  }
-  
-  function scSegShort(seg){
-    var t = String(seg || 'Jalan').replace(/^\s*jl\.?\s*/i, '').trim();
-    return t.toLowerCase().replace(/(^|[\s.])([a-z])/g, function(m, a, b){ return a + b.toUpperCase(); });
-  }
-  
-  // rows (hasil brtTimeline) -> daftar item {label, unit, total, aktual, wins[], first, last}
-  function scBuildModel(rows){
-    var m = {};
-    rows.forEach(function(r){
-      (r.items || []).forEach(function(it){
-        if (SC_ITEMS.indexOf(it.label) < 0) return;
-        var vol = scNum(it.plan);
-        if (!(vol > 0) || !it.start || !it.end) return;
-        var o = m[it.label];
-        if (!o) o = m[it.label] = { label: it.label, unit: SC_UNIT[it.label], total: 0, aktual: 0, wins: [], first: Infinity, last: -Infinity };
-        var s = scIsoDay(it.start), e = scIsoDay(it.end);
-        o.total += vol;
-        o.aktual += scNum(it.aktual);
-        o.wins.push({ seg: scSegShort(r.segmen), vol: vol, s: s, e: e });
-        if (s < o.first) o.first = s;
-        if (e > o.last) o.last = e;
-      });
+  function jalanShort(n){ return String(n || '').replace(/^\s*jl\.?\s*/i, '').trim(); }
+
+  // semua item dengan status, untuk ringkasan
+  function allItemsWithStatus(){
+    var out = [];
+    allRows.forEach(function(r){
+      (r.items || []).forEach(function(it){ out.push({ jalan: r.segmen, it: it, st: itemStatus(it) }); });
     });
-    return SC_ITEMS.filter(function(l){ return m[l]; }).map(function(l){ return m[l]; });
+    return out;
   }
-  
-  function scPlanAt(o, d){
-    var t = 0;
-    o.wins.forEach(function(w){ t += w.vol * scFrac(d, w.s, w.e); });
-    return t;
-  }
-  
-  function scSelected(list, mode){
-    if (mode === 'GAB') return list;
-    return list.filter(function(o){ return o.label === mode; });
-  }
-  
-  // Nilai Plan pada hari d: gabungan = rata-rata % semua item (bobot sama rata); item = satuan asli
-  function scPlanValue(list, mode, d){
-    var sel = scSelected(list, mode);
-    if (!sel.length) return 0;
-    if (mode === 'GAB') {
-      var sum = 0;
-      sel.forEach(function(o){ sum += scPlanAt(o, d) / o.total * 100; });
-      return sum / sel.length;
+
+  function renderCtrl(){
+    var el = document.getElementById('ctrl');
+    if (!el) return;
+    var list = allItemsWithStatus();
+    var jalanNames = [];
+    allRows.forEach(function(r){ if (jalanNames.indexOf(r.segmen) < 0) jalanNames.push(r.segmen); });
+
+    if (selJalan && jalanNames.indexOf(selJalan) < 0) selJalan = '';
+    var chipsJ = '<div class="sc-chips"><div class="sc-chip-btn' + (selJalan === '' ? ' on' : '') + '" data-j="">Semua jalan</div>' +
+      jalanNames.map(function(n){ return '<div class="sc-chip-btn' + (selJalan === n ? ' on' : '') + '" data-j="' + escapeHtml(n) + '">' + escapeHtml(jalanShort(n)) + '</div>'; }).join('') + '</div>';
+
+    var scope = selJalan ? list.filter(function(x){ return x.jalan === selJalan; }) : list;
+    var cnt = {}; ST_ORDER.forEach(function(k){ cnt[k] = 0; });
+    scope.forEach(function(x){ if (cnt[x.st.key] !== undefined) cnt[x.st.key]++; });
+    var chipsS = '<div class="st-row">' + ST_ORDER.map(function(k){
+      return '<div class="st-chip' + (selStatus === k ? ' on' : '') + (cnt[k] ? '' : ' zero') + '" data-s="' + k + '" style="--c:' + ST[k].color + '"><b>' + cnt[k] + '</b><span>' + ST[k].label + '</span></div>';
+    }).join('') + '</div>';
+
+    // tabel per jalan (hanya saat "Semua jalan")
+    var perJalan = '';
+    if (!selJalan && jalanNames.length > 1) {
+      perJalan = '<details class="st-card" open><summary>Ringkasan per jalan</summary><div class="pj-tb">' +
+        '<div class="pj-r pj-h"><span>Jalan</span>' + ST_ORDER.map(function(k){ return '<span style="color:' + ST[k].color + '">' + ST[k].label.split(' ')[0] + '</span>'; }).join('') + '</div>' +
+        jalanNames.map(function(n){
+          var c = {}; ST_ORDER.forEach(function(k){ c[k] = 0; });
+          list.forEach(function(x){ if (x.jalan === n && c[x.st.key] !== undefined) c[x.st.key]++; });
+          return '<div class="pj-r" data-j="' + escapeHtml(n) + '"><span class="pj-n">' + escapeHtml(jalanShort(n)) + '</span>' +
+            ST_ORDER.map(function(k){ return '<span' + (c[k] ? ' style="color:' + ST[k].color + ';font-weight:800"' : ' class="z"') + '>' + c[k] + '</span>'; }).join('') + '</div>';
+        }).join('') + '</div></details>';
     }
-    return scPlanAt(sel[0], d);
-  }
-  
-  // aktualByItem: {label: nilai}
-  function scAktualValue(list, mode, aktualByItem){
-    var sel = scSelected(list, mode);
-    if (!sel.length) return 0;
-    if (mode === 'GAB') {
-      var sum = 0;
-      sel.forEach(function(o){ sum += (aktualByItem[o.label] || 0) / o.total * 100; });
-      return sum / sel.length;
-    }
-    return aktualByItem[sel[0].label] || 0;
-  }
-  
-  // log [{date,zona,item,aktual}] -> [[day, value]] urut tanggal. zona=null => semua zona dijumlah
-  function scLogSeries(log, zona, list, mode){
-    var byDate = {};
-    (log || []).forEach(function(r){
-      if (zona && r.zona !== zona) return;
-      var d = scIsoDay(r.date);
-      var o = byDate[d] || (byDate[d] = {});
-      o[r.item] = (o[r.item] || 0) + scNum(r.aktual);
+
+    // perlu perhatian
+    var att = scope.filter(function(x){ return x.st.key === 'late' || x.st.key === 'behind'; })
+      .sort(function(a, b){ return ST[a.st.key].order - ST[b.st.key].order || (b.st.days || 0) - (a.st.days || 0); });
+    var attHtml = att.length
+      ? '<details class="st-card"' + (selJalan ? ' open' : '') + '><summary>Perlu perhatian (' + att.length + ')</summary>' + att.map(function(x){
+          var sisa = Math.max(0, x.it.plan - (+x.it.aktual || 0));
+          return '<div class="att"><span class="dot" style="background:' + ST[x.st.key].color + '"></span><div><b>' + escapeHtml(jalanShort(x.jalan)) + ' &middot; ' + escapeHtml(x.it.label) + '</b>' +
+            '<div class="att-s" style="color:' + ST[x.st.key].color + '">' + escapeHtml(stText(x.it, x.st)) + '</div>' +
+            '<div class="att-s">Aktual ' + fmtN(x.it.aktual) + ' / Plan ' + fmtN(x.it.plan) + ' &middot; sisa ' + fmtN(sisa) + ' ' + escapeHtml(x.it.unit || '') + ' &middot; jadwal ' + escapeHtml(x.it.startDisplay) + ' - ' + escapeHtml(x.it.endDisplay) + '</div></div></div>';
+        }).join('') + '</details>'
+      : '<div class="st-card ok">Tidak ada item yang terlambat atau tertinggal' + (selJalan ? ' di ' + escapeHtml(jalanShort(selJalan)) : '') + '. &#10003;</div>';
+
+    var und = (allUndated || []).filter(function(u){ return !selJalan || u.jalan === selJalan; });
+    var undHtml = und.length
+      ? '<details class="st-card"><summary>Belum ada jadwal START/END (' + und.length + ')</summary>' + und.map(function(u){
+          return '<div class="att-s" style="padding:3px 0">' + escapeHtml(jalanShort(u.jalan)) + ' &middot; ' + escapeHtml(u.label) + ' &mdash; Plan ' + fmtN(u.plan) + ' ' + escapeHtml(u.unit || '') + '</div>';
+        }).join('') + '</details>'
+      : '';
+
+    el.innerHTML = chipsJ + chipsS + perJalan + attHtml + undHtml +
+      (selStatus ? '<div class="st-filter">Menampilkan hanya: <b style="color:' + ST[selStatus].color + '">' + ST[selStatus].label + '</b> <a id="stClear">tampilkan semua</a></div>' : '');
+
+    Array.prototype.forEach.call(el.querySelectorAll('[data-j]'), function(b){
+      b.addEventListener('click', function(){ selJalan = b.getAttribute('data-j') || ''; saveSel(); render(); });
     });
-    return Object.keys(byDate).map(Number).sort(function(a,b){ return a-b; }).map(function(d){
-      return [d, scAktualValue(list, mode, byDate[d])];
+    Array.prototype.forEach.call(el.querySelectorAll('[data-s]'), function(b){
+      b.addEventListener('click', function(){ var k = b.getAttribute('data-s'); selStatus = (selStatus === k) ? '' : k; saveSel(); render(); });
     });
+    var c = document.getElementById('stClear');
+    if (c) c.addEventListener('click', function(){ selStatus = ''; saveSel(); render(); });
   }
-  
-  // Target harian skala Zona (akumulasi)
-  function scDaily(o, today){
-    var active = [], tgNow = 0;
-    var upcoming = null;
-    o.wins.forEach(function(w){
-      var rate = w.vol / Math.max(1, (w.e - w.s));
-      w.rate = rate;
-      if (w.s <= today && today < w.e) { tgNow += rate; active.push(w); }
-      if (w.s > today && (!upcoming || w.s < upcoming.s)) upcoming = w;
-    });
-    var started = o.first <= today;
-    var elapsed = started ? Math.max(1, today - o.first) : 0;
-    var left = Math.max(1, o.last - today);
-    var firstWinRate = 0;
-    o.wins.forEach(function(w){ if (w.s === o.first) firstWinRate += w.vol / Math.max(1, (w.e - w.s)); });
-    return {
-      started: started, tgNow: tgNow, active: active,
-      avg: elapsed ? o.aktual / elapsed : 0,
-      need: Math.max(0, (o.total - o.aktual) / left),
-      startRate: firstWinRate, first: o.first, last: o.last,
-      planToday: scPlanAt(o, today),
-      done: today >= o.last
-    };
-  }
-  // ==== END SCURVE-CORE ====
+  function saveSel(){ try { localStorage.setItem('lpTlSel', JSON.stringify({ j: selJalan, s: selStatus })); } catch (e) {} }
+  function loadSel(){ try { var o = JSON.parse(localStorage.getItem('lpTlSel') || '{}'); selJalan = o.j || ''; } catch (e) {} }
+  // ==== END STATUS + FILTER ====
   
 
   
@@ -578,6 +589,7 @@
       allRows = data.rows;
       allZonas = data.zonas || [];
       allUndated = data.undated || [];
+      loadSel();
       render();
     })
     .catch(function(err){
