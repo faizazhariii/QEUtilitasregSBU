@@ -163,17 +163,12 @@
 <header>
   <a class="back-btn" href="HalamanDepan.html" aria-label="Kembali">&#8592;</a>
   <div>
-    <h1>Timeline &amp; Kurva S &middot; Lubuk Pakam</h1>
+    <h1>Timeline &middot; Lubuk Pakam</h1>
     <p>Sumber: tab LUBUK PAKAM</p>
   </div>
 </header>
 
 <div class="section">
-
-  <div class="tabs">
-    <button id="tabTl" class="on" onclick="setTab('tl')">Timeline</button>
-    <button id="tabSc" onclick="setTab('sc')">Kurva S</button>
-  </div>
 
   <div id="viewTimeline">
     <div class="hint-line">Tabel timeline di bawah bisa digeser ke kanan/kiri. Garis biru terang menandai hari ini.</div>
@@ -191,7 +186,6 @@
     <div id="lopList"><div class="loading">Memuat...</div></div>
   </div>
 
-  <div id="viewScurve" style="display:none"></div>
 
 </div>
 
@@ -574,232 +568,7 @@
   // ==== END SCURVE-CORE ====
   
 
-  // ==== SCURVE-UI ====
-  var scState = { zona: '', item: 'GAB' };
-  var scLog = [];
-  var scColor = { plan: '#6d9bff', akt: '#22c55e', today: '#ef4444' };
   
-  function scFmt(v, unit, dec){
-    if (unit === '%') return (Math.round(v * 10) / 10).toLocaleString('id-ID') + '%';
-    var d = dec == null ? 0 : dec;
-    return v.toLocaleString('id-ID', { maximumFractionDigits: d }) + (unit ? ' ' + unit : '');
-  }
-  function scDayLabel(d){
-    var dt = new Date(d * SC_DAY);
-    return dt.getUTCDate() + ' ' + MONTH_ID[dt.getUTCMonth()];
-  }
-  function scZonaShort(name){
-    var m = String(name).match(/ZONA\s*\d+/i);
-    return m ? m[0].toUpperCase().replace(/ZONA\s*/, 'Zona ') : String(name).slice(0, 18);
-  }
-  
-  function scRowsForView(){
-    var stoVal = '';
-    return allRows.filter(function(r){
-      if (stoVal && r.sto !== stoVal) return false;
-      if (scState.zona && r.namaLop !== scState.zona) return false;
-      return true;
-    });
-  }
-  
-  function scChartSvg(list, mode, today, aktSeries){
-    var sel = scSelected(list, mode);
-    var from = Infinity, to = -Infinity;
-    sel.forEach(function(o){ if (o.first < from) from = o.first; if (o.last > to) to = o.last; });
-    if (today < from) from = today;
-    if (today > to) to = today;
-    var span = Math.max(1, to - from);
-    var isPct = mode === 'GAB';
-    var unit = isPct ? '%' : sel[0].unit;
-    var tot = isPct ? 100 : sel[0].total;
-  
-    var L = 46, R = 392, T = 10, B = 205, W = R - L, H = B - T;
-    var x = function(d){ return L + W * (d - from) / span; };
-    var y = function(v){ return B - H * Math.min(v, tot) / tot; };
-  
-    var s = '';
-    for (var g = 0; g <= 4; g++) {
-      var v = tot * g / 4;
-      s += '<line x1="' + L + '" x2="' + R + '" y1="' + y(v) + '" y2="' + y(v) + '" stroke="#232f4d"/>' +
-           '<text x="' + (L - 5) + '" y="' + (y(v) + 4) + '" font-size="9" fill="#8b95ab" text-anchor="end">' +
-           (isPct ? Math.round(v) + '%' : Math.round(v).toLocaleString('id-ID')) + '</text>';
-    }
-    // penanda awal tiap bulan
-    var d0 = new Date(from * SC_DAY);
-    for (var mi = 1; mi <= 14; mi++) {
-      var md = Date.UTC(d0.getUTCFullYear(), d0.getUTCMonth() + mi, 1) / SC_DAY;
-      if (md > to - 6) break;
-      s += '<line x1="' + x(md) + '" x2="' + x(md) + '" y1="' + B + '" y2="' + (B + 4) + '" stroke="#8b95ab"/>' +
-           '<text x="' + x(md) + '" y="222" font-size="9" fill="#8b95ab" text-anchor="middle">1 ' + MONTH_ID[new Date(md * SC_DAY).getUTCMonth()] + '</text>';
-    }
-    s += '<text x="' + R + '" y="238" font-size="9" fill="#8b95ab" text-anchor="end">selesai ' + scDayLabel(to) + '</text>';
-    s += '<text x="' + L + '" y="238" font-size="9" fill="#8b95ab">mulai ' + scDayLabel(from) + '</text>';
-  
-    var pts = [];
-    for (var d = from; d <= to; d++) pts.push(x(d) + ',' + y(scPlanValue(list, mode, d)));
-    s += '<path d="M' + pts.join(' L') + ' L' + x(to) + ',' + B + ' L' + x(from) + ',' + B + 'Z" fill="rgba(109,155,255,.12)"/>' +
-         '<polyline points="' + pts.join(' ') + '" fill="none" stroke="' + scColor.plan + '" stroke-width="2.5"/>';
-  
-    var tx = x(today);
-    s += '<line x1="' + tx + '" x2="' + tx + '" y1="' + T + '" y2="' + B + '" stroke="' + scColor.today + '" stroke-dasharray="4 3"/>';
-  
-    var as = aktSeries.filter(function(p){ return p[0] >= from && p[0] <= to; });
-    if (as.length > 1) {
-      s += '<polyline points="' + as.map(function(p){ return x(p[0]) + ',' + y(p[1]); }).join(' ') + '" fill="none" stroke="' + scColor.akt + '" stroke-width="2.5"/>';
-    }
-    var last = as.length ? as[as.length - 1] : null;
-    if (last) {
-      var lx = x(last[0]), ly = y(last[1]);
-      s += '<circle cx="' + lx + '" cy="' + ly + '" r="5" fill="' + scColor.akt + '" stroke="#0b1120" stroke-width="2"/>' +
-           '<text x="' + (lx > R - 60 ? lx - 8 : lx + 8) + '" y="' + Math.min(ly - 8, B - 14) + '" font-size="10" fill="' + scColor.akt + '" font-weight="700" text-anchor="' + (lx > R - 60 ? 'end' : 'start') + '">' + scFmt(last[1], unit, 1) + '</text>';
-    }
-    return '<svg viewBox="0 0 400 244" width="100%">' + s + '</svg>';
-  }
-  
-  function scDailyRow(o, today){
-    var dd = scDaily(o, today), un = o.unit;
-    var head = '<div class="sc-h"><span><b>' + escapeHtml(o.label) + '</b></span>';
-    var cells;
-    if (dd.done) {
-      head += '<span class="sc-chip sc-eq">Jadwal selesai</span></div>';
-      cells = [[scFmt(o.aktual, un), 'Aktual', 'akt'], [scFmt(o.total, un), 'Total Plan', ''], [scFmt(Math.max(0, o.total - o.aktual), un), 'Sisa', '']];
-    } else if (!dd.started) {
-      head += '<span class="sc-chip sc-eq">Belum mulai &middot; ' + scDayLabel(dd.first) + '</span></div>';
-      cells = [[scFmt(dd.startRate, '', 1), 'Target/hari saat mulai (' + un + ')', 'plan'], ['&ndash;', 'Aktual/hari', ''], [scFmt(dd.need, '', 1), 'Perlu/hari rata-rata ke depan', '']];
-    } else {
-      var ok = dd.avg >= dd.tgNow - 0.05;
-      head += '<span class="sc-chip ' + (ok ? 'sc-up' : 'sc-bad') + '">' + (ok ? '&#10004; Tercapai' : '&#10006; Belum tercapai') + '</span></div>';
-      cells = [[scFmt(dd.tgNow, '', 1), 'Target/hari ini (' + un + ')', 'plan'], [scFmt(dd.avg, '', 1), 'Aktual/hari (rata2 sejak ' + scDayLabel(dd.first) + ')', 'akt'], [scFmt(dd.need, '', 1), 'Perlu/hari rata-rata ke depan', '']];
-    }
-    var grid = '<div class="sc-g">' + cells.map(function(c){
-      var col = c[2] === 'plan' ? scColor.plan : c[2] === 'akt' ? scColor.akt : 'inherit';
-      return '<div><b style="color:' + col + '">' + c[0] + '</b><span>' + c[1] + '</span></div>';
-    }).join('') + '</div>';
-    var cum = '<div class="sc-cum">Kumulatif: Plan s/d hari ini <b style="color:' + scColor.plan + '">' + scFmt(dd.planToday, un, 1) + '</b> &middot; Aktual <b style="color:' + scColor.akt + '">' + scFmt(o.aktual, un, 1) + '</b> &middot; Sisa ' + scFmt(Math.max(0, o.total - o.aktual), un) + ' dari ' + scFmt(o.total, un) + ' (selesai ' + scDayLabel(dd.last) + ')</div>';
-    var wins = o.wins.slice().sort(function(a, b){ return a.s - b.s; }).map(function(w){
-      var st = today >= w.e ? 'selesai' : today >= w.s ? 'aktif' : 'belum';
-      var rate = w.vol / Math.max(1, w.e - w.s);
-      return '<div class="sc-win' + (st === 'aktif' ? ' on' : '') + '"><span>' + escapeHtml(w.seg) + ' &middot; ' + scDayLabel(w.s) + '&ndash;' + scDayLabel(w.e) + '</span><span>' + scFmt(rate, un, 1) + '/hari' + (st === 'aktif' ? ' &#9679; aktif' : st === 'selesai' ? ' &#10003;' : '') + '</span></div>';
-    }).join('');
-    return '<div class="sc-dr">' + head + grid + cum + '<details><summary>Target per Jalan</summary>' + wins + '</details></div>';
-  }
-  
-  function scRincian(list, mode, today){
-    if (mode !== 'GAB') {
-      var o = scSelected(list, mode)[0];
-      return '<div class="sc-tab"><span>Total Plan</span><span>' + scFmt(o.total, o.unit) + '</span></div>' +
-             '<div class="sc-tab"><span>Aktual</span><span style="color:' + scColor.akt + '">' + scFmt(o.aktual, o.unit) + ' (' + scFmt(o.aktual / o.total * 100, '%') + ')</span></div>' +
-             '<div class="sc-tab"><span>Sisa</span><span>' + scFmt(Math.max(0, o.total - o.aktual), o.unit) + '</span></div>';
-    }
-    return list.map(function(o){
-      var p = scPlanAt(o, today) / o.total * 100, a = o.aktual / o.total * 100, d = a - p;
-      var chip = d > 0.05 ? '<span class="sc-chip sc-up">+' + scFmt(d, '%') + '</span>' : d < -0.05 ? '<span class="sc-chip sc-bad">' + scFmt(d, '%') + '</span>' : '<span class="sc-chip sc-eq">sesuai plan</span>';
-      return '<div class="sc-ir"><div class="sc-it"><span>' + escapeHtml(o.label) + '</span><span><span style="color:var(--sub)">Plan ' + scFmt(p, '%') + ' &middot; </span><b style="color:' + scColor.akt + '">Aktual ' + scFmt(a, '%') + '</b> ' + chip + '</span></div>' +
-        '<div class="sc-tb"><span class="sc-lb">Plan</span><div class="sc-tk"><div style="width:' + Math.min(100, p) + '%;background:' + scColor.plan + '"></div></div></div>' +
-        '<div class="sc-tb"><span class="sc-lb">Aktual</span><div class="sc-tk"><div style="width:' + Math.min(100, a) + '%;background:' + scColor.akt + '"></div></div></div></div>';
-    }).join('');
-  }
-  
-  function renderScurve(){
-    var el = document.getElementById('viewScurve');
-    var stoVal = '';
-    var zonaNames = [];
-    allRows.forEach(function(r){
-      if (stoVal && r.sto !== stoVal) return;
-      if (zonaNames.indexOf(r.namaLop) < 0) zonaNames.push(r.namaLop);
-    });
-    if (scState.zona && zonaNames.indexOf(scState.zona) < 0) scState.zona = '';
-  
-    var list = scBuildModel(scRowsForView());
-    var zChips = '<div class="sc-chips"><div class="sc-chip-btn' + (!scState.zona ? ' on' : '') + '" data-zona="">Semua Zona</div>' +
-      zonaNames.map(function(n){ return '<div class="sc-chip-btn' + (scState.zona === n ? ' on' : '') + '" data-zona="' + escapeHtml(n) + '">' + escapeHtml(scZonaShort(n)) + '</div>'; }).join('') + '</div>';
-  
-    if (!list.length) {
-      el.innerHTML = '<div class="empty">Belum ada item dengan jadwal (START/END) dan volume Plan untuk dihitung kurva S.</div>' + undatedHtml();
-      scBind(el);
-      return;
-    }
-    if (scState.item !== 'GAB' && !list.some(function(o){ return o.label === scState.item; })) scState.item = 'GAB';
-    var mode = scState.item;
-    var iChips = '<div class="sc-chips"><div class="sc-chip-btn' + (mode === 'GAB' ? ' on' : '') + '" data-item="GAB">Gabungan (%)</div>' +
-      list.map(function(o){ return '<div class="sc-chip-btn' + (mode === o.label ? ' on' : '') + '" data-item="' + escapeHtml(o.label) + '">' + escapeHtml(o.label) + '</div>'; }).join('') + '</div>';
-  
-    var today = scTodayDay();
-    var sel = scSelected(list, mode);
-    var isPct = mode === 'GAB';
-    var unit = isPct ? '%' : sel[0].unit;
-  
-    var akNow = {};
-    list.forEach(function(o){ akNow[o.label] = o.aktual; });
-    var aktNowVal = scAktualValue(list, mode, akNow);
-    var planNow = scPlanValue(list, mode, today);
-    var diff = aktNowVal - planNow;
-  
-    var series = scLogSeries(scLog, scState.zona || null, list, mode).filter(function(p){ return p[0] < today; });
-    series.push([today, aktNowVal]);
-  
-    var badge = Math.abs(diff) < 0.05 ? '<span class="sc-badge sc-eq">Sesuai rencana</span>' :
-      diff > 0 ? '<span class="sc-badge sc-up">&#9650; Lebih cepat dari rencana</span>' : '<span class="sc-badge sc-bad">&#9660; Terlambat dari rencana</span>';
-    var dec = isPct ? 1 : 0;
-    var kpi = '<div class="sc-card"><div class="sc-kp">' +
-      '<div><b style="color:' + scColor.plan + '">' + scFmt(planNow, unit, dec) + '</b><span>Plan hari ini</span></div>' +
-      '<div><b style="color:' + scColor.akt + '">' + scFmt(aktNowVal, unit, dec) + '</b><span>Aktual</span></div>' +
-      '<div><b>' + (diff > 0.05 ? '+' : '') + scFmt(diff, unit, dec) + '</b><span>Selisih</span></div></div>' +
-      '<div style="text-align:center">' + badge + '</div></div>';
-  
-    var title = 'Lubuk Pakam' + ' &middot; ' + (isPct ? 'Gabungan (% bobot sama rata)' : sel[0].label + ' (' + unit + ' kumulatif)');
-    var chart = '<div class="sc-card"><div class="sc-t">Kurva S &mdash; ' + title + '</div>' + scChartSvg(list, mode, today, series) +
-      '<div class="sc-leg"><span><i style="background:' + scColor.plan + '"></i>Plan</span><span><i style="background:' + scColor.akt + '"></i>Aktual</span><span><i style="background:' + scColor.today + '"></i>Hari ini (' + scDayLabel(today) + ')</span></div>' +
-      '<div class="sc-note">' + (series.length > 1 ? 'Garis Aktual dari snapshot harian + nilai terbaru.' : 'Garis Aktual mulai terbentuk sejak snapshot harian tercatat; saat ini baru 1 titik.') + '</div></div>';
-  
-    var daily = '<div class="sc-card"><div class="sc-t">Target harian vs Aktual</div>' + sel.map(function(o){ return scDailyRow(o, today); }).join('') +
-      '<div class="sc-note">Semua angka akumulasi seluruh jalan, sama seperti kurva S. Target/hari ini = jumlah target Jalan yang sedang aktif (volume &divide; hari jadwal). Aktual/hari = Aktual total &divide; hari sejak item mulai. Perlu/hari = sisa volume &divide; sisa hari sampai END terakhir.</div></div>';
-  
-    var rinc = '<div class="sc-card"><div class="sc-t">Rincian' + (isPct ? ' per item (hari ini)' : '') + '</div>' + scRincian(list, mode, today) + '</div>';
-  
-    var guide = '<details class="sc-guide" open><summary>&#8505;&#65039; Cara membaca &amp; menghitung</summary><ul>' +
-      '<li><b><span class="sw" style="background:' + scColor.plan + '"></span>Garis Plan</b>: target kumulatif dari timeplan. Per item per Jalan: <b>volume Plan &divide; hari jadwal &times; hari berjalan</b> (hari jadwal = END &minus; START). Sebelum START = 0, setelah END = penuh. Lalu dijumlah semua Jalan di Lubuk Pakam.</li>' +
-      '<li><b><span class="sw" style="background:' + scColor.akt + '"></span>Titik/garis Aktual</b>: realisasi dari kolom REALISASI di tab LUBUK PAKAM (diisi lewat Input Progress). Garis terbentuk dari snapshot harian (akhir hari).</li>' +
-      '<li><b>Garis merah putus-putus</b>: posisi hari ini. Aktual di atas garis Plan = lebih cepat, di bawah = terlambat.</li>' +
-      '<li><b>Tab per item</b>: satuan asli (m / pcs), tidak digabung karena satuannya berbeda.</li>' +
-      '<li><b>Gabungan (%)</b>: tiap item dinormalisasi ke persen (Aktual &divide; Plan), lalu dirata-rata dengan bobot sama rata.</li>' +
-      '<li><b>Target harian</b>: akumulasi seluruh jalan, sama dengan kurva S. Target hari ini = jumlah target per hari semua Jalan yang sedang aktif. &#10004; tercapai bila Aktual/hari &ge; Target/hari. <b>Perlu/hari ke depan</b> = sisa volume &divide; sisa hari agar selesai tepat waktu.</li>' +
-      '<li><b>Selisih</b> = Aktual &minus; Plan hari ini. Plus berarti di depan jadwal.</li>' +
-      '<li>Hari libur belum diperhitungkan. Item berundak karena jadwalnya hanya beberapa hari per jalan. Jalan/item tanpa START-END atau volume Plan di sheet belum dihitung (lihat daftar di bawah).</li></ul></details>';
-  
-    el.innerHTML = iChips + kpi + chart + daily + rinc + undatedHtml() + guide;
-    scBind(el);
-  }
-  
-  // Jalan x item yang punya Plan tapi START/END kosong: tidak masuk kurva S
-  function undatedHtml(){
-    if (!allUndated.length) return '';
-    var rows = allUndated.map(function(u){
-      var pct = u.plan > 0 ? Math.round(u.aktual / u.plan * 100) : 0;
-      return '<div class="sc-win"><span>' + escapeHtml(scSegShort(u.jalan)) + ' &middot; ' + escapeHtml(u.label) + '</span><span>' + scFmt(u.aktual, '') + ' / ' + scFmt(u.plan, '') + ' (' + pct + '%)</span></div>';
-    }).join('');
-    return '<div class="sc-card"><details><summary class="sc-t" style="cursor:pointer">Belum ada jadwal START/END (' + allUndated.length + ') &mdash; tidak ikut kurva S</summary>' +
-      '<div class="sc-note" style="margin:6px 0">Isi kolom START &amp; END di tab LUBUK PAKAM untuk baris ini agar masuk hitungan kurva S.</div>' + rows + '</details></div>';
-  }
-
-  function scBind(el){
-    Array.prototype.forEach.call(el.querySelectorAll('[data-zona]'), function(b){
-      b.addEventListener('click', function(){ scState.zona = b.getAttribute('data-zona'); renderScurve(); });
-    });
-    Array.prototype.forEach.call(el.querySelectorAll('[data-item]'), function(b){
-      b.addEventListener('click', function(){ scState.item = b.getAttribute('data-item'); renderScurve(); });
-    });
-  }
-  
-  function setTab(which){
-    var sc = which === 'sc';
-    document.getElementById('viewTimeline').style.display = sc ? 'none' : '';
-    document.getElementById('viewScurve').style.display = sc ? '' : 'none';
-    document.getElementById('tabTl').classList.toggle('on', !sc);
-    document.getElementById('tabSc').classList.toggle('on', sc);
-    if (sc) renderScurve();
-  }
-  // ==== END SCURVE-UI ====
   
 
 
@@ -810,9 +579,6 @@
       allZonas = data.zonas || [];
       allUndated = data.undated || [];
       render();
-      apiGet(API_URL + '?action=lpAktualLog')
-        .then(function(d){ if (d.ok) { scLog = d.log || []; if (document.getElementById('viewScurve').style.display !== 'none') renderScurve(); } })
-        .catch(function(){});
     })
     .catch(function(err){
       document.getElementById('lopList').innerHTML = '<div class="empty">Gagal memuat data: ' + escapeHtml(err.message) + '<br><br><button onclick="location.reload()" style="background:#6d9bff;color:#04122b;border:none;border-radius:8px;padding:8px 16px;font-weight:700;font-size:13px;">Coba lagi</button></div>';
