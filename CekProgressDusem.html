@@ -53,6 +53,14 @@
   .pill.g{background:rgba(34,197,94,.18);color:var(--green);} .pill.b{background:rgba(59,110,246,.2);color:var(--accent2);} .pill.o{background:rgba(245,158,11,.18);color:var(--orange);}
   .filters{display:flex;gap:8px;margin-bottom:10px;}
   .filters .chip{padding:6px 12px;font-size:11.5px;}
+  .lopsel{width:100%;padding:13px 14px;margin-bottom:12px;border-radius:12px;background:var(--card);border:1px solid var(--card-border);color:var(--text);font-size:13.5px;font-weight:700;font-family:inherit;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%236d9bff' stroke-width='3'><path d='M6 9l6 6 6-6'/></svg>");background-repeat:no-repeat;background-position:right 14px center;padding-right:38px;}
+  .lopsel:focus{outline:none;border-color:var(--accent);}
+  .hero{display:flex;align-items:center;gap:16px;background:var(--card);border:1px solid var(--card-border);border-radius:14px;padding:14px;margin-bottom:12px;}
+  .ring{width:92px;height:92px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+  .ring div{width:70px;height:70px;border-radius:50%;background:var(--card);display:flex;align-items:center;justify-content:center;font-size:21px;font-weight:800;}
+  .hero .ht{font-size:11px;color:var(--sub);text-transform:uppercase;letter-spacing:.4px;font-weight:800;}
+  .hero .hv{font-size:15px;font-weight:800;margin:4px 0 2px;}
+  .hero .hs{font-size:11.5px;color:var(--sub);line-height:1.5;}
   .warn{background:#3a2a0b;color:#fbbf24;border:1px solid #7a5a12;border-radius:10px;padding:8px 12px;font-size:12px;margin-bottom:10px;display:none;}
   .vol b.done{color:var(--green);}
 </style>
@@ -67,9 +75,9 @@
 </header>
 <div class="section">
   <div class="warn" id="warn">&#9888; Data realisasi belum bisa dimuat &mdash; menampilkan kebutuhan saja.</div>
-  <div class="chips" id="chips"></div>
+  <select class="lopsel" id="lopSel" aria-label="Pilih LOP"></select>
+  <div class="hero" id="hero"></div>
   <div class="info" id="info"></div>
-  <div class="tot" id="tot"></div>
   <div class="search"><span>&#128269;</span><input id="q" type="text" placeholder="Cari designator / uraian material..." autocomplete="off"></div>
   <div class="filters" id="filters"></div>
   <div class="count" id="count"></div>
@@ -100,10 +108,12 @@ function lopPct(l){
 }
 function pillCls(st){var c=String(st).slice(0,2); return (c==='08'||c==='07')?'g':(c==='06'?'b':'o');}
 function renderChips(){
-  var h='<div class="chip'+(sel==='all'?' on':'')+'" data-id="all">Semua LOP</div>';
-  D.lops.forEach(function(l){var p=lopPct(l); h+='<div class="chip'+(sel===l.id?' on':'')+'" data-id="'+l.id+'">'+esc(l.name)+(p===null?'':' &middot; '+p+'%')+'</div>';});
-  var el=document.getElementById('chips'); el.innerHTML=h;
-  Array.prototype.forEach.call(el.children,function(c){ c.onclick=function(){ sel=c.getAttribute('data-id'); render(); }; });
+  var sl=document.getElementById('lopSel');
+  var ap=0;
+  var h='<option value="all"'+(sel==='all'?' selected':'')+'>Semua LOP</option>';
+  D.lops.forEach(function(l){var p=lopPct(l); h+='<option value="'+l.id+'"'+(sel===l.id?' selected':'')+'>'+esc(l.name)+' ('+esc(l.sto.replace('STO ',''))+')'+(p===null?' \u2014 hanya jasa':' \u2014 '+p+'%')+'</option>';});
+  sl.innerHTML=h;
+  sl.onchange=function(){ sel=sl.value; render(); };
   var f=[['all','Semua'],['open','Belum selesai'],['done','Selesai']];
   var fe=document.getElementById('filters');
   fe.innerHTML=f.map(function(x){return '<div class="chip'+(flt===x[0]?' on':'')+'" data-f="'+x[0]+'">'+x[1]+'</div>';}).join('');
@@ -118,6 +128,13 @@ function render(){
     D.items.forEach(function(it){ if(it.v[l.id]) real+=aktualOf(l,it)*it.p; });
   });
   var pct = mat>0 ? Math.round(real/mat*100) : null;
+  var hc = pct===null ? 'var(--sub)' : (pct>=100?'var(--green)':(pct>=50?'var(--accent2)':'var(--orange)'));
+  var nItem=0, nDone=0;
+  D.items.forEach(function(it){ var v=0,a=0; lops.forEach(function(l){var pl=it.v[l.id]||0; if(pl>0){v+=pl;a+=aktualOf(l,it);}}); if(v>0){nItem++; if(a>=v) nDone++;} });
+  document.getElementById('hero').innerHTML=
+    '<div class="ring" style="background:conic-gradient('+hc+' '+(pct||0)*3.6+'deg,var(--card-border) 0)"><div>'+(pct===null?'-':pct+'%')+'</div></div>'+
+    '<div><div class="ht">Presentase Pekerjaan</div><div class="hv">'+(pct===null?'Hanya jasa, tanpa material':rp(real)+' / '+rp(mat))+'</div>'+
+    '<div class="hs">'+(pct===null?'Progres material tidak dihitung':nDone+' dari '+nItem+' jenis material selesai')+'</div></div>';
   var info=document.getElementById('info');
   if(sel==='all'){
     info.innerHTML='<h2>Semua LOP (12 LOP)</h2><div class="sub">Gabungan seluruh LOP relokasi akibat pipa gas, wilayah Rantau Prapat. Jasa total '+rp(jasa)+'.</div>';
@@ -125,8 +142,6 @@ function render(){
     var l=lops[0], st=liveOf(D.lops.indexOf(l)).status;
     info.innerHTML='<h2>'+esc(l.name)+(st?'<span class="pill '+pillCls(st)+'">'+esc(st)+'</span>':'')+'</h2><div class="sub">'+esc(l.sto)+' &middot; Rantau Prapat<br>ODC/Feeder: '+esc(l.odc.join(', '))+'<br>Jasa '+rp(jasa)+(l.mat===0?'<br><b style="color:var(--orange)">LOP ini hanya jasa, tanpa material.</b>':'')+'</div>';
   }
-  document.getElementById('tot').innerHTML=
-    '<div class="mat"><b>'+rp(mat)+'</b><span>Kebutuhan</span></div><div><b style="color:var(--green)">'+rp(real)+'</b><span>Terpasang</span></div><div><b>'+(pct===null?'-':pct+'%')+'</b><span>Progres</span></div>';
   var rows=[];
   D.items.forEach(function(it){
     var v=0,a=0,parts=[];
