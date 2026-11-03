@@ -17,52 +17,44 @@
   .back{width:36px; height:36px; border-radius:10px; background:var(--accent-soft); color:var(--text); display:flex; align-items:center; justify-content:center; text-decoration:none; font-size:18px; flex-shrink:0;}
   header h1{font-size:16px; margin:0;}
   header p{font-size:11px; color:var(--sub); margin:2px 0 0;}
-  .section{padding:14px 16px;}
-  .chips{display:flex; gap:8px; overflow-x:auto; padding:2px 0 8px; margin:0 -16px; padding-left:16px; padding-right:16px;}
-  .chip{flex-shrink:0; padding:7px 13px; border-radius:99px; background:var(--card); border:1px solid var(--card-border); color:var(--sub); font-size:12px; font-weight:700; cursor:pointer; white-space:nowrap;}
-  .chip.on{background:var(--accent); border-color:var(--accent); color:#fff;}
-  .info{background:var(--card); border:1px solid var(--card-border); border-radius:14px; padding:12px 14px; margin-bottom:12px;}
-  .info h2{font-size:14px; margin:0 0 4px;}
-  .info .sub{font-size:11px; color:var(--sub); line-height:1.5;}
-  .tot{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px;}
-  .tot div{background:var(--card); border:1px solid var(--card-border); border-radius:12px; padding:10px 8px; text-align:center;}
-  .tot b{display:block; font-size:13px;}
-  .tot span{font-size:10px; color:var(--sub);}
-  .tot .mat b{color:var(--accent2);}
-  .search{display:flex; align-items:center; gap:8px; background:var(--card); border:1px solid var(--card-border); border-radius:12px; padding:0 12px; margin-bottom:10px;}
-  .search input{flex:1; background:none; border:0; color:var(--text); font-size:13px; padding:11px 0; outline:none;}
-  .count{font-size:11px; color:var(--sub); margin:0 2px 8px;}
-  .item{background:var(--card); border:1px solid var(--card-border); border-radius:14px; padding:12px 14px; margin-bottom:8px;}
-  .item .top{display:flex; justify-content:space-between; gap:10px; align-items:flex-start;}
-  .des{font-size:12px; font-weight:800; color:var(--accent2); word-break:break-all;}
-  .ura{font-size:11px; color:var(--sub); margin-top:3px; line-height:1.4;}
-  .vol{text-align:right; flex-shrink:0;}
-  .vol b{font-size:18px; display:block;}
-  .vol span{font-size:10.5px; color:var(--sub);}
-  .row2{display:flex; justify-content:space-between; font-size:11px; color:var(--sub); margin-top:8px; padding-top:8px; border-top:1px dashed var(--card-border);}
-  .row2 b{color:var(--text);}
-  .split{display:none; margin-top:8px; font-size:11px; color:var(--sub); line-height:1.7;}
-  .item.open .split{display:block;}
-  .split span{display:inline-block; background:var(--bg2); border:1px solid var(--card-border); border-radius:8px; padding:2px 8px; margin:0 4px 4px 0; color:var(--text);}
-  .empty{text-align:center; color:var(--sub); padding:30px 0; font-size:13px;}
-  .note{font-size:10.5px; color:var(--sub); margin-top:14px; line-height:1.5;}
-  .bar{height:7px;border-radius:5px;background:var(--card-border);overflow:hidden;margin-top:9px;}
-  .bar i{display:block;height:100%;background:var(--orange);border-radius:5px;}
-  .bar i.full{background:var(--green);}
-  .pill{display:inline-block;font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:99px;margin-left:6px;vertical-align:middle;}
-  .pill.g{background:rgba(34,197,94,.18);color:var(--green);} .pill.b{background:rgba(59,110,246,.2);color:var(--accent2);} .pill.o{background:rgba(245,158,11,.18);color:var(--orange);}
-  .filters{display:flex;gap:8px;margin-bottom:10px;}
-  .filters .chip{padding:6px 12px;font-size:11.5px;}
-  .lopsel{width:100%;padding:13px 14px;margin-bottom:12px;border-radius:12px;background:var(--card);border:1px solid var(--card-border);color:var(--text);font-size:13.5px;font-weight:700;font-family:inherit;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%236d9bff' stroke-width='3'><path d='M6 9l6 6 6-6'/></svg>");background-repeat:no-repeat;background-position:right 14px center;padding-right:38px;}
-  .lopsel:focus{outline:none;border-color:var(--accent);}
+  .section{padding:14px 12px;}
   .hero{display:flex;align-items:center;gap:16px;background:var(--card);border:1px solid var(--card-border);border-radius:14px;padding:14px;margin-bottom:12px;}
   .ring{width:92px;height:92px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
   .ring div{width:70px;height:70px;border-radius:50%;background:var(--card);display:flex;align-items:center;justify-content:center;font-size:21px;font-weight:800;}
   .hero .ht{font-size:11px;color:var(--sub);text-transform:uppercase;letter-spacing:.4px;font-weight:800;}
   .hero .hv{font-size:15px;font-weight:800;margin:4px 0 2px;}
   .hero .hs{font-size:11.5px;color:var(--sub);line-height:1.5;}
-  .warn{background:#3a2a0b;color:#fbbf24;border:1px solid #7a5a12;border-radius:10px;padding:8px 12px;font-size:12px;margin-bottom:10px;display:none;}
-  .vol b.done{color:var(--green);}
+  .tbl{background:var(--card);border:1px solid var(--card-border);border-radius:14px;overflow:hidden;}
+  .tr{display:grid;grid-template-columns:1.25fr .78fr 1.3fr 18px;gap:8px;padding:10px 10px;align-items:start;}
+  .th{background:var(--bg2);font-size:10.5px;font-weight:800;color:var(--sub);text-transform:uppercase;letter-spacing:.4px;}
+  .row{border-top:1px solid var(--card-border);}
+  .row .tr{cursor:pointer;}
+  .row .tr:active{background:var(--accent-soft);}
+  .nm{font-size:12px;font-weight:700;line-height:1.35;}
+  .nm small{display:block;font-size:10.5px;color:var(--sub);font-weight:500;margin-top:3px;}
+  .pill{display:inline-block;font-size:10.5px;font-weight:800;padding:3px 8px;border-radius:99px;line-height:1.3;}
+  .pill.g{background:rgba(34,197,94,.18);color:var(--green);} .pill.b{background:rgba(59,110,246,.2);color:var(--accent2);} .pill.o{background:rgba(245,158,11,.18);color:var(--orange);}
+  .pc{font-size:11px;font-weight:800;margin-top:6px;}
+  .dt{font-size:11px;color:var(--sub);line-height:1.45;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;}
+  .chev{color:var(--accent2);font-size:16px;transition:transform .15s;text-align:center;}
+  .row.open .chev{transform:rotate(90deg);}
+  .row.open .dt{-webkit-line-clamp:unset;}
+  .panel{display:none;padding:2px 12px 14px;background:var(--bg2);border-top:1px dashed var(--card-border);}
+  .row.open .panel{display:block;}
+  .ph{font-size:10.5px;font-weight:800;color:var(--accent2);text-transform:uppercase;letter-spacing:.4px;margin:12px 0 8px;}
+  .mi{margin-bottom:9px;}
+  .mi .mt{display:flex;justify-content:space-between;gap:8px;font-size:12px;}
+  .mi .mt b{font-weight:800;}
+  .mi .mt span{color:var(--sub);font-size:11px;white-space:nowrap;}
+  .bar{height:6px;border-radius:5px;background:var(--card-border);overflow:hidden;margin-top:5px;}
+  .bar i{display:block;height:100%;background:var(--orange);border-radius:5px;}
+  .bar i.full{background:var(--green);}
+  .log{font-size:11.5px;color:var(--text);line-height:1.5;padding:6px 0;border-bottom:1px solid var(--card-border);}
+  .log:last-child{border-bottom:0;}
+  .log em{font-style:normal;color:var(--accent2);font-weight:800;margin-right:4px;}
+  .empty,.err{text-align:center;color:var(--sub);padding:26px 0;font-size:13px;}
+  .err button{background:#6d9bff;color:#04122b;border:none;border-radius:8px;padding:8px 16px;font-weight:700;font-size:13px;margin-top:10px;}
+  .note{font-size:10.5px;color:var(--sub);margin-top:14px;line-height:1.5;padding:0 4px;}
 </style>
 </head>
 <body>
@@ -70,116 +62,73 @@
   <a class="back" href="HalamanDepan.html" aria-label="Kembali">&#8249;</a>
   <div>
     <h1>DUSEM &middot; Cek Progress</h1>
-    <p>Kebutuhan vs terpasang &middot; relokasi pipa gas KIS-RAP</p>
+    <p>Status & progres material &middot; relokasi pipa gas KIS-RAP</p>
   </div>
 </header>
 <div class="section">
-  <div class="warn" id="warn">&#9888; Data realisasi belum bisa dimuat &mdash; menampilkan kebutuhan saja.</div>
-  <select class="lopsel" id="lopSel" aria-label="Pilih LOP"></select>
   <div class="hero" id="hero"></div>
-  <div class="info" id="info"></div>
-  <div class="search"><span>&#128269;</span><input id="q" type="text" placeholder="Cari designator / uraian material..." autocomplete="off"></div>
-  <div class="filters" id="filters"></div>
-  <div class="count" id="count"></div>
-  <div id="list"></div>
-  <div class="note">Kebutuhan dari BoQ (belum termasuk PPN). Realisasi diisi lewat Input Progress. Progres % dihitung berbobot harga material. Ketuk item untuk rincian per LOP.</div>
+  <div class="tbl" id="tbl"><div class="empty">Memuat data...</div></div>
+  <div class="note">Ketuk baris LOP untuk melihat progres tiap material dan riwayat detail. Progres % = rata-rata (terpasang / kebutuhan) dari seluruh material LOP tersebut. Status & detail dari sheet DUSEM, realisasi dari Input Progress.</div>
 </div>
 <script>
 var API_URL='https://script.google.com/macros/s/AKfycbzwDowJ4CHMEgtlFYd45rqFAYAVj9QSRBdjXKcLqEcMdQWM4ybkSTxV5UxUEtcaagfbKQ/exec';
-var D={"lops":[{"id":"anr","name":"Feeder & Dist STO ANR","sto":"STO ANR","nilai":247171380,"mat":143598894,"jasa":103572486,"odc":["ODC-ANR-FB","FE-ANR-03 (ODC-ANR-FAH, FAC)"]},{"id":"rapd","name":"Distribusi STO RAP","sto":"STO RAP","nilai":61088795,"mat":31778642,"jasa":29310153,"odc":["ODC-RAP-FC","ODC-RAP-FAP","ODC-RAP-FAR","ODC-RAP-FA","ODC-RAP-FJ"]},{"id":"rapf","name":"Feeder STO RAP","sto":"STO RAP","nilai":600003528,"mat":437515290,"jasa":162488238,"odc":["FE-RAP-05","FE-RAP-08 (ODC-RAP-FAC, FAM)","FE-RAP-11 (ODC-RAP-FAI)"]},{"id":"kp","name":"OLT Kampung Pajak","sto":"STO ANP","nilai":240008290,"mat":107438642,"jasa":132569648,"odc":["FE-ANP-03","ODC-ANP-FAS","ODC-ANP-FAV"]},{"id":"kan","name":"Feeder Aek Kanopan","sto":"STO ANP","nilai":1029254472,"mat":576930355,"jasa":452324117,"odc":["FE-ANP-01","FE-ANP-02","FE-ANP-05"]},{"id":"pra","name":"Feeder & Dist STO PRA","sto":"STO PRA","nilai":290461779,"mat":222459610,"jasa":68002169,"odc":["ODC-PRA-FAD","ODC-PRA-FAC"]},{"id":"ab","name":"Mini OLT Air Batu","sto":"STO KIS","nilai":8961570,"mat":1569561,"jasa":7392009,"odc":["ODC-KIS-FAP"]},{"id":"set","name":"Feeder & Dist STO SET","sto":"STO SET","nilai":90824437,"mat":67252951,"jasa":23571486,"odc":["ODC-SET-FAP"]},{"id":"kis","name":"Feeder & Dist STO KIS","sto":"STO KIS","nilai":186224194,"mat":120670338,"jasa":65553856,"odc":["ODC-KIS-FAZ","ODC-KIS-FAB","ODC-KIS-FAH","ODC-KIS-FAR","ODC-KIS-FBG","ODC-KIS-FAD"]},{"id":"pt","name":"Mini OLT Pekan Tolan","sto":"STO KPI","nilai":3780720,"mat":0,"jasa":3780720,"odc":["ODC-KPI-FAP"]},{"id":"kpi","name":"Feeder & Dist STO KPI","sto":"STO KPI","nilai":1251939486,"mat":861550732,"jasa":390388754,"odc":["ODC-KPI-FAE","FE-KPI-01 (ODC-KPI-FA)","FE-KPI-06","FE-KPI-10 (ODC-KPI-FAS)","ODC-KPI-FB","ODC-KPI-FAD","ODC-KPI-FAH"]},{"id":"cik","name":"OLT Cikampak","sto":"STO KIS","nilai":12602400,"mat":0,"jasa":12602400,"odc":["RAP817 & ODC-KIS-FAG"]},{"id":"blm","name":"FE-RAP-02 (belum ada LOP)","sto":"STO RAP","nilai":23745365,"mat":13080161,"jasa":10665204,"odc":["FE-RAP-02 (ODC-RAP-FAB)"]}],"items":[{"d":"M-PU-S7.0-140","u":"Pengadaan dan pemasangan tiang besi 7 meter, berikut cat & cor pondasi dan assesories dengan kekuatan tarik 140 kg","s":"Unit","p":1513765,"v":{"anr":8,"rapf":144,"kan":33,"pra":91,"set":20,"kpi":277,"blm":1}},{"d":"M-AC-OF-SM-ADSS-96D","u":"Pengadaan dan Pemasangan Kabel Udara Fiber Optik All Dielectric Self Supporting Cable (ADSS) Single Mode 96 Core G.652.D","s":"meter","p":20207,"v":{"anr":4570,"rapf":6304,"kp":887,"kan":11983,"kpi":10016}},{"d":"M-AC-OF-SM-ADSS-48D","u":"Pengadaan dan Pemasangan Kabel Udara Fiber Optik All Dielectric Self Supporting Cable (ADSS) Single Mode 48 Core G.652.D","s":"meter","p":10854,"v":{"anr":118,"rapf":658,"kp":673,"kan":4426,"pra":6763,"set":2858,"kis":7487,"kpi":37,"blm":105}},{"d":"M-AC-OF-SM-ADSS-24D","u":"Pengadaan dan Pemasangan Kabel Udara Fiber Optik All Dielectric Self Supporting Cable (ADSS) Single Mode 24 Core G.652.D","s":"meter","p":7086,"v":{"anr":30,"rapd":416,"rapf":2135,"kp":5702,"kan":725,"ab":60,"kpi":19172}},{"d":"M-MH-HH2","u":"Pekerjaan Pembuatan Handhole Type HH2 ukuran dimensi dalam (P X L X T = 120x130x165) cor beton 1 : 2 : 3","s":"pcs","p":4329766,"v":{"anr":4,"rapf":1,"kp":4,"kan":6,"pra":1,"kis":1,"kpi":5,"blm":2}},{"d":"M-DC-OF-SM-144D","u":"Pengadaan dan pemasangan kabel duct fiber optik single mode 144 core g 652 d","s":"meter","p":38808,"v":{"anr":57,"kan":1265,"kpi":833}},{"d":"M-DC-OF-SM-288D","u":"Pengadaan dan pemasangan kabel duct fiber optik single mode 288 core g 652 d","s":"meter","p":72842,"v":{"kan":1125}},{"d":"M-AC-OF-SM-ADSS-12D","u":"Pengadaan dan Pemasangan Kabel Udara Fiber Optik All Dielectric Self Supporting Cable (ADSS) Single Mode 12 Core G.652.D","s":"meter","p":6043,"v":{"rapd":3621,"rapf":8050,"kan":1014,"kis":20}},{"d":"M-DD-HDPE-40-1","u":"Pengadaan dan pemasangan pipa hdpe 40/33 mm 1 pipa dengan kedalaman 1,5 meter","s":"meter","p":10413,"v":{"anr":83,"rapd":21,"rapf":42,"kp":48,"kan":2390,"pra":39,"ab":7,"set":20,"kis":90,"kpi":825,"blm":14}},{"d":"M-PU-S9.0-140","u":"Pengadaan dan pemasangan tiang besi 9 meter, berikut cat & cor dan assesories dengan kekuatan tarik 140 kg","s":"Unit","p":1892000,"v":{"anr":4,"kp":4,"kan":6,"set":1,"kis":2,"kpi":2}},{"d":"M-SLACK-SUPP","u":"PENGADAAN SLACK SUPPORT","s":"Pcs","p":125903,"v":{"anr":9,"rapd":7,"rapf":33,"kp":14,"kan":33,"pra":14,"set":6,"kis":14,"kpi":58}},{"d":"M-PU-S7.0-400NM","u":"Pengadaan dan Pemasangan Tiang Besi Telekomunikasi 7 Meter dengan 2 Segmen untuk Kabel Distribusi berikut Cat & Cor Pondasi (1:2:3) dengan Kekuatan Tarik 400 Newton Meter","s":"Unit","p":1056233,"v":{"kis":16}},{"d":"M-STAINLESS BELT","u":"PENGADAAN DAN PEMASANGAN AKSESORIS TIANG BESI STAINLESS BELT","s":"pcs","p":10290,"v":{"anr":100,"rapd":92,"rapf":237,"kp":144,"kan":385,"pra":46,"ab":2,"set":72,"kis":189,"kpi":315,"blm":3}},{"d":"M-PU-AS-HL","u":"Pengadaan dan Pemasangan Aksesoris Tiang Helical Performed Grip untuk Kabel ADSS","s":"pcs","p":15401,"v":{"anr":51,"rapd":44,"rapf":119,"kp":82,"kan":221,"pra":26,"set":40,"kis":92,"kpi":154,"blm":1}},{"d":"M-TC-02-ODC","u":"Pengadaan dan pemasangan riser pipe untuk pengaman kabel optik ke odc pole / titik naik ku diamater 2 inch panjang 3 meter","s":"pcs","p":231391,"v":{"anr":6,"rapd":3,"rapf":6,"kp":5,"kan":8,"pra":2,"ab":1,"set":2,"kis":8,"kpi":10,"blm":2}},{"d":"M-SC-OF-SM-48","u":"Pengadaan dan pemasangan alat sambung (cabang/ lurus) untuk fiber optik kapasitas 12 - 48 core","s":"pcs","p":786539,"v":{"anr":1,"kp":3,"kan":1,"pra":1,"ab":1,"set":1,"kis":6,"blm":1}},{"d":"M-SC-OF-SM-144","u":"Pengadaan dan pemasangan alat sambung (cabang/ lurus) untuk fiber optik kapasitas 12 - 144 core","s":"pcs","p":1177000,"v":{"anr":2,"rapf":1,"kan":4,"kpi":3}},{"d":"M-HB-PS-1","u":"Pengadaan dan pemasangan pipa duct dengan system gantung 1 tiang besi, bentang s/d 40 meter","s":"meter","p":143703,"v":{"kan":20,"kpi":60}},{"d":"M-PU-AS-SC","u":"Pengadaan dan Pemasangan Aksesoris Tiang Suspension Clamp Corong untuk Kabel ADSS","s":"pcs","p":15400,"v":{"anr":45,"rapd":42,"rapf":106,"kp":56,"kan":182,"pra":20,"set":30,"kis":90,"kpi":154,"blm":1}},{"d":"M-SC-OF-SM-24","u":"Pengadaan dan pemasangan alat sambung (cabang/ lurus) untuk fiber optik kapasitas 12 - 24 core","s":"pcs","p":696218,"v":{"rapd":4,"rapf":3,"kp":1,"kpi":6}},{"d":"M-SC-OF-SM-96","u":"Pengadaan dan pemasangan alat sambung (cabang/ lurus) untuk fiber optik kapasitas 12 - 96 core","s":"pcs","p":740520,"v":{"anr":1,"rapf":2,"kp":1,"kan":3,"kpi":3}},{"d":"M-TC-SM-96","u":"Pengadaan dan pemasangan otb termasuk terminasi dan penyambungan kabel optik single mode kap 96 core serta adapter (sc connector), pigtail dan protection sleeve pada cassette/box","s":"pcs","p":5442197,"v":{"kp":1}},{"d":"M-SC-OF-SM-288","u":"Pengadaan dan pemasangan alat sambung (cabang/ lurus) untuk fiber optik kapasitas 12 - 288 core","s":"pcs","p":2150500,"v":{"kan":2}},{"d":"M-Slack Support HH","u":"Pengadaan dan Pemasangan Slack include sabuk ukuran dimensi dalam (P x L = 80cm x 80cm)","s":"pcs","p":138710,"v":{"anr":5,"rapf":1,"kp":4,"kan":8,"pra":1,"kis":1,"kpi":7,"blm":2}},{"d":"M-TC-SM-48","u":"Pengadaan dan pemasangan otb termasuk terminasi dan penyambungan kabel optik single mode kap 48 core serta adapter (sc connector), pigtail dan protection sleeve pada cassette/box","s":"pcs","p":2200081,"v":{"pra":1}},{"d":"M-PU-AS-DE-50/70","u":"Pengadaan dan Pemasangan Aksesoris Tiang Helical Dead-End Clamp untuk Kabel ADSS ukuran 50/70","s":"pcs","p":16500,"v":{"anr":5,"rapd":6,"rapf":8,"kp":6,"kan":6,"pra":2,"ab":2,"set":2,"kis":7,"kpi":7,"blm":2}}]};
-D.lops=D.lops.filter(function(l){return l.id!=='blm';});
-D.items=D.items.filter(function(it){delete it.v.blm; return Object.keys(it.v).length>0;});
-var LIVE={}; // row -> {status, items:{des:aktual}}
-var sel='all', q='', flt='all';
+var LOPS=[];
 var nf=new Intl.NumberFormat('id-ID');
-function rp(n){
-  if(n>=1e9) return 'Rp '+(n/1e9).toFixed(2).replace('.',',')+' M';
-  if(n>=1e6) return 'Rp '+(n/1e6).toFixed(1).replace('.',',')+' jt';
-  return 'Rp '+nf.format(Math.round(n));
-}
-function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
-function lopById(id){for(var i=0;i<D.lops.length;i++) if(D.lops[i].id===id) return D.lops[i]; return null;}
-function liveOf(idx){return LIVE[6+idx]||{status:'',items:{}};}
-function aktualOf(l,it){var v=liveOf(D.lops.indexOf(l)).items[it.d]; return Math.min(v||0, it.v[l.id]||0);}
-function lopPct(l){
-  var r=0,p=0;
-  D.items.forEach(function(it){var pl=it.v[l.id]||0; if(pl>0){p+=pl*it.p; r+=aktualOf(l,it)*it.p;}});
-  return p>0?Math.round(r/p*100):null;
-}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
 function pillCls(st){var c=String(st).slice(0,2); return (c==='08'||c==='07')?'g':(c==='06'?'b':'o');}
-function renderChips(){
-  var sl=document.getElementById('lopSel');
-  var ap=0;
-  var h='<option value="all"'+(sel==='all'?' selected':'')+'>Semua LOP</option>';
-  D.lops.forEach(function(l){var p=lopPct(l); h+='<option value="'+l.id+'"'+(sel===l.id?' selected':'')+'>'+esc(l.name)+' ('+esc(l.sto.replace('STO ',''))+')'+(p===null?' \u2014 hanya jasa':' \u2014 '+p+'%')+'</option>';});
-  sl.innerHTML=h;
-  sl.onchange=function(){ sel=sl.value; render(); };
-  var f=[['all','Semua'],['open','Belum selesai'],['done','Selesai']];
-  var fe=document.getElementById('filters');
-  fe.innerHTML=f.map(function(x){return '<div class="chip'+(flt===x[0]?' on':'')+'" data-f="'+x[0]+'">'+x[1]+'</div>';}).join('');
-  Array.prototype.forEach.call(fe.children,function(c){ c.onclick=function(){ flt=c.getAttribute('data-f'); render(); }; });
+function pctOf(it){return Math.min(it.aktual,it.plan)/it.plan;}
+function lopPct(l){ if(!l.items.length) return null; var s=0; l.items.forEach(function(it){s+=pctOf(it);}); return Math.round(s/l.items.length*100); }
+function firstLine(t){ var a=String(t||'').split('\n').map(function(x){return x.trim();}).filter(Boolean); return a[0]||'-'; }
+function logLines(t){
+  return String(t||'').split('\n').map(function(x){return x.trim().replace(/^"+|"+$/g,'');}).filter(Boolean).map(function(x){
+    var m=x.match(/^\(([^)]*)\)\s*(.*)$/);
+    return m?'<div class="log"><em>'+esc(m[1])+'</em>'+esc(m[2])+'</div>':'<div class="log">'+esc(x)+'</div>';
+  }).join('');
+}
+function renderHero(){
+  var pairs=0,sum=0,done=0,closed=0;
+  LOPS.forEach(function(l){ var c=String(l.status).slice(0,2); if(c==='08'||c==='07') closed++; l.items.forEach(function(it){pairs++; sum+=pctOf(it); if(it.aktual>=it.plan) done++;}); });
+  var pct=pairs?Math.round(sum/pairs*100):0;
+  var hc=pct>=100?'var(--green)':(pct>=50?'var(--accent2)':'var(--orange)');
+  document.getElementById('hero').innerHTML=
+    '<div class="ring" style="background:conic-gradient('+hc+' '+pct*3.6+'deg,var(--card-border) 0)"><div>'+pct+'%</div></div>'+
+    '<div><div class="ht">Presentase Pekerjaan</div><div class="hv">'+LOPS.length+' LOP &middot; '+closed+' closed</div>'+
+    '<div class="hs">'+done+' dari '+pairs+' material LOP sudah terpasang penuh</div></div>';
 }
 function render(){
-  renderChips();
-  var lops = sel==='all' ? D.lops : [lopById(sel)];
-  var mat=0,jasa=0,nilai=0,real=0;
-  lops.forEach(function(l){
-    mat+=l.mat; jasa+=l.jasa; nilai+=l.nilai;
-    D.items.forEach(function(it){ if(it.v[l.id]) real+=aktualOf(l,it)*it.p; });
+  renderHero();
+  var h='<div class="tr th"><div>Nama LOP</div><div>Status</div><div>Detail Progress</div><div></div></div>';
+  LOPS.forEach(function(l,i){
+    var p=lopPct(l);
+    var mats=l.items.map(function(it){
+      var pc=Math.round(pctOf(it)*100), full=it.aktual>=it.plan;
+      return '<div class="mi"><div class="mt"><b>'+esc(it.des)+'</b><span>'+nf.format(it.aktual)+' / '+nf.format(it.plan)+' '+esc(it.unit)+' &middot; '+pc+'%</span></div><div class="bar"><i class="'+(full?'full':'')+'" style="width:'+pc+'%"></i></div></div>';
+    }).join('');
+    h+='<div class="row" data-i="'+i+'"><div class="tr"><div class="nm">'+esc(l.nama.replace(/^QE UTI RELOKASI\s*/,'').replace(/\s*AKIBAT PIPA GAS$/,''))+'<small>'+esc(l.sto)+(p===null?'':' &middot; progres '+p+'%')+'</small></div>'+
+      '<div><span class="pill '+pillCls(l.status)+'">'+esc(l.status||'-')+'</span>'+(p===null?'':'<div class="pc">'+p+'%</div>')+'</div>'+
+      '<div class="dt">'+esc(firstLine(l.detail))+'</div><div class="chev">&#8250;</div></div>'+
+      '<div class="panel"><div class="ph">Progres Material</div>'+(mats||'<div class="empty" style="padding:6px 0">Belum ada kebutuhan material.</div>')+
+      '<div class="ph">Riwayat Detail Progress</div>'+(logLines(l.detail)||'<div class="empty" style="padding:6px 0">Belum ada detail.</div>')+'</div></div>';
   });
-  var pct = mat>0 ? Math.round(real/mat*100) : null;
-  var hc = pct===null ? 'var(--sub)' : (pct>=100?'var(--green)':(pct>=50?'var(--accent2)':'var(--orange)'));
-  var nItem=0, nDone=0;
-  D.items.forEach(function(it){ var v=0,a=0; lops.forEach(function(l){var pl=it.v[l.id]||0; if(pl>0){v+=pl;a+=aktualOf(l,it);}}); if(v>0){nItem++; if(a>=v) nDone++;} });
-  document.getElementById('hero').innerHTML=
-    '<div class="ring" style="background:conic-gradient('+hc+' '+(pct||0)*3.6+'deg,var(--card-border) 0)"><div>'+(pct===null?'-':pct+'%')+'</div></div>'+
-    '<div><div class="ht">Presentase Pekerjaan</div><div class="hv">'+(pct===null?'Hanya jasa, tanpa material':rp(real)+' / '+rp(mat))+'</div>'+
-    '<div class="hs">'+(pct===null?'Progres material tidak dihitung':nDone+' dari '+nItem+' jenis material selesai')+'</div></div>';
-  var info=document.getElementById('info');
-  if(sel==='all'){
-    info.innerHTML='<h2>Semua LOP (12 LOP)</h2><div class="sub">Gabungan seluruh LOP relokasi akibat pipa gas, wilayah Rantau Prapat. Jasa total '+rp(jasa)+'.</div>';
-  }else{
-    var l=lops[0], st=liveOf(D.lops.indexOf(l)).status;
-    info.innerHTML='<h2>'+esc(l.name)+(st?'<span class="pill '+pillCls(st)+'">'+esc(st)+'</span>':'')+'</h2><div class="sub">'+esc(l.sto)+' &middot; Rantau Prapat<br>ODC/Feeder: '+esc(l.odc.join(', '))+'<br>Jasa '+rp(jasa)+(l.mat===0?'<br><b style="color:var(--orange)">LOP ini hanya jasa, tanpa material.</b>':'')+'</div>';
-  }
-  var rows=[];
-  D.items.forEach(function(it){
-    var v=0,a=0,parts=[];
-    lops.forEach(function(l){ var pl=it.v[l.id]||0; if(pl>0){ var ak=aktualOf(l,it); v+=pl; a+=ak; parts.push([l.name,ak,pl]); } });
-    if(v>0) rows.push({it:it,v:v,a:a,parts:parts});
-  });
-  var t=q.toLowerCase();
-  if(t) rows=rows.filter(function(r){ return (r.it.d+' '+r.it.u).toLowerCase().indexOf(t)>=0; });
-  if(flt==='done') rows=rows.filter(function(r){return r.a>=r.v;});
-  if(flt==='open') rows=rows.filter(function(r){return r.a<r.v;});
-  rows.sort(function(a,b){ return b.v*b.it.p - a.v*a.it.p; });
-  document.getElementById('count').textContent=rows.length+' jenis material';
-  var h='';
-  rows.forEach(function(r){
-    var it=r.it, p=Math.round(r.a/r.v*100), full=r.a>=r.v;
-    var split='';
-    if(sel==='all') r.parts.forEach(function(x){ split+='<span>'+esc(x[0])+': <b>'+nf.format(x[1])+' / '+nf.format(x[2])+'</b></span>'; });
-    h+='<div class="item"><div class="top"><div><div class="des">'+esc(it.d)+'</div><div class="ura">'+esc(it.u)+'</div></div>'+
-       '<div class="vol"><b class="'+(full?'done':'')+'">'+nf.format(r.a)+' / '+nf.format(r.v)+'</b><span>'+esc(it.s)+' &middot; '+p+'%</span></div></div>'+
-       '<div class="bar"><i class="'+(full?'full':'')+'" style="width:'+Math.min(100,p)+'%"></i></div>'+
-       '<div class="row2"><span>Harga satuan <b>Rp '+nf.format(it.p)+'</b></span><span>Terpasang <b>'+rp(r.a*it.p)+'</b> / '+rp(r.v*it.p)+'</span></div>'+
-       (split?'<div class="split">'+split+'</div>':'')+'</div>';
-  });
-  document.getElementById('list').innerHTML = h || '<div class="empty">Tidak ada material yang cocok.</div>';
-  Array.prototype.forEach.call(document.querySelectorAll('.item'),function(e){ e.onclick=function(){ e.classList.toggle('open'); }; });
+  var t=document.getElementById('tbl'); t.innerHTML=h;
+  Array.prototype.forEach.call(t.querySelectorAll('.row .tr'),function(e){ e.onclick=function(){ e.parentNode.classList.toggle('open'); }; });
 }
 function load(n){
+  var key='dusem:structure';
   fetch(API_URL+'?action=dsStructure').then(function(r){return r.text();}).then(function(t){
     var d=JSON.parse(t); if(!d.ok) throw new Error(d.error||'gagal');
-    d.lops.forEach(function(l){ var m={}; l.items.forEach(function(it){m[it.des]=it.aktual;}); LIVE[l.row]={status:l.status,items:m}; });
-    document.getElementById('warn').style.display='none'; render();
-  }).catch(function(){
-    if(n<3) setTimeout(function(){load(n+1);},900*n); else document.getElementById('warn').style.display='block';
+    try{localStorage.setItem(key,t);}catch(e){}
+    LOPS=d.lops; render();
+  }).catch(function(err){
+    if(n<3){ setTimeout(function(){load(n+1);},900*n); return; }
+    var c=null; try{c=localStorage.getItem(key);}catch(e){}
+    if(c){ try{ LOPS=JSON.parse(c).lops; render(); return; }catch(e){} }
+    document.getElementById('hero').innerHTML='';
+    document.getElementById('tbl').innerHTML='<div class="err">Gagal memuat data: '+esc(err.message)+'<br><button onclick="location.reload()">Coba lagi</button></div>';
   });
 }
-document.getElementById('q').addEventListener('input',function(e){ q=e.target.value.trim(); render(); document.getElementById('q').focus(); });
 try{ if(window.Telegram&&Telegram.WebApp){ Telegram.WebApp.ready(); Telegram.WebApp.expand(); } }catch(e){}
-render(); load(1);
+load(1);
 </script>
 </body>
 </html>
