@@ -77,6 +77,20 @@
   .focus-box .module-card{border-color:rgba(109,155,255,.35);}
   .focus-sub{font-size:11px; font-weight:800; color:var(--sub); text-transform:uppercase; letter-spacing:.5px; margin:12px 2px 6px;}
   .focus-tag + .focus-sub{margin-top:6px;}
+
+  .fgroup{background:var(--card); border:1px solid rgba(109,155,255,.35); border-radius:14px; box-shadow:var(--shadow); overflow:hidden;}
+  .fgroup.open{border-color:var(--accent2);}
+  .fhead{display:flex; align-items:center; gap:12px; width:100%; padding:12px 14px; background:none; border:0; color:var(--text); font:inherit; text-align:left; cursor:pointer;}
+  .fchev{transition:transform .2s;}
+  .fgroup.open .fchev{transform:rotate(90deg);}
+  .fbody{display:none; padding:0 10px 10px;}
+  .fgroup.open .fbody{display:block;}
+  .fgrid{display:grid; grid-template-columns:repeat(3,1fr); gap:8px;}
+  .fg-link{display:flex; flex-direction:column; align-items:center; gap:6px; padding:10px 4px; border-radius:12px; background:var(--bg2); border:1px solid var(--card-border); color:var(--text); text-decoration:none; font-size:11px; font-weight:700; text-align:center; line-height:1.2;}
+  .fg-link:active{border-color:var(--accent);}
+  .fg-ic{width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:16px;}
+  .fgroup.soon .fhead{cursor:default; opacity:.65;}
+  .soon-badge{margin-left:auto; font-size:10px; font-weight:800; color:var(--sub); border:1px solid var(--card-border); border-radius:99px; padding:3px 9px;}
   .filter-scroll{display:flex; gap:8px; overflow-x:auto; padding:2px 0 4px; margin-bottom:4px;}
   .filter-scroll::-webkit-scrollbar{display:none;}
   .chip{
@@ -266,57 +280,57 @@
 
   <div class="focus-box">
     <div class="focus-tag">&#127919; Fokus Saat Ini</div>
-    <div class="focus-sub">BRT Medan</div>
-    <a class="module-card" href="Timeline-BRT.html?v=20261015">
-      <div class="module-icon">&#128198;</div>
-      <div class="module-text">
-        <div class="module-title">BRT Medan &middot; Kurva S &amp; Timeline</div>
-        <div class="module-desc">Jadwal per Zona &middot; Segmen, kurva S Plan vs Aktual, target harian</div>
+    <div class="fgroup" id="fg-brt">
+      <button class="fhead" type="button" onclick="toggleFocus('brt')" aria-expanded="false">
+        <div class="module-icon" style="background:rgba(59,110,246,.18); color:var(--accent2);">&#128652;</div>
+        <div class="module-text">
+          <div class="module-title">BRT</div>
+          <div class="module-desc">Kurva S &amp; Timeline &middot; Input &middot; Cek Update</div>
+        </div>
+        <div class="module-arrow fchev">&#8250;</div>
+      </button>
+      <div class="fbody"><div class="fgrid">
+        <a class="fg-link" href="Timeline-BRT.html?v=20261102"><span class="fg-ic" style="background:rgba(236,72,153,.15)">&#128198;</span><span>Kurva S &amp; Timeline</span></a>
+        <a class="fg-link" href="InputBRT.html?v=20261102"><span class="fg-ic" style="background:rgba(34,197,94,.15)">&#9999;&#65039;</span><span>Input Progress</span></a>
+        <a class="fg-link" href="CekUpdateBRT.html?v=20261102"><span class="fg-ic" style="background:rgba(245,158,11,.15)">&#128205;</span><span>Cek Update</span></a>
+      </div></div>
+    </div>
+    <div class="fgroup" id="fg-lp">
+      <button class="fhead" type="button" onclick="toggleFocus('lp')" aria-expanded="false">
+        <div class="module-icon" style="background:rgba(168,85,247,.18); color:var(--purple);">&#127959;&#65039;</div>
+        <div class="module-text">
+          <div class="module-title">Lubuk Pakam</div>
+          <div class="module-desc">Timeline &middot; Input &middot; Cek Update</div>
+        </div>
+        <div class="module-arrow fchev">&#8250;</div>
+      </button>
+      <div class="fbody"><div class="fgrid">
+        <a class="fg-link" href="Timeline-LubukPakam.html?v=20261102"><span class="fg-ic" style="background:rgba(236,72,153,.15)">&#128198;</span><span>Timeline</span></a>
+        <a class="fg-link" href="InputLubukPakam.html?v=20261102"><span class="fg-ic" style="background:rgba(34,197,94,.15)">&#9999;&#65039;</span><span>Input Progress</span></a>
+        <a class="fg-link" href="CekUpdateLubukPakam.html?v=20261102"><span class="fg-ic" style="background:rgba(245,158,11,.15)">&#128205;</span><span>Cek Update</span></a>
+      </div></div>
+    </div>
+    <div class="fgroup soon">
+      <div class="fhead" aria-disabled="true">
+        <div class="module-icon" style="background:rgba(20,184,166,.18); color:var(--teal);">&#128230;</div>
+        <div class="module-text">
+          <div class="module-title">DUSEM</div>
+          <div class="module-desc">Menu belum dipasang</div>
+        </div>
+        <span class="soon-badge">Segera</span>
       </div>
-      <div class="module-arrow">&#8250;</div>
-    </a>
-    <a class="module-card" href="InputBRT.html?v=20261015">
-      <div class="module-icon" style="background:rgba(34,197,94,.15); color:var(--green);">&#9999;&#65039;</div>
-      <div class="module-text">
-        <div class="module-title">BRT Medan &middot; Input Progress</div>
-        <div class="module-desc">Update Aktual + foto &amp; lokasi per Zona &middot; Segmen</div>
-      </div>
-      <div class="module-arrow">&#8250;</div>
-    </a>
-    <a class="module-card" href="CekUpdateBRT.html?v=20261015">
-      <div class="module-icon" style="background:rgba(245,158,11,.15); color:var(--orange);">&#128205;</div>
-      <div class="module-text">
-        <div class="module-title">BRT Medan &middot; Cek Update Progress</div>
-        <div class="module-desc">Update aktual lapangan terbaru: peta lokasi, foto, catatan</div>
-      </div>
-      <div class="module-arrow">&#8250;</div>
-    </a>
-    <div class="focus-sub">Lubuk Pakam</div>
-    <a class="module-card" href="Timeline-LubukPakam.html?v=20261015">
-      <div class="module-icon">&#128198;</div>
-      <div class="module-text">
-        <div class="module-title">Lubuk Pakam &middot; Timeline</div>
-        <div class="module-desc">Jadwal pekerjaan per Jalan</div>
-      </div>
-      <div class="module-arrow">&#8250;</div>
-    </a>
-    <a class="module-card" href="InputLubukPakam.html?v=20261015">
-      <div class="module-icon" style="background:rgba(34,197,94,.15); color:var(--green);">&#9999;&#65039;</div>
-      <div class="module-text">
-        <div class="module-title">Lubuk Pakam &middot; Input Progress</div>
-        <div class="module-desc">Update Realisasi + foto &amp; lokasi per Jalan (otomatis masuk sheet)</div>
-      </div>
-      <div class="module-arrow">&#8250;</div>
-    </a>
-    <a class="module-card" href="CekUpdateLubukPakam.html?v=20261015">
-      <div class="module-icon" style="background:rgba(245,158,11,.15); color:var(--orange);">&#128205;</div>
-      <div class="module-text">
-        <div class="module-title">Lubuk Pakam &middot; Cek Update Progress</div>
-        <div class="module-desc">Update lapangan terbaru: peta lokasi, foto, catatan, progress per jalan</div>
-      </div>
-      <div class="module-arrow">&#8250;</div>
-    </a>
+    </div>
   </div>
+  <script>
+  function toggleFocus(k){
+    var groups=document.querySelectorAll('.fgroup[id^="fg-"]');
+    for(var i=0;i<groups.length;i++){
+      var g=groups[i], open=(g.id==='fg-'+k) && !g.classList.contains('open');
+      g.classList.toggle('open',open);
+      g.querySelector('.fhead').setAttribute('aria-expanded',open?'true':'false');
+    }
+  }
+  </script>
 
   <div class="showing" id="showingLabel">Memuat...</div>
 
