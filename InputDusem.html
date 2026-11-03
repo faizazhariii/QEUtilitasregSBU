@@ -196,9 +196,10 @@
 
   function fmt(n){ return Number(n || 0).toLocaleString('id-ID'); }
   function lopPct(l){
-    var r = 0, p = 0;
-    l.items.forEach(function(it){ r += Math.min(it.aktual, it.plan) * it.price; p += it.plan * it.price; });
-    return p > 0 ? Math.round(r / p * 100) : 0;
+    if (!l.items.length) return 0;
+    var sum = 0;
+    l.items.forEach(function(it){ sum += Math.min(it.aktual, it.plan) / it.plan; });
+    return Math.round(sum / l.items.length * 100);
   }
 
   function renderLopList(){
@@ -209,7 +210,7 @@
         var pct = lopPct(l);
         return '<div class="segmen-item" data-idx="' + idx + '">' +
           '<div class="seg-title">' + escapeHtml(l.nama) + '</div>' +
-          '<div class="seg-sub">' + escapeHtml(l.sto) + ' &middot; ' + escapeHtml(l.status || '-') + ' &middot; ' + l.items.length + ' material &middot; realisasi ' + pct + '%</div>' +
+          '<div class="seg-sub">' + escapeHtml(l.sto) + ' &middot; ' + escapeHtml(l.status || '-') + ' &middot; ' + l.items.length + ' material &middot; progres ' + pct + '%</div>' +
           '<div style="height:5px;border-radius:4px;background:var(--card-border);margin-top:7px;overflow:hidden;"><div style="height:100%;width:' + pct + '%;background:var(--green);"></div></div>' +
         '</div>';
       }).join('') + '</div>';
@@ -338,7 +339,7 @@
     itemsList.innerHTML = seg.items.map(function(it, idx){
       return '<div class="item-card">' +
         '<div class="item-top"><div class="item-name">' + escapeHtml(it.des) + (it.unit ? ' <span style="color:var(--sub);font-weight:500;font-size:11px;">(' + escapeHtml(it.unit) + ')</span>' : '') + '</div></div>' +
-        '<div style="font-size:10px;color:var(--sub);margin:-2px 0 6px;">' + 'harga ' + fmt(it.price) + ' &middot; sisa ' + escapeHtml(Math.max(0, Number(it.plan) - Number(it.aktual || 0)).toLocaleString('id-ID')) + '</div>' +
+        '<div style="font-size:10px;color:var(--sub);margin:-2px 0 6px;">' + 'sisa ' + escapeHtml(Math.max(0, Number(it.plan) - Number(it.aktual || 0)).toLocaleString('id-ID')) + '</div>' +
         '<div class="item-mid">' +
           '<div class="item-col"><div class="col-label">Aktual</div>' +
             '<input type="number" inputmode="decimal" data-idx="' + idx + '" class="aktual-input" value="' + escapeHtml(it.aktual) + '" /></div>' +
